@@ -2,6 +2,19 @@
 
 wooooo my SBA for absolutely no reason (I mean I have reason, which is DSE, well idk aaaaaaaa)
 
+**git tips**\
+\
+git auto update files that had been added, wont auto add but auto update, just commit if u had no new files\
+
+```git
+git add new_filed_you_created
+git add files_you_edited_too
+git add .
+git status
+git commit -m "Title" -m "Desc"
+git push
+```
+
 ## Word Analysis and Plagiarism Detection System
 
 ### Task 1 (Design & Implementation)
