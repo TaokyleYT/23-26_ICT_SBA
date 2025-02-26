@@ -1,10 +1,13 @@
 # 23-26_ICT_SBA
 
+## DO NOT USE OUT-SYL FUNCTIONS TO ACHIEVE IN-SYL
+
+*such as using list.index, sorted*\
+*known exclude: map*
+
 wooooo my SBA for absolutely no reason (I mean I have reason, which is DSE, well idk aaaaaaaa)
 
-**git tips**\
-\
-git auto update files that had been added, wont auto add but auto update, just commit if u had no new files
+**git tips**
 
 ```git
 git add new_filed_you_created
@@ -174,6 +177,7 @@ Shows a significant improvement in program performance or usability.
 test.txt: 708 words
 
 command line & GUI (?)
+CAN USE PYGAME WOOOO
 COLORED TEXT WITH ANSI ESCAPE WHY NOT
 test case would be hard but okay maybe try try
 count word: exclude titles, headings, minus word, show +- expected word
@@ -181,6 +185,4 @@ sort: QUICK SORT ALL THE WAY
 plagiarism: different test types, like word frequency, sentence matching, shows top matching results and shit idk
 
 extra: add mass processing tools
-
-ASK LAILAI IF CAN USE GUI MODULES LIKE PYGAME LOOL
 ```
