@@ -73,24 +73,24 @@ Write a Python program to analyze articles from text files. The program should:
 **Test your program and evaluate its performance.**\
 (a) Conduct a test using the following test cases:
 
-- Test Case 1: Two identical articles (similarity percentage should be 100%).\
-- Test Case 2: Two completely different articles (similarity percentage should be <15%).\
+- Test Case 1: Two identical articles (similarity percentage should be 100%).
+- Test Case 2: Two completely different articles (similarity percentage should be <15%).
 - Test Case 3: Articles with partial overlaps (e.g. ~50% shared vocabulary).
 
 (b) Record feedback and results.
 
-- Document the accuracy of word counts, sorting, and similarity calculations.\
+- Document the accuracy of word counts, sorting, and similarity calculations.
 - Identify limitations (e.g. case sensitivity, handling hyphenated words).
 
 (c) Improve the program.
 
-- Option 1: make one major change in the program and illustrate the corresponding improvement.\
+- Option 1: make one major change in the program and illustrate the corresponding improvement.
 - Option 2: describe how the scope of the program could be extended.
 
 **Create a document to illustrate the development of the program. You may want to consider some of the following:**
 
-- Compare pros and cons of your initial design.\
-- Discuss algorithm optimization (e.g. improving efficiency for large files).\
+- Compare pros and cons of your initial design.
+- Discuss algorithm optimization (e.g. improving efficiency for large files).
 - Include screenshots of test results and code snippets in your report.
 
 **Deliverables:**
