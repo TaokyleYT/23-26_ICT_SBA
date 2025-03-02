@@ -169,8 +169,6 @@ Clearly explains the improvement and its benefits.\
 Includes detailed documentation of the changes made.\
 Shows a significant improvement in program performance or usability.
 
-
-
 ## WOO HERES WHAT I WILL DO
 
 ```none
@@ -182,7 +180,11 @@ COLORED TEXT WITH ANSI ESCAPE WHY NOT
 test case would be hard but okay maybe try try
 count word: exclude titles, headings, minus word, show +- expected word
 sort: QUICK SORT ALL THE WAY
-plagiarism: different test types, like word frequency, sentence matching, shows top matching results and shit idk
+plagiarism: different test types, like word frequency, sentence matching, shows top matching results and stuff idk
+
+note: can use matplotlib or ascii graph to show result instead of numbers
+
+should I train a big ahh neural network for plagiarism? idk it seemed a bit overkill lol
 
 extra: add mass processing tools
 ```
