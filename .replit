@@ -1,5 +1,6 @@
 entrypoint = "main.py"
-modules = ["python-3.11"]
+modules = ["python-3.12"]
+hidden = ["github.url", "generated-icon.png"]
 
 [nix]
 channel = "stable-24_05"

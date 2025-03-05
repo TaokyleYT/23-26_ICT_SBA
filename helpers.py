@@ -54,3 +54,15 @@ def is_sorted(input_list:list, default=1):
         if not (ascending or decending):
             break
     return ascending-decending
+
+def repeat_str_to_len(word: str, length: int, start_index=0) -> tuple[str, int]:
+    if not isinstance(word, str):
+        raise TypeError("word must be a str")
+    if not isinstance(length, int) and length >= 0:
+        raise TypeError("length must be a positive int")
+    if not isinstance(start_index, int) and start_index >= 0 and start_index < len(word):
+        raise TypeError("start_index must be a positive int which less than the length of word")
+    if length == 0:
+        return '', 0
+    words = word*(-((-length)//len(word))+1) #word * (ceil division + 1)
+    return words[start_index:length+start_index], (length+start_index)%len(word)
