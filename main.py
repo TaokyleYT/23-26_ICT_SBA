@@ -1,5 +1,6 @@
 import re
 import helpers
+from animated_print import animated_print as print
 
 def read_file(file_path):
     """Read a text file and return its content as a string."""
@@ -52,7 +53,7 @@ def get_total_words(word_count):
 
 def get_unique_words(word_count):
     """Return the number of unique words in a text."""
-    return len(word_count)
+    return len(word_count[0])
 
 def sort_alphabetically(word_count):
     """Sort words alphabetically using quick_sort from helpers."""
@@ -91,20 +92,17 @@ def sort_by_frequency(word_count):
     return result
 
 def calculate_similarity(word_count1, word_count2):
-    """Calculate the similarity percentage between two texts based on word frequencies."""
-    if not word_count1 or not word_count2:
-        return 0.0
-    
+    """Calculate the similarity percentage between two texts based on word frequencies."""    
     # Get all unique words from both texts
     all_words = []
     common_words = 0
     
-    for word in word_count1:
+    for word in word_count1[0]:
         if word not in all_words:
             all_words.append(word)
     
-    for word in word_count2:
-        if word in word_count1:
+    for word in word_count2[0]:
+        if word in word_count1[0]:
             common_words += 1
         if word not in all_words:
             all_words.append(word)
@@ -144,25 +142,28 @@ def replace_word(text, target_word, replacement_word):
 
 def display_results(file_path, word_count, total_words, unique_words):
     """Display analysis results for a single file."""
-    print(f"\n{'='*60}")
-    print(f"Analysis of '{file_path}':")
-    print(f"{'='*60}")
-    print(f"Total words: {total_words}")
-    print(f"Unique words: {unique_words}")
-    
-    # Display top 10 most frequent words
-    print("\nTop 10 Most Frequent Words:")
-    print(f"{'-'*30}")
+    print(f"\
+\n\
+{'='*60}\n\
+Analysis of '{file_path}':\n\
+{'='*60}\n\
+Total words: {total_words}\n\
+Unique words: {unique_words}\n\
+\n\
+\n\
+Top 10 Most Frequent Words:\n\
+{'-'*30}")
+    txt = ""
     frequency_sorted = sort_by_frequency(word_count)
     for i, (word, count) in enumerate(frequency_sorted[:10]):
-        print(f"{i+1}. '{word}': {count} times")
+        txt += f"{i+1}. '{word}': {count} times\n"
+    print(txt)
     
-    # Display first 10 words alphabetically
-    print("\nFirst 10 Words (Alphabetically):")
-    print(f"{'-'*30}")
+    txt = f"\nFirst 10 Words (Alphabetically):\n{'-'*30}"
     alpha_sorted = sort_alphabetically(word_count)
     for i, (word, count) in enumerate(alpha_sorted[:10]):
-        print(f"{i+1}. '{word}': {count} times")
+        txt += f"{i+1}. '{word}': {count} times\n"
+    print(txt)
 
 def compare_files(file_path1, file_path2):
     """Compare two text files and calculate their similarity percentage."""
@@ -193,10 +194,7 @@ def compare_files(file_path1, file_path2):
     # Calculate and display similarity percentage
     similarity = calculate_similarity(word_count1, word_count2)
     
-    print(f"\n{'='*60}")
-    print(f"Comparison between '{file_path1}' and '{file_path2}':")
-    print(f"{'='*60}")
-    print(f"Similarity percentage: {similarity:.2f}%")
+    print(f"\n{'='*60}\nComparison between '{file_path1}' and '{file_path2}':\n{'='*60}\nSimilarity percentage: {similarity:.2f}%")
     
     # Determine plagiarism level based on similarity
     if similarity > 80:
@@ -232,12 +230,7 @@ def main():
     print("--------------------------------------------")
     
     while True:
-        print("\nMenu:")
-        print("1. Analyze a single file")
-        print("2. Compare two files for plagiarism")
-        print("3. Search for a word in a file")
-        print("4. Replace a word in a file")
-        print("5. Exit")
+        print("\nMenu:\n1. Analyze a single file\n2. Compare two files for plagiarism\n3. Search for a word in a file\n4. Replace a word in a file\n5. Exit\n")
         
         choice = input("\nEnter your choice (1-5): ").strip()
         

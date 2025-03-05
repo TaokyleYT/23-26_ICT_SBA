@@ -66,32 +66,3 @@ def animated_print(txt: Iterable[str],
     print(end=end)
     return
     '''
-
-
-if __name__ == "__main__":
-    time.sleep(1)
-    print("end")
-    animated_print(
-        "abcdefghijk\nlmnopqrstuvwxyz\nabcdefghijk\nlmnopqrstuvwxyz\nabcdefghijk\nlmnopqrstuvwxyz",
-        0.03, 
-        next_line_char_delay=1)
-    time.sleep(1)
-    print("\x1b[2;1H")
-    animated_print(
-        "abcdefghijk\nlmnopqrstuvwxyz\nabcdefghijk\nlmnopqrstuvwxyz\nabcdefghijk\nlmnopqrstuvwxyz",
-        0.03, 
-        next_line_char_delay=1)
-    print("end", end='')
-    time.sleep(1)
-    animated_print(
-        "abcdefghijlmnopqrstuvwxyzabcdefghijk",
-        0.03,
-        "//"+chr(9608),  #(">", 3), 
-        next_line_char_delay=1,
-        end='==Finish\n')
-    animated_print(("abcdefg", "abcdefg", "1234567"), 0.03)
-    time.sleep(1)
-    animated_print(
-        "abcdefghijk\nlmnopqrstuvwxyz\nabcdefghijk\nlmnopqrstuvwxyz\nabcdefghijk\nlmnopqrstuvwxyz",
-        0.03, 
-        next_line_char_delay=1, front_effect='  '+chr(9608))

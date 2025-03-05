@@ -181,6 +181,7 @@ test case would be hard but okay maybe try try
 count word: exclude titles, headings, minus word, show +- expected word
 sort: QUICK SORT ALL THE WAY
 plagiarism: different test types, like word frequency, sentence matching, shows top matching results and stuff idk
+plagiarism: might use the same concept of autocorrect system to detect
 
 note: can use matplotlib or ascii graph to show result instead of numbers
 
