@@ -1,12 +1,12 @@
-import re
-import os
-import helpers
-from helpers import animated_print as print
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import argparse
+import re #regex
+import os #get terminal size for text overflowing on CLI mode
+import helpers #a bunch of non-functions (by me ofc) that prevents me from losing ALOT of marks due to using built-in functions
+from helpers import animated_print as print #animate print lol
+import tkinter as tk #tkinter is a module that allows me to go GUI WOOOOOOO
+from tkinter import ttk, filedialog, messagebox #frequently used stuff I dont wanna type "tkinter." everytime I use them
+import matplotlib.pyplot as plt #graphs and charts so I dont need to suffer using pure tkinter
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #used whenever I make a chart, COMEON NOBODY WANNA TYPE THIS LONG AHH THING EVERYTIME
+import argparse #so I know if u want CLI or GUI :) you are on CLI if u can use this   anyways
 
 def read_file(file_path):
     """Read a text file and return its content as a string."""
