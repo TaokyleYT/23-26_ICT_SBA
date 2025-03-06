@@ -744,7 +744,7 @@ Top 10 Most Frequent Words:\n\
         txt += f"{i+1}. '{word}': {count} times\n"
     print(txt)
 
-    txt = f"\nFirst 10 Words (Alphabetically):\n{'-'*30}"
+    txt = f"\nFirst 10 Words (Alphabetically):\n{'-'*30}\n"
     alpha_sorted = sort_alphabetically(word_count)
     for i, (word, count) in enumerate(alpha_sorted[:10]):
         txt += f"{i+1}. '{word}': {count} times\n"
@@ -809,11 +809,14 @@ def analyze_file(file_path):
 
     return word_count, clean_content
 
+
 def mainGUI():
     """Main function to run the Word Analysis and Plagiarism Detection System GUI."""
     root = tk.Tk()
     app = TextAnalysisApp(root)
+    root.protocol("WM_DELETE_WINDOW", lambda: root.destroy() if messagebox.askokcancel("Quit", "Do you want to quit?") else None)
     root.mainloop()
+
 
 def mainCLI():
     """Main function to run the Word Analysis and Plagiarism Detection System."""

@@ -1,17 +1,20 @@
 
 from collections.abc import Sequence, Iterable
+from itertools import islice
 from typing import Any
 import types
 import time
 import os
 
 def animated_print(txt: Iterable[str], delay: float = 0.02, front_effect: str = '', next_line_char_delay: int = 1, end: str = '\n'):
+    if len(txt) == 0:
+        return
     if all(isinstance(char, str) for char in txt):
         if all(len(char) == 1 for char in txt):
-            txt_lst = list(''.join(txt).split('\n'))
+            txt = list(''.join(txt).split('\n'))
             #print(txt_lst)
         else:
-            txt_lst = list(txt)
+            txt = list(txt)
     else:
         raise TypeError("txt must be a str or iterable of str")
     if not isinstance(delay, (int, float)):
@@ -20,6 +23,11 @@ def animated_print(txt: Iterable[str], delay: float = 0.02, front_effect: str = 
         raise TypeError("front_effect must be a str")
 
     term_size = os.get_terminal_size()
+    txt_lst = []
+    for line in txt:
+        for warpped_line in (line[i:i+term_size.columns] for i in range(0, len(line), term_size.columns)):
+            txt_lst.append(warpped_line)
+    txt_lst, truncated = txt_lst[:term_size.lines-1], txt_lst[term_size.lines-1:]
     max_wordlen = max([len(line) for line in txt_lst])
     print('\n' * (len(txt_lst)), end='')
     for i in range(max_wordlen + next_line_char_delay * (len(txt_lst))):
@@ -41,6 +49,7 @@ def animated_print(txt: Iterable[str], delay: float = 0.02, front_effect: str = 
         print("\x1b[1A\x1b[1C", end='', flush=True)
     time.sleep(delay)
     print("\x1b[" + str(next_line_char_delay * len(txt_lst)) + "D", end=end, flush=True)
+    animated_print(truncated, delay, front_effect, next_line_char_delay, end)
     return
     #deprecated cuz buggy
     '''
@@ -610,7 +619,7 @@ class linked_list:
             
         return result
     
-    def __iadd__(self, other):
+    def __iadd__(self, other, /):
         """
         Concatenate other list to this list.
         
@@ -618,7 +627,7 @@ class linked_list:
             other: List to concatenate
         
         Returns:
-            Self
+            None
         """
         if isinstance(other, linked_list):
             for item in other:
@@ -628,5 +637,3 @@ class linked_list:
                 self.append(item)
         else:
             raise TypeError(f"Cannot add object of type '{type(other).__name__}' to linked_list")
-            
-        return self
