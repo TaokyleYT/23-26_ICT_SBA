@@ -2,7 +2,7 @@
 
 ## DO NOT USE OUT-SYL FUNCTIONS TO ACHIEVE IN-SYL
 
-*such as using list.index, sorted*\
+*such as using list.index, list.insert, sorted, dictionary, set*\
 *known exclude: map*
 
 wooooo my SBA for absolutely no reason (I mean I have reason, which is DSE, well idk aaaaaaaa)
@@ -188,4 +188,6 @@ note: can use matplotlib or ascii graph to show result instead of numbers
 should I train a big ahh neural network for plagiarism? idk it seemed a bit overkill lol
 
 extra: add mass processing tools
+
+asking lailai can no can use list.insert **pending**
 ```

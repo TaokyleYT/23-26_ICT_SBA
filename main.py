@@ -126,19 +126,6 @@ def search_word(text, target_word):
     
     return positions
 
-def replace_word(text, target_word, replacement_word):
-    """Replace a target word with a replacement word and return the modified text."""
-    if not text or not target_word:
-        return text
-    
-    words = text.split()
-    target_word = target_word.lower()
-    
-    for i, word in enumerate(words):
-        if word.lower() == target_word:
-            words[i] = replacement_word
-    
-    return ' '.join(words)
 
 def display_results(file_path, word_count, total_words, unique_words):
     """Display analysis results for a single file."""
@@ -266,7 +253,7 @@ def main():
                 replacement_word = input("Enter the replacement word: ").strip()
                 
                 clean_content = clean_text(content)
-                modified_content = replace_word(clean_content, target_word, replacement_word)
+                modified_content = helpers.replace_word(clean_content, target_word, replacement_word)
                 
                 print("\nOriginal text (cleaned):")
                 print(clean_content[:100] + "..." if len(clean_content) > 100 else clean_content)

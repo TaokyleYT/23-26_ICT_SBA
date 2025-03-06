@@ -1,5 +1,7 @@
 from collections.abc import Iterable
-import time
+from helpers import linked_list as list
+import time, os
+
 
 def animated_print(txt: Iterable[str],
                    delay: float = 0.02,
@@ -8,18 +10,19 @@ def animated_print(txt: Iterable[str],
                    end: str = '\n'):
     if all(isinstance(char, str) for char in txt):
         if all(len(char) == 1 for char in txt):
-            txt_lst = ''.join(txt).split('\n')
+            txt_lst = list(''.join(txt).split('\n'))
             #print(txt_lst)
         else:
             txt_lst = list(txt)
     else:
         raise TypeError("txt must be a str or iterable of str")
     if not isinstance(delay, (int, float)):
-        raise TypeError("delay must be a float")
+        raise TypeError("delay must be a number")
     if not isinstance(front_effect, str):
         raise TypeError("front_effect must be a str")
 
-    max_wordlen = max(len(line) for line in txt_lst)
+    term_size = os.get_terminal_size()
+    max_wordlen = max([len(line) for line in txt_lst])
     print('\n' * (len(txt_lst)), end='')
     for i in range(max_wordlen + next_line_char_delay * (len(txt_lst))):
         print("\x1b[A"*(len(txt_lst)-1), end='')
@@ -36,11 +39,12 @@ def animated_print(txt: Iterable[str],
                       end='',
                       flush=True)
             else:
-                print("\x1b[1B", end='')
-        print("\x1b[1A\x1b[1C", end='')
+                print("\x1b[1B", end='', flush=True)
+        print("\x1b[1A\x1b[1C", end='', flush=True)
     time.sleep(delay)
-    print("\x1b[" + str(next_line_char_delay * len(txt_lst)) + "D", end=end)
+    print("\x1b[" + str(next_line_char_delay * len(txt_lst)) + "D", end=end, flush=True)
     return
+    #deprecated cuz buggy
     '''
     elif front_effect[1] == 0:
         for i in range(len(txt)):
