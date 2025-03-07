@@ -1,7 +1,7 @@
 import re #regex
 import os #get terminal size for text overflowing on CLI mode
 import helpers #a bunch of non-functions (by me ofc) that prevents me from losing ALOT of marks due to using built-in functions
-from helpers import animated_print as print #animate print lol
+from helpers import animated_print as print, animated_input as input #animate print lol
 import tkinter as tk #tkinter is a module that allows me to go GUI WOOOOOOO
 from tkinter import ttk, filedialog, messagebox #frequently used stuff I dont wanna type "tkinter." everytime I use them
 import matplotlib.pyplot as plt #graphs and charts so I dont need to suffer using pure tkinter
@@ -459,12 +459,12 @@ class TextAnalysisApp:
         # Display word lists
         self.freq_list.delete(0, tk.END)
         freq_sorted = sort_by_frequency(word_count)
-        for i, (word, count) in enumerate(freq_sorted[:20]):  # Show top 20
+        for i, (word, count) in enumerate(freq_sorted):
             self.freq_list.insert(tk.END, f"{i+1}. '{word}': {count} times")
             
         self.alpha_list.delete(0, tk.END)
         alpha_sorted = sort_alphabetically(word_count)
-        for i, (word, count) in enumerate(alpha_sorted[:20]):  # Show first 20
+        for i, (word, count) in enumerate(alpha_sorted):
             self.alpha_list.insert(tk.END, f"{i+1}. '{word}': {count} times")
             
         # Create and display the frequency graph
@@ -761,7 +761,7 @@ def compare_files(file_path1, file_path2):
     content2 = read_file(file_path2)
 
     if content1 is None or content2 is None:
-        print("Error: Cannot compare files due to reading errors.")
+        print("\x1b[38;5;9mError: Cannot compare files due to reading errors.\x1b[38;0m")
         return
 
     clean_content1 = clean_text(content1)
@@ -787,13 +787,13 @@ def compare_files(file_path1, file_path2):
 
     # Determine plagiarism level based on similarity
     if similarity > 80:
-        print("Plagiarism Level: HIGH - These texts are very similar")
+        print("\x1b[38;5;9mPlagiarism Level: HIGH - These texts are very similar\x1b[38;0m")
     elif similarity > 50:
-        print("Plagiarism Level: MEDIUM - These texts have significant overlap")
+        print("\x1b[38;5;11mPlagiarism Level: MEDIUM - These texts have significant overlap\x1b[38;0m")
     elif similarity > 20:
-        print("Plagiarism Level: LOW - These texts have some common elements")
+        print("\x1b[38;5;10mPlagiarism Level: LOW - These texts have some common elements\x1b[38;0m")
     else:
-        print("Plagiarism Level: MINIMAL - These texts are mostly different")
+        print("\1b[38;5;10mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[38;0m")
 
 def analyze_file(file_path):
     """Analyze a single text file."""
@@ -834,7 +834,7 @@ def mainCLI():
 2. Compare two files for plagiarism\n\
 3. Search for a word in a file\n\
 4. Replace a word in a file\n\
-5. Exit\n")
+5. Exit\n", front_effect="")
 
         choice = input("\nEnter your choice (1-5): ").strip()
 

@@ -25,12 +25,20 @@ author = 16391845
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "git add ."
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "python main.py GUI"
 
 [[workflows.workflow]]
 name = "CLI"
 mode = "sequential"
 author = 16391845
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git add ."
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

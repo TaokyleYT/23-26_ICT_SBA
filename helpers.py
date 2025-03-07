@@ -1,10 +1,15 @@
-from collections.abc import Sequence, Iterable
+from collections.abc import Iterable, Sequence
 from typing import Any
 import types
 import time
 import os
 
-def animated_print(txt: Iterable[str], delay: float = 0.02, front_effect: str = '', next_line_char_delay: int = 1, end: str = '\n'):
+def animated_input(prompt:str, delay:float=0.02, front_effect="", line_offset:int=1):
+    animated_print(prompt, "", delay, front_effect, line_offset)
+    return input()
+
+
+def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str = '', line_offset: int = 1):
     if len(txt) == 0:
         return
     if all(isinstance(char, str) for char in txt):
@@ -31,26 +36,26 @@ def animated_print(txt: Iterable[str], delay: float = 0.02, front_effect: str = 
     txt_lst, truncated = txt_lst[:term_size.lines-1], txt_lst[term_size.lines-1:]
     max_wordlen = max([len(line) for line in txt_lst])
     print('\n' * (len(txt_lst)), end='\x1b[A')
-    for i in range(max_wordlen + next_line_char_delay * (len(txt_lst))):
+    for i in range(max_wordlen + line_offset * (len(txt_lst))):
         print("\x1b[A"*(len(txt_lst)-1), end='')
         time.sleep(delay)
         for j, line in enumerate(txt_lst):
-            temp_for_line_delay = j * next_line_char_delay + 1
+            current_char = j * line_offset + 1
             print(' '*len(front_effect)+"\x1b[D"*len(front_effect), end='')
-            if (i - temp_for_line_delay >= 0 
-                and i - temp_for_line_delay < len(line)):
-                print("\x1b[" + str(temp_for_line_delay) + "D" +
-                    line[i - temp_for_line_delay] +
+            if (i - current_char >= 0 
+                and i - current_char < len(line)): #needs animated update
+                print("\x1b[" + str(current_char) + "D" +
+                    line[i - current_char] +
                     front_effect + "\x1b[D"*len(front_effect) +
-                    "\x1b[" + str(temp_for_line_delay) + "C" + "\b\x1b[1B",
+                    "\x1b[" + str(current_char) + "C" + "\b\x1b[1B",
                     end='',
                     flush=True)
             else:
                 print("\x1b[1B", end='', flush=True)
         print("\x1b[1A\x1b[1C", end='', flush=True)
     time.sleep(delay)
-    print("\x1b[" + str(next_line_char_delay * len(txt_lst)) + "D", end=end, flush=True)
-    animated_print(truncated, delay, front_effect, next_line_char_delay, end)
+    print("\x1b[" + str(line_offset * len(txt_lst)) + "D", end=end, flush=True)
+    animated_print(truncated, end, delay, front_effect, line_offset)
     return
     #deprecated cuz buggy
     '''
@@ -235,6 +240,10 @@ def repeat_str_to_len(word: str, length: int, start_index=0) -> tuple[str, int]:
     words = word*(-((-length)//len(word))+1) #word * (ceil division + 1)
     return words[start_index:length+start_index], (length+start_index)%len(word)
 
+def split_exclude_sequence(text, excluded_sequence:list|tuple, case_sensitive=True):
+    pass
+    
+
 def replace_word(text, target_word, replacement_word, case_sensitive=False):
     """
     Replace occurrences of target_word with replacement_word in text.
@@ -262,14 +271,38 @@ def replace_word(text, target_word, replacement_word, case_sensitive=False):
             
     return ' '.join(result)
 
-class Node:
-    """Node for linked list implementation."""
-    def __init__(self, value):
-        self.value = value
-        self.next = None
+def max(*args):
+    if len(args) == 0:
+        return []
+    elif len(args) == 1 and isinstance(args, Iterable):
+        args = args[0]
+    maximum = args[0]
+    for n in args:
+        if n > maximum:
+            maximum = n
+    return maximum
+
+def min(*args):
+    if len(args) == 0:
+        return []
+    elif len(args) == 1 and isinstance(args, Iterable):
+        args = args[0]
+    minimum = args[0]
+    for n in args:
+        if n < minimum:
+            minimum = n
+    return minimum
+
 
 class linked_list:
     """A simple linked list implementation."""
+
+    class Node:
+        """Node for linked list implementation."""
+        def __init__(self, value):
+            self.value = value
+            self.next: linked_list.Node | None = None
+
     
     def __init__(self, iterable=()):
         """
@@ -300,7 +333,7 @@ class linked_list:
             index: Position to insert at
         """
         if index == 0:
-            new_node = Node(value)
+            new_node = linked_list.Node(value)
             new_node.next = self.head
             self.head = new_node
             return
@@ -313,7 +346,7 @@ class linked_list:
             position += 1
             
         if current:
-            new_node = Node(value)
+            new_node = linked_list.Node(value)
             new_node.next = current.next
             current.next = new_node
         else:
@@ -327,7 +360,7 @@ class linked_list:
         Args:
             value: Value to append
         """
-        new_node = Node(value)
+        new_node = linked_list.Node(value)
         
         if not self.head:
             self.head = new_node
