@@ -725,33 +725,37 @@ class TextAnalysisApp:
             except Exception as e:
                 messagebox.showerror("Error", f"Error saving file: {str(e)}")
 
-def display_results(file_path, word_count, total_words, unique_words):
+def display_results(file_path, word_count, total_words, unique_words, show_nums=10, warp=os.get_terminal_size().columns):
     """Display analysis results for a single file."""
+    if show_nums > len(word_count[0]):
+        show_nums = len(word_count[0])
+    hyphen_warp = warp if warp<len(str(show_nums))+30 else len(str(show_nums))+30
     print(f"\
 \n\
-{'='*60}\n\
+{'='*warp}\n\
 Analysis of '{file_path}':\n\
-{'='*60}\n\
+{'='*warp}\n\
 Total words: {total_words}\n\
 Unique words: {unique_words}\n\
 \n\
 \n\
-Top 10 Most Frequent Words:\n\
-{'-'*30}")
+Top {show_nums} Most Frequent Words:\n\
+{'-'*hyphen_warp}")
     txt = ""
     frequency_sorted = sort_by_frequency(word_count)
-    for i, (word, count) in enumerate(frequency_sorted[:10]):
+    for i, (word, count) in enumerate(frequency_sorted[:show_nums]):
         txt += f"{i+1}. '{word}': {count} times\n"
     print(txt)
 
-    txt = f"\nFirst 10 Words (Alphabetically):\n{'-'*30}\n"
+    txt = f"\nFirst {show_nums} Words (Alphabetically):\n{'-'*hyphen_warp}\n"
     alpha_sorted = sort_alphabetically(word_count)
-    for i, (word, count) in enumerate(alpha_sorted[:10]):
+    for i, (word, count) in enumerate(alpha_sorted[:show_nums]):
         txt += f"{i+1}. '{word}': {count} times\n"
     print(txt)
 
 def compare_files(file_path1, file_path2):
     """Compare two text files and calculate their similarity percentage."""
+    columns = os.get_terminal_size().columns
     # Read and process the files
     content1 = read_file(file_path1)
     content2 = read_file(file_path2)
@@ -773,13 +777,13 @@ def compare_files(file_path1, file_path2):
     unique_words2 = get_unique_words(word_count2)
 
     # Display analysis results for each file
-    display_results(file_path1, word_count1, total_words1, unique_words1)
-    display_results(file_path2, word_count2, total_words2, unique_words2)
+    display_results(file_path1, word_count1, total_words1, unique_words1, 5)
+    display_results(file_path2, word_count2, total_words2, unique_words2, 5)
 
     # Calculate and display similarity percentage
     similarity = calculate_similarity(word_count1, word_count2)
 
-    print(f"\n{'='*60}\nComparison between '{file_path1}' and '{file_path2}':\n{'='*60}\nSimilarity percentage: {similarity:.2f}%")
+    print(f"\n{'='*columns}\nComparison between '{file_path1}' and '{file_path2}':\n{'='*columns}\nSimilarity percentage: {similarity:.2f}%")
 
     # Determine plagiarism level based on similarity
     if similarity > 80:
@@ -819,9 +823,9 @@ def mainGUI():
 
 
 def mainCLI():
+    columns = os.get_terminal_size().columns
     """Main function to run the Word Analysis and Plagiarism Detection System."""
-    print("Word Analysis and Plagiarism Detection System")
-    print("--------------------------------------------")
+    print("Word Analysis and Plagiarism Detection System\n"+"-"*(columns if columns<45 else 45))
 
     while True:
         print("\

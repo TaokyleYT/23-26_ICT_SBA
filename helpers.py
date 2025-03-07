@@ -1,6 +1,4 @@
-
 from collections.abc import Sequence, Iterable
-from itertools import islice
 from typing import Any
 import types
 import time
@@ -11,8 +9,8 @@ def animated_print(txt: Iterable[str], delay: float = 0.02, front_effect: str = 
         return
     if all(isinstance(char, str) for char in txt):
         if all(len(char) == 1 for char in txt):
-            txt = list(''.join(txt).split('\n'))
-            #print(txt_lst)
+            #its a str
+            txt = ''.join(txt).split('\n')
         else:
             txt = list(txt)
     else:
@@ -25,11 +23,14 @@ def animated_print(txt: Iterable[str], delay: float = 0.02, front_effect: str = 
     term_size = os.get_terminal_size()
     txt_lst = []
     for line in txt:
+        if len(line) == 0:
+            txt_lst.append("")
+            continue
         for warpped_line in (line[i:i+term_size.columns] for i in range(0, len(line), term_size.columns)):
             txt_lst.append(warpped_line)
     txt_lst, truncated = txt_lst[:term_size.lines-1], txt_lst[term_size.lines-1:]
     max_wordlen = max([len(line) for line in txt_lst])
-    print('\n' * (len(txt_lst)), end='')
+    print('\n' * (len(txt_lst)), end='\x1b[A')
     for i in range(max_wordlen + next_line_char_delay * (len(txt_lst))):
         print("\x1b[A"*(len(txt_lst)-1), end='')
         time.sleep(delay)
