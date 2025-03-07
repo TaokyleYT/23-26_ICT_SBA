@@ -33,6 +33,7 @@ def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str 
             continue
         for warpped_line in (line[i:i+term_size.columns] for i in range(0, len(line), term_size.columns)):
             txt_lst.append(warpped_line)
+    txt_lst = list(map(split_exclude_ANSI, txt_lst))
     txt_lst, truncated = txt_lst[:term_size.lines-1], txt_lst[term_size.lines-1:]
     max_wordlen = max([len(line) for line in txt_lst])
     print('\n' * (len(txt_lst)), end='\x1b[A')
@@ -240,8 +241,40 @@ def repeat_str_to_len(word: str, length: int, start_index=0) -> tuple[str, int]:
     words = word*(-((-length)//len(word))+1) #word * (ceil division + 1)
     return words[start_index:length+start_index], (length+start_index)%len(word)
 
-def split_exclude_sequence(text, excluded_sequence:list|tuple, case_sensitive=True):
-    pass
+def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
+    splitted_list = []
+    if not type_check(sep, str|list[str]|tuple[str]):
+        raise TypeError(f"sep should be either string or list or tuple that contains only strings, not {type(sep)}")
+    if isinstance(sep, str):
+        pass
+    else:
+        match_ptr = 0
+        last_ptr = 0
+        checking = linked_list()
+        for idx in range(len(text)):
+            if len(checking) > 0:
+                for check_idx in range(len(checking)):
+                    word = sep[checking[check_idx][0]]
+                    if text[idx] == word:
+                        checking[check_idx][1] += 1
+                        if checking[check_idx][1] == len(word):
+                            splitted_list.append(text[last_ptr:idx-len(word)+1])
+                            last_ptr = idx+1
+                            checking = linked_list()
+                    else:
+                        checking.remove(check_idx)
+            for check_idx in range(len(sep)):
+                if text[idx] == sep[check_idx]:
+                    checking.append([check_idx, 1])
+            if text[idx] == sep[match_ptr]:
+                match_ptr += 1
+                if match_ptr == len(sep):
+                    splitted_list.append(text[last_ptr:idx-len(sep)+1])
+                    match_ptr = 0
+                    last_ptr = idx+1
+        splitted_list.append(text[last_ptr:])
+    return splitted_list
+                
     
 
 def replace_word(text, target_word, replacement_word, case_sensitive=False):
