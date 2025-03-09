@@ -834,7 +834,7 @@ def mainCLI():
 2. Compare two files for plagiarism\n\
 3. Search for a word in a file\n\
 4. Replace a word in a file\n\
-5. Exit\n", front_effect="")
+5. Exit\n")
 
         choice = input("\nEnter your choice (1-5): ").strip()
 
