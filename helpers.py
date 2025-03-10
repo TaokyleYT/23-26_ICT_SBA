@@ -12,7 +12,10 @@ def animated_input(prompt:str, delay:float=0.02, front_effect="", line_offset:in
 def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str = '', line_offset: int = 1):
     if len(txt) == 0:
         return
-    if all(isinstance(char, str) for char in txt):
+    if all(
+        (all(isinstance(subchar, str) for subchar in char)\
+         if isinstance(char, (list, tuple))\
+         else isinstance(char, str)) for char in txt):
         if all(len(char) == 1 for char in txt):
             #its a str
             txt = ''.join(txt).split('\n')
@@ -242,6 +245,7 @@ def repeat_str_to_len(word: str, length: int, start_index=0) -> tuple[str, int]:
     return words[start_index:length+start_index], (length+start_index)%len(word)
 
 def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
+    return text.split(sep) if sep else list(text)
     splitted_list = []
     if not type_check(sep, str|list[str]|tuple[str]):
         raise TypeError(f"sep should be either string or list or tuple that contains only strings, not {type(sep)}")
@@ -306,7 +310,7 @@ def replace_word(text, target_word, replacement_word, case_sensitive=False):
 
 def max(*args):
     if len(args) == 0:
-        return []
+        raise TypeError("max expected at least 1 argument, 0 received")
     elif len(args) == 1 and isinstance(args, Iterable):
         args = args[0]
     maximum = args[0]
@@ -317,7 +321,7 @@ def max(*args):
 
 def min(*args):
     if len(args) == 0:
-        return []
+        raise TypeError("min expected at least 1 argument, 0 received")
     elif len(args) == 1 and isinstance(args, Iterable):
         args = args[0]
     minimum = args[0]
@@ -325,6 +329,26 @@ def min(*args):
         if n < minimum:
             minimum = n
     return minimum
+
+def all(*args):
+    if len(args) == 0:
+        raise TypeError("all expected at least 1 argument, 0 received")
+    elif len(args) == 1 and isinstance(args, Iterable):
+        args = args[0]
+    for n in args:
+        if not n:
+            return False
+    return True
+
+def any(*args):
+    if len(args) == 0:
+        raise TypeError("all expected at least 1 argument, 0 received")
+    elif len(args) == 1 and isinstance(args, Iterable):
+        args = args[0]
+    for n in args:
+        if n:
+            return True
+    return False
 
 
 class linked_list:

@@ -667,8 +667,8 @@ class TextAnalysisApp:
             words = clean_content.split()
             for pos in positions:
                 # Get a window of words around the occurrence
-                start = max(0, pos - 3)
-                end = min(len(words), pos + 4)
+                start = helpers.max(0, pos - 3)
+                end = helpers.min(len(words), pos + 4)
                 context = " ".join(words[start:end])
                 
                 if pos > 3:
