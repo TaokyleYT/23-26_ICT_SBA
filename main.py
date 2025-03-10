@@ -1,4 +1,3 @@
-import re #regex
 import os #get terminal size for text overflowing on CLI mode
 import helpers #a bunch of non-functions (by me ofc) that prevents me from losing ALOT of marks due to using built-in functions
 from helpers import animated_print as print, animated_input as input #animate print lol
@@ -27,11 +26,20 @@ def clean_text(text):
     """Remove punctuation and convert text to lowercase."""
     if text is None:
         return ""
-    # Replace all punctuation with spaces
-    text = re.sub(r'[^\w\s]', ' ', text.lower())
-    # Replace multiple spaces with a single space
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
+
+    cleaned_text = "".join(
+        (
+            char
+            if 'a' <= char <= 'z' or '0' <= char <= '9' or char == ' '
+            else ' '
+        )
+        for char in text.lower()
+    )
+    # Remove extra spaces
+    while '  ' in cleaned_text:
+        cleaned_text = cleaned_text.replace('  ', ' ')
+
+    return cleaned_text.strip()
 
 def count_words(text):
     """Count the frequency of each word in the text."""
@@ -41,7 +49,8 @@ def count_words(text):
     word_count = ([],[])
     words = text.split(" ")
     
-    for word in words:
+    for n in range(len(words)):
+        word = words[n]
         if word in word_count[0]:
             word_count[1][helpers.linear_search(word_count[0], word)] += 1
         else:
@@ -66,7 +75,8 @@ def sort_alphabetically(word_count):
     words = word_count[0]
     sorted_words = helpers.quick_sort(words)
     result = []
-    for word in sorted_words:
+    for n in range(len(sorted_words)):
+        word = sorted_words[n]
         result.append((word, word_count[1][helpers.linear_search(word_count[0], word)]))
     return result
 
@@ -102,20 +112,18 @@ def calculate_similarity(word_count1, word_count2):
     # Get all unique words from both texts
     all_words = []
     common_words = 0
-    
+
     for word in word_count1[0]:
         if word not in all_words:
             all_words.append(word)
-    
+
     for word in word_count2[0]:
         if word in word_count1[0]:
             common_words += 1
         if word not in all_words:
             all_words.append(word)
-    
-    # Calculate similarity percentage
-    similarity = (common_words / len(all_words)) * 100
-    return similarity
+
+    return (common_words / len(all_words)) * 100
 
 
 class TextAnalysisApp:
@@ -378,43 +386,46 @@ class TextAnalysisApp:
         
     def browse_file1(self):
         """Browse for a file to analyze."""
-        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
-        if file_path:
+        if file_path := filedialog.askopenfilename(
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        ):
             self.file_entry1.delete(0, tk.END)
             self.file_entry1.insert(0, file_path)
             self.file_path1 = file_path
             
     def browse_compare_file1(self):
         """Browse for the first file to compare."""
-        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
-        if file_path:
+        if file_path := filedialog.askopenfilename(
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        ):
             self.compare_file_entry1.delete(0, tk.END)
             self.compare_file_entry1.insert(0, file_path)
             
     def browse_compare_file2(self):
         """Browse for the second file to compare."""
-        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
-        if file_path:
+        if file_path := filedialog.askopenfilename(
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        ):
             self.compare_file_entry2.delete(0, tk.END)
             self.compare_file_entry2.insert(0, file_path)
             
     def browse_search_file(self):
         """Browse for a file to search."""
-        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
-        if file_path:
+        if file_path := filedialog.askopenfilename(
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        ):
             self.search_file_entry.delete(0, tk.END)
             self.search_file_entry.insert(0, file_path)
             
     def browse_replace_file(self):
         """Browse for a file to perform word replacement."""
-        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
-        if file_path:
+        if file_path := filedialog.askopenfilename(
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        ):
             self.replace_file_entry.delete(0, tk.END)
             self.replace_file_entry.insert(0, file_path)
-            
-            # Load and display the original text
-            content = read_file(file_path)
-            if content:
+
+            if content := read_file(file_path):
                 clean_content = clean_text(content)
                 self.original_text.delete(1.0, tk.END)
                 self.original_text.insert(tk.END, clean_content)
@@ -565,25 +576,25 @@ class TextAnalysisApp:
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
-            
+
         # Get top words from both files
         freq_sorted1 = sort_by_frequency(word_count1)
         freq_sorted2 = sort_by_frequency(word_count2)
-        
+
         # Create sets of top words
-        top_words1 = set([word for word, _ in freq_sorted1[:max_words]])
-        top_words2 = set([word for word, _ in freq_sorted2[:max_words]])
-        
+        top_words1 = {word for word, _ in freq_sorted1[:max_words]}
+        top_words2 = {word for word, _ in freq_sorted2[:max_words]}
+
         # Combine top words
         combined_top_words = list(top_words1.union(top_words2))
-        
+
         if not combined_top_words:
             return
-            
+
         # Get counts for each word in both files
         counts1 = []
         counts2 = []
-        
+
         for word in combined_top_words:
             # Get count in file 1
             if word in word_count1[0]:
@@ -591,33 +602,45 @@ class TextAnalysisApp:
                 counts1.append(word_count1[1][idx])
             else:
                 counts1.append(0)
-                
+
             # Get count in file 2
             if word in word_count2[0]:
                 idx = helpers.linear_search(word_count2[0], word)
                 counts2.append(word_count2[1][idx])
             else:
                 counts2.append(0)
-                
+
         # Create figure
         fig, ax = plt.subplots(figsize=(5, 4))
-        
+
         x = range(len(combined_top_words))
         width = 0.35
-        
+
         # Create bar chart
-        ax.bar([i - width/2 for i in x], counts1, width, label=f'File 1', color='skyblue')
-        ax.bar([i + width/2 for i in x], counts2, width, label=f'File 2', color='lightgreen')
-        
+        ax.bar(
+            [i - width / 2 for i in x],
+            counts1,
+            width,
+            label='File 1',
+            color='skyblue',
+        )
+        ax.bar(
+            [i + width / 2 for i in x],
+            counts2,
+            width,
+            label='File 2',
+            color='lightgreen',
+        )
+
         # Add labels and legend
         ax.set_ylabel('Frequency')
         ax.set_title('Word Frequency Comparison')
         ax.set_xticks(x)
         ax.set_xticklabels(combined_top_words, rotation=45, ha='right')
         ax.legend()
-        
+
         plt.tight_layout()
-        
+
         # Embed the graph in the canvas
         canvas = FigureCanvasTkAgg(fig, master=canvas_widget)
         canvas.draw()
@@ -627,27 +650,28 @@ class TextAnalysisApp:
         """Search for a word in the selected file."""
         file_path = self.search_file_entry.get()
         target_word = self.search_entry.get()
-        
+
         if not file_path:
             messagebox.showerror("Error", "Please select a file first.")
             return
-            
+
         if not target_word:
             messagebox.showerror("Error", "Please enter a word to search for.")
             return
-            
+
         content = read_file(file_path)
         if content is None:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
             return
-            
-        positions = clean_text(content).find(target_word)
-        
+
+        clean_content = clean_text(content)
+        positions = helpers.count_find_str(clean_content, target_word)
+
         self.search_results.delete(1.0, tk.END)
-        
+
         if positions:
             self.search_results.insert(tk.END, f"The word '{target_word}' appears {len(positions)} times at positions: {positions}\n\n")
-            
+
             # Show each occurrence in context
             words = clean_content.split()
             for pos in positions:
@@ -655,12 +679,12 @@ class TextAnalysisApp:
                 start = helpers.max(0, pos - 3)
                 end = helpers.min(len(words), pos + 4)
                 context = " ".join(words[start:end])
-                
+
                 if pos > 3:
-                    context = "... " + context
+                    context = f"... {context}"
                 if pos + 4 < len(words):
-                    context = context + " ..."
-                    
+                    context += " ..."
+
                 self.search_results.insert(tk.END, f"Position {pos}: {context}\n")
         else:
             self.search_results.insert(tk.END, f"The word '{target_word}' was not found in the file.")
@@ -695,13 +719,11 @@ class TextAnalysisApp:
         if not self.modified_text.get(1.0, tk.END).strip():
             messagebox.showerror("Error", "No modified text to save.")
             return
-            
-        file_path = filedialog.asksaveasfilename(
+
+        if file_path := filedialog.asksaveasfilename(
             defaultextension=".txt",
-            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
-        )
-        
-        if file_path:
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+        ):
             try:
                 with open(file_path, 'w', encoding='utf-8') as file:
                     file.write(self.modified_text.get(1.0, tk.END))
@@ -711,9 +733,8 @@ class TextAnalysisApp:
 
 def display_results(file_path, word_count, total_words, unique_words, show_nums=10, warp=os.get_terminal_size().columns):
     """Display analysis results for a single file."""
-    if show_nums > len(word_count[0]):
-        show_nums = len(word_count[0])
-    hyphen_warp = warp if warp<len(str(show_nums))+30 else len(str(show_nums))+30
+    show_nums = min(show_nums, len(word_count[0]))
+    hyphen_warp = min(warp, len(str(show_nums))+30)
     print(f"\
 \n\
 {'='*warp}\n\
@@ -725,10 +746,11 @@ Unique words: {unique_words}\n\
 \n\
 Top {show_nums} Most Frequent Words:\n\
 {'-'*hyphen_warp}")
-    txt = ""
     frequency_sorted = sort_by_frequency(word_count)
-    for i, (word, count) in enumerate(frequency_sorted[:show_nums]):
-        txt += f"{i+1}. '{word}': {count} times\n"
+    txt = "".join(
+        f"{i + 1}. '{word}': {count} times\n"
+        for i, (word, count) in enumerate(frequency_sorted[:show_nums])
+    )
     print(txt)
 
     txt = f"\nFirst {show_nums} Words (Alphabetically):\n{'-'*hyphen_warp}\n"
@@ -777,7 +799,7 @@ def compare_files(file_path1, file_path2):
     elif similarity > 20:
         print("\x1b[38;5;10mPlagiarism Level: LOW - These texts have some common elements\x1b[38;0m")
     else:
-        print("\1b[38;5;10mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[38;0m")
+        print("\x1b[38;5;10mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[38;0m")
 
 def analyze_file(file_path):
     """Analyze a single text file."""
@@ -809,7 +831,10 @@ def mainGUI():
 def mainCLI():
     columns = os.get_terminal_size().columns
     """Main function to run the Word Analysis and Plagiarism Detection System."""
-    print("Word Analysis and Plagiarism Detection System\n"+"-"*(columns if columns<45 else 45))
+    print(
+        "Word Analysis and Plagiarism Detection System\n"
+        + "-" * min(columns, 45)
+    )
 
     while True:
         print("\
@@ -837,9 +862,7 @@ def mainCLI():
 
             if content is not None:
                 target_word = input("Enter the word to search for: ").strip()
-                positions = clean_text(content).find(target_word)
-
-                if positions:
+                if positions := helpers.count_find_str(clean_text(content), target_word):
                     print(f"The word '{target_word}' appears {len(positions)} times at positions: {positions}")
                 else:
                     print(f"The word '{target_word}' was not found in the file.")
@@ -852,13 +875,17 @@ def mainCLI():
                 target_word = input("Enter the word to replace: ").strip()
                 replacement_word = input("Enter the replacement word: ").strip()
 
-                modified_content = clean_text(content).replace(target_word, replacement_word)
+                clean_content = clean_text(content)
+                modified_content = clean_content.replace(target_word, replacement_word)
 
                 print("\nOriginal text (cleaned):")
-                print(clean_content[:100] + "..." if len(clean_content) > 100 else clean_content)
+                print(
+                    f"{clean_content[:100]}..."
+                    if len(clean_content) > 100
+                    else clean_content
+                )
 
-                print("\nModified text:")
-                print(modified_content[:100] + "..." if len(modified_content) > 100 else modified_content)
+                print('\nModified text:\n{modified_content[:100]}{"..." if len(modified_content) > 100 else modified_content}')
 
                 save_option = input("\nDo you want to save the modified text to a new file? (y/n): ").strip().lower()
                 if save_option == 'y':

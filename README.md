@@ -7,7 +7,8 @@
 
 *in-syl:*\
 *types: str, float, int, bool, list*\
-*struct: if, while, for, stack, queue, linked list*
+*struct: if, while, for, stack, queue, linked list*\
+*basic python stuff*
 
 wooooo my SBA for absolutely no reason (I mean I have reason, which is DSE, well idk aaaaaaaa)
 

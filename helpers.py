@@ -4,12 +4,19 @@ import types
 import time
 import os
 
-def animated_input(prompt:str, delay:float=0.02, front_effect="", line_offset:int=1):
-    animated_print(prompt, "", delay, front_effect, line_offset)
-    return input()
-
 
 def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str = '', line_offset: int = 1):
+    """
+    Prints text with an animation effect, simulating a typewriter-style output.
+
+    Parameters:
+    - txt: The text to print. It can be a string or an iterable of strings.
+    - end: A string appended after the last value, default is a newline.
+    - delay: Time in seconds between each character print, default is 0.02 seconds.
+    - front_effect: A string effect applied at the front of animated text.
+    - line_offset: Number of lines to offset the text vertically.
+    """
+
     if len(txt) == 0:
         return
     if all(
@@ -38,7 +45,7 @@ def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str 
             txt_lst.append(warpped_line)
     txt_lst = list(map(split_exclude_ANSI, txt_lst))
     txt_lst, truncated = txt_lst[:term_size.lines-1], txt_lst[term_size.lines-1:]
-    max_wordlen = max([len(line) for line in txt_lst])
+    max_wordlen = max(len(line) for line in txt_lst)
     print('\n' * (len(txt_lst)), end='\x1b[A')
     for i in range(max_wordlen + line_offset * (len(txt_lst))):
         print("\x1b[A"*(len(txt_lst)-1), end='')
@@ -89,39 +96,50 @@ def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str 
     '''
 
 
-types_tuple = (
-    type,
-    types.GenericAlias,
-    types.UnionType,
-)
+
+def animated_input(prompt:str, delay:float=0.02, front_effect="", line_offset:int=1):
+    """
+    Same as animated_print but with input
+    """
+    animated_print(prompt, "", delay, front_effect, line_offset)
+    return input()
+
+
 
 def type_check(instance: Any, _type: type | types.GenericAlias | types.UnionType) -> bool:
 
-    if not isinstance(_type, types_tuple):
+    """
+    Checks if the given instance is of the given type.
+
+        instance (Any): The instance to check.
+        _type (type | types.GenericAlias | types.UnionType): The type to check against.
+
+    Returns:
+        bool: True if instance is of type _type, False otherwise.
+    """
+
+    if not isinstance(_type, (type,types.GenericAlias,types.UnionType,)):
         raise TypeError("_type must be a type")
 
     if isinstance(_type, types.UnionType):
         return any(type_check(instance, t) for t in _type.__args__)
 
-    #check if typ is sth like list[int] or tuple[str,int]
+    #check if _type is sth like list[int] or tuple[str,int]
     if isinstance(_type, types.GenericAlias):
-        if hasattr(_type, '__origin__') and hasattr(_type, '__args__'):
-            if not isinstance(instance, _type.__origin__):
-                return False
-            if isinstance(instance, tuple):
-                if len(_type.__args__) != len(instance):
-                    return False
-                return all((type_check(instance[i], _type.__args__[i])) for i in range(len(_type.__args__)))
-            return all(
-                type_check(item, _type.__args__[0]) for item in instance)
-        else:
+        if not hasattr(_type, '__origin__') or not hasattr(_type, '__args__'):
             raise AssertionError("GenericAlias should always have __origin__ and __args__")
 
+        if not isinstance(instance, _type.__origin__):
+            return False
+        if isinstance(instance, tuple):
+            if len(_type.__args__) != len(instance):
+                return False
+            return all((type_check(instance[i], _type.__args__[i])) for i in range(len(_type.__args__)))
+        return all(
+            type_check(item, _type.__args__[0]) for item in instance)
     # normal check
-    # check if instance is a subclass of typ
-    if isinstance(instance, _type):
-        return True
-    return False
+    # check if instance is a subclass of _type
+    return isinstance(instance, _type)
 
 def quick_sort(input_list:Sequence, ascending:bool=True):
     """
@@ -190,8 +208,7 @@ def linear_search(input_list:list, value, start=0, stop=9223372036854775807, /):
     Returns:
         Index of value if found, -1 otherwise
     """
-    if stop > len(input_list):
-        stop = len(input_list)
+    stop = min(stop, len(input_list))
     for n in range(start, stop):
         if input_list[n] == value:
             return n
@@ -245,7 +262,7 @@ def repeat_str_to_len(word: str, length: int, start_index=0) -> tuple[str, int]:
     return words[start_index:length+start_index], (length+start_index)%len(word)
 
 def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
-    return text.split(sep) if sep else list(text)
+    return text.split(sep) if sep else list(text) #temp
     splitted_list = []
     if not type_check(sep, str|list[str]|tuple[str]):
         raise TypeError(f"sep should be either string or list or tuple that contains only strings, not {type(sep)}")
@@ -282,7 +299,7 @@ def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
 
 
 def max(*args):
-    if len(args) == 0:
+    if not args:
         raise TypeError("max expected at least 1 argument, 0 received")
     elif len(args) == 1 and isinstance(args, Iterable):
         args = args[0]
@@ -293,7 +310,7 @@ def max(*args):
     return maximum
 
 def min(*args):
-    if len(args) == 0:
+    if not args:
         raise TypeError("min expected at least 1 argument, 0 received")
     elif len(args) == 1 and isinstance(args, Iterable):
         args = args[0]
@@ -304,7 +321,7 @@ def min(*args):
     return minimum
 
 def all(*args):
-    if len(args) == 0:
+    if not args:
         raise TypeError("all expected at least 1 argument, 0 received")
     elif len(args) == 1 and isinstance(args, Iterable):
         args = args[0]
@@ -314,14 +331,27 @@ def all(*args):
     return True
 
 def any(*args):
-    if len(args) == 0:
-        raise TypeError("all expected at least 1 argument, 0 received")
+    if not args:
+        raise TypeError("any expected at least 1 argument, 0 received")
     elif len(args) == 1 and isinstance(args, Iterable):
         args = args[0]
     for n in args:
         if n:
             return True
     return False
+
+def count_find_str(input_str, target_str):
+    count = 0
+    current_ptr = 0
+    for n in range(len(input_str)):
+        if input_str[n] == target_str[current_ptr]:
+            current_ptr += 1
+            if current_ptr == len(target_str):
+                count += 1
+                current_ptr = 0
+        else:
+            current_ptr = 0
+    return count
 
 
 class linked_list:
@@ -671,16 +701,12 @@ class linked_list:
             New concatenated list
         """
         result = self.copy()
-        
-        if isinstance(other, linked_list):
-            for item in other:
-                result.append(item)
-        elif isinstance(other, (list, tuple)):
-            for item in other:
-                result.append(item)
-        else:
+
+        if not isinstance(other, (linked_list, list, tuple)):
             raise TypeError(f"Cannot add object of type '{type(other).__name__}' to linked_list")
-            
+
+        for item in other:
+            result.append(item)
         return result
     
     def __iadd__(self, other, /):
@@ -693,11 +719,8 @@ class linked_list:
         Returns:
             None
         """
-        if isinstance(other, linked_list):
-            for item in other:
-                self.append(item)
-        elif isinstance(other, (list, tuple)):
-            for item in other:
-                self.append(item)
-        else:
+        if not isinstance(other, (linked_list, list, tuple)):
             raise TypeError(f"Cannot add object of type '{type(other).__name__}' to linked_list")
+        for item in other:
+            self.append(item)
+        return self
