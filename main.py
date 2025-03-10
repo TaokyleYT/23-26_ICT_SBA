@@ -117,20 +117,6 @@ def calculate_similarity(word_count1, word_count2):
     similarity = (common_words / len(all_words)) * 100
     return similarity
 
-def search_word(text, target_word):
-    """Search for a target word in the text and return its positions."""
-    if not text or not target_word:
-        return []
-    
-    words = text.split()
-    target_word = target_word.lower()
-    positions = []
-    
-    for i, word in enumerate(words):
-        if word.lower() == target_word:
-            positions.append(i)
-    
-    return positions
 
 class TextAnalysisApp:
     def __init__(self, root):
@@ -655,8 +641,7 @@ class TextAnalysisApp:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
             return
             
-        clean_content = clean_text(content)
-        positions = search_word(clean_content, target_word)
+        positions = clean_text(content).find(target_word)
         
         self.search_results.delete(1.0, tk.END)
         
@@ -699,8 +684,7 @@ class TextAnalysisApp:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
             return
             
-        clean_content = clean_text(content)
-        modified_content = helpers.replace_word(clean_content, target_word, replacement_word)
+        modified_content = clean_text(content).replace(target_word, replacement_word)
         
         # Display modified content
         self.modified_text.delete(1.0, tk.END)
@@ -853,8 +837,7 @@ def mainCLI():
 
             if content is not None:
                 target_word = input("Enter the word to search for: ").strip()
-                clean_content = clean_text(content)
-                positions = search_word(clean_content, target_word)
+                positions = clean_text(content).find(target_word)
 
                 if positions:
                     print(f"The word '{target_word}' appears {len(positions)} times at positions: {positions}")
@@ -869,8 +852,7 @@ def mainCLI():
                 target_word = input("Enter the word to replace: ").strip()
                 replacement_word = input("Enter the replacement word: ").strip()
 
-                clean_content = clean_text(content)
-                modified_content = helpers.replace_word(clean_content, target_word, replacement_word)
+                modified_content = clean_text(content).replace(target_word, replacement_word)
 
                 print("\nOriginal text (cleaned):")
                 print(clean_content[:100] + "..." if len(clean_content) > 100 else clean_content)

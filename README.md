@@ -3,7 +3,11 @@
 ## DO NOT USE OUT-SYL FUNCTIONS TO ACHIEVE IN-SYL
 
 *such as using list.index, list.insert, sorted, dictionary, set*\
-*known exclude: map*
+*known exclude: map, str.find, str.replace, str.split*
+
+*in-syl:*\
+*types: str, float, int, bool, list*\
+*struct: if, while, for, stack, queue, linked list*
 
 wooooo my SBA for absolutely no reason (I mean I have reason, which is DSE, well idk aaaaaaaa)
 

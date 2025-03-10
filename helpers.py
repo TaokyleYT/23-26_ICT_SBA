@@ -279,34 +279,7 @@ def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
         splitted_list.append(text[last_ptr:])
     return splitted_list
                 
-    
 
-def replace_word(text, target_word, replacement_word, case_sensitive=False):
-    """
-    Replace occurrences of target_word with replacement_word in text.
-    
-    Args:
-        text: Text to modify
-        target_word: Word to replace
-        replacement_word: Replacement word
-        case_sensitive: Whether to match case
-    
-    Returns:
-        Modified text
-    """
-    if not text or not target_word:
-        return text
-    
-    words = text.split()
-    result = []
-    
-    for word in words:
-        if (case_sensitive and word == target_word) or (not case_sensitive and word.lower() == target_word.lower()):
-            result.append(replacement_word)
-        else:
-            result.append(word)
-            
-    return ' '.join(result)
 
 def max(*args):
     if len(args) == 0:
