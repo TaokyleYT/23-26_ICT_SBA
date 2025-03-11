@@ -5,7 +5,12 @@ import time
 import os
 
 
-def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str = '', line_offset: int = 1):
+def animated_print(txt,
+                   end: str = '\n',
+                   delay: float = 0.02,
+                   front_effect: str = '',
+                   line_offset: int = 1,
+                   _overload: bool = False):
     """
     Prints text with an animation effect, simulating a typewriter-style output.
 
@@ -21,7 +26,7 @@ def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str 
         return
     if all(
         (all(isinstance(subchar, str) for subchar in char)\
-         if isinstance(char, (list, tuple))\
+         if (isinstance(char, (list, tuple)) and _overload)\
          else isinstance(char, str)) for char in txt):
         if all(len(char) == 1 for char in txt):
             #its a str
@@ -38,35 +43,63 @@ def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str 
     term_size = os.get_terminal_size()
     txt_lst = []
     for line in txt:
-        if len(line) == 0:
+        if _overload:
+            txt_lst = txt
+            break  #dont wanna indent the entire thing even more or else it would be ugly
+        if not line:
             txt_lst.append("")
             continue
-        for warpped_line in (line[i:i+term_size.columns] for i in range(0, len(line), term_size.columns)):
-            txt_lst.append(warpped_line)
-    txt_lst = list(map(split_exclude_ANSI, txt_lst))
-    txt_lst, truncated = txt_lst[:term_size.lines-1], txt_lst[term_size.lines-1:]
+        temp = split_exclude_ANSI(line, " ")
+        words: list[str] = [(item if i == len(temp) else item + " ")
+                            for i, item in enumerate(temp)]
+        index: int = 0
+        while index < len(words):
+            if len(words[index]) > term_size.columns:
+                #dk
+                for warpped_line in (
+                        line[i:i + term_size.columns]
+                        for i in range(0, len(line), term_size.columns)):
+                    txt_lst.append(warpped_line)
+                index += 1
+                continue
+            txt_lst.append("")
+            for i, word in enumerate(words[index:]):
+                if len(txt_lst[-1]) + len(word) > term_size.columns:
+                    index += i
+                    break  #break for loop
+                txt_lst[-1] += word
+            else:
+                break  #break while loop
+    txt_lst, truncated = txt_lst[:term_size.lines -
+                                 1], txt_lst[term_size.lines - 1:]
     max_wordlen = max(len(line) for line in txt_lst)
     print('\n' * (len(txt_lst)), end='\x1b[A')
     for i in range(max_wordlen + line_offset * (len(txt_lst))):
-        print("\x1b[A"*(len(txt_lst)-1), end='')
+        print("\x1b[A" * (len(txt_lst) - 1), end='')
         time.sleep(delay)
         for j, line in enumerate(txt_lst):
             current_char = j * line_offset + 1
-            print(' '*len(front_effect)+"\x1b[D"*len(front_effect), end='')
-            if (i - current_char >= 0 
-                and i - current_char < len(line)): #needs animated update
+            print(' ' * len(front_effect) + "\x1b[D" * len(front_effect),
+                  end='')
+            if (i - current_char >= 0
+                    and i - current_char < len(line)):  #needs animated update
                 print("\x1b[" + str(current_char) + "D" +
-                    line[i - current_char] +
-                    front_effect + "\x1b[D"*len(front_effect) +
-                    "\x1b[" + str(current_char) + "C" + "\b\x1b[1B",
-                    end='',
-                    flush=True)
+                      line[i - current_char] + front_effect +
+                      "\x1b[D" * len(front_effect) + "\x1b[" +
+                      str(current_char) + "C" + "\b\x1b[1B",
+                      end='',
+                      flush=True)
             else:
                 print("\x1b[1B", end='', flush=True)
         print("\x1b[1A\x1b[1C", end='', flush=True)
     time.sleep(delay)
     print("\x1b[" + str(line_offset * len(txt_lst)) + "D", end=end, flush=True)
-    animated_print(truncated, end, delay, front_effect, line_offset)
+    animated_print(truncated,
+                   end,
+                   delay,
+                   front_effect,
+                   line_offset,
+                   _overload=True)
     return
     #deprecated cuz buggy
     '''
@@ -96,8 +129,10 @@ def animated_print(txt, end: str = '\n', delay: float = 0.02, front_effect: str 
     '''
 
 
-
-def animated_input(prompt:str, delay:float=0.02, front_effect="", line_offset:int=1):
+def animated_input(prompt: str,
+                   delay: float = 0.02,
+                   front_effect="",
+                   line_offset: int = 1):
     """
     Same as animated_print but with input
     """
@@ -105,9 +140,8 @@ def animated_input(prompt:str, delay:float=0.02, front_effect="", line_offset:in
     return input()
 
 
-
-def type_check(instance: Any, _type: type | types.GenericAlias | types.UnionType) -> bool:
-
+def type_check(instance: Any,
+               _type: type | types.GenericAlias | types.UnionType) -> bool:
     """
     Checks if the given instance is of the given type.
 
@@ -118,7 +152,11 @@ def type_check(instance: Any, _type: type | types.GenericAlias | types.UnionType
         bool: True if instance is of type _type, False otherwise.
     """
 
-    if not isinstance(_type, (type,types.GenericAlias,types.UnionType,)):
+    if not isinstance(_type, (
+            type,
+            types.GenericAlias,
+            types.UnionType,
+    )):
         raise TypeError("_type must be a type")
 
     if isinstance(_type, types.UnionType):
@@ -127,21 +165,23 @@ def type_check(instance: Any, _type: type | types.GenericAlias | types.UnionType
     #check if _type is sth like list[int] or tuple[str,int]
     if isinstance(_type, types.GenericAlias):
         if not hasattr(_type, '__origin__') or not hasattr(_type, '__args__'):
-            raise AssertionError("GenericAlias should always have __origin__ and __args__")
+            raise AssertionError(
+                "GenericAlias should always have __origin__ and __args__")
 
         if not isinstance(instance, _type.__origin__):
             return False
         if isinstance(instance, tuple):
             if len(_type.__args__) != len(instance):
                 return False
-            return all((type_check(instance[i], _type.__args__[i])) for i in range(len(_type.__args__)))
-        return all(
-            type_check(item, _type.__args__[0]) for item in instance)
+            return all((type_check(instance[i], _type.__args__[i]))
+                       for i in range(len(_type.__args__)))
+        return all(type_check(item, _type.__args__[0]) for item in instance)
     # normal check
     # check if instance is a subclass of _type
     return isinstance(instance, _type)
 
-def quick_sort(input_list:Sequence, ascending:bool=True):
+
+def quick_sort(input_list: Sequence, ascending: bool = True):
     """
     Sorts a list using the quick sort algorithm.
     
@@ -156,7 +196,7 @@ def quick_sort(input_list:Sequence, ascending:bool=True):
     if len(input_list) < 2:
         return input_list
 
-    pivot = input_list[0] # First pivot
+    pivot = input_list[0]  # First pivot
     less = []
     more = []
 
@@ -168,9 +208,11 @@ def quick_sort(input_list:Sequence, ascending:bool=True):
             more.append(item)
 
     # Recurse + conquer + return
-    return (list(quick_sort(less)) + [pivot] + list(quick_sort(more)))[::1 if ascending else -1]
+    return (list(quick_sort(less)) + [pivot] +
+            list(quick_sort(more)))[::1 if ascending else -1]
 
-def binary_search(input_list:list, value, /):
+
+def binary_search(input_list: list, value, /):
     """
     Binary search for value in a sorted list.
     
@@ -184,7 +226,8 @@ def binary_search(input_list:list, value, /):
     start = 0
     end = len(input_list) - 1
     if not is_sorted(input_list):
-        raise ValueError("Binary_search: input list is not sorted what are you doing")
+        raise ValueError(
+            "Binary_search: input list is not sorted what are you doing")
     while start <= end:
         mid = (start + end) // 2
         if value == input_list[mid]:
@@ -195,7 +238,12 @@ def binary_search(input_list:list, value, /):
             start = mid + 1
     return -1
 
-def linear_search(input_list:list, value, start=0, stop=9223372036854775807, /):
+
+def linear_search(input_list: list,
+                  value,
+                  start=0,
+                  stop=9223372036854775807,
+                  /):
     """
     Linear search for value in a list.
     
@@ -214,7 +262,8 @@ def linear_search(input_list:list, value, start=0, stop=9223372036854775807, /):
             return n
     return -1
 
-def is_sorted(input_list:list, default=1):
+
+def is_sorted(input_list: list, default=1):
     """
     Check if input list is sorted.
     
@@ -223,22 +272,27 @@ def is_sorted(input_list:list, default=1):
         default: Default value to return if list is too short
     
     Returns:
-        1 if sorted in ascending order, -1 if sorted in descending order, 0 if not sorted
+        1 if sorted in ascending order, -1 if sorted in descending order, 0 if not sorted, default if all item in list is the same value
     """
     ascending = True
     descending = True
     if len(input_list) < 2:
         return default
-    for n in range(len(input_list)-1):
-        if input_list[n] > input_list[n+1]:
+    for n in range(len(input_list) - 1):
+        if input_list[n] > input_list[n + 1]:
             ascending = False
-        elif input_list[n] < input_list[n+1]:
+        elif input_list[n] < input_list[n + 1]:
             descending = False
         if not (ascending or descending):
             break
-    return 1 if ascending else (-1 if descending else 0)
+    if ascending and descending:
+        return default
+    return ascending - descending
 
-def repeat_str_to_len(word: str, length: int, start_index=0) -> tuple[str, int]:
+
+def repeat_str_to_len(word: str,
+                      length: int,
+                      start_index=0) -> tuple[str, int]:
     """
     Repeat string to a certain length.
     
@@ -252,26 +306,36 @@ def repeat_str_to_len(word: str, length: int, start_index=0) -> tuple[str, int]:
     """
     if not isinstance(word, str):
         raise TypeError("word must be a str")
-    if not isinstance(length, int) and length >= 0:
+    if not (isinstance(length, int) and length >= 0):
         raise TypeError("length must be a positive int")
-    if not isinstance(start_index, int) and start_index >= 0 and start_index < len(word):
-        raise TypeError("start_index must be a positive int which less than the length of word")
-    if length == 0:
+    if not (isinstance(start_index, int) and start_index >= 0 and
+            (start_index < len(word) or not word)):
+        raise TypeError(
+            "start_index must be a positive int which less than the length of word"
+        )
+    if length == 0 or not word:
         return '', 0
-    words = word*(-((-length)//len(word))+1) #word * (ceil division + 1)
-    return words[start_index:length+start_index], (length+start_index)%len(word)
+    words = word * (-((-length) // len(word)) + 1)  #word * (ceil division + 1)
+    return words[start_index:length +
+                 start_index], (length + start_index) % len(word)
 
-def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
-    return text.split(sep) if sep else list(text) #temp
+
+def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
+    return text.split(sep) if sep else list(text)  #temp
     splitted_list = []
-    if not type_check(sep, str|list[str]|tuple[str]):
-        raise TypeError(f"sep should be either string or list or tuple that contains only strings, not {type(sep)}")
+    if not type_check(sep, str | list[str] | tuple[str]):
+        raise TypeError(
+            f"sep should be either string or list or tuple that contains only strings, not {type(sep)}"
+        )
     if isinstance(sep, str):
-        pass
+        if not sep:
+            pass
+        else:
+            pass
     else:
         match_ptr = 0
         last_ptr = 0
-        checking = linked_list()
+        checking = []
         for idx in range(len(text)):
             if len(checking) > 0:
                 for check_idx in range(len(checking)):
@@ -279,9 +343,10 @@ def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
                     if text[idx] == word:
                         checking[check_idx][1] += 1
                         if checking[check_idx][1] == len(word):
-                            splitted_list.append(text[last_ptr:idx-len(word)+1])
-                            last_ptr = idx+1
-                            checking = linked_list()
+                            splitted_list.append(text[last_ptr:idx -
+                                                      len(word) + 1])
+                            last_ptr = idx + 1
+                            checking = []
                     else:
                         checking.remove(check_idx)
             for check_idx in range(len(sep)):
@@ -290,68 +355,87 @@ def split_exclude_ANSI(text:str, sep:str|list[str]|tuple[str]=""):
             if text[idx] == sep[match_ptr]:
                 match_ptr += 1
                 if match_ptr == len(sep):
-                    splitted_list.append(text[last_ptr:idx-len(sep)+1])
+                    splitted_list.append(text[last_ptr:idx - len(sep) + 1])
                     match_ptr = 0
-                    last_ptr = idx+1
+                    last_ptr = idx + 1
         splitted_list.append(text[last_ptr:])
     return splitted_list
-                
 
 
 def max(*args):
     if not args:
         raise TypeError("max expected at least 1 argument, 0 received")
-    elif len(args) == 1 and isinstance(args, Iterable):
+    elif len(args) == 1:
         args = args[0]
+        if isinstance(args, Iterable):
+            args = list(args)
+        else:
+            return args
     maximum = args[0]
     for n in args:
         if n > maximum:
             maximum = n
     return maximum
 
+
 def min(*args):
     if not args:
         raise TypeError("min expected at least 1 argument, 0 received")
-    elif len(args) == 1 and isinstance(args, Iterable):
+    elif len(args) == 1:
         args = args[0]
+        if isinstance(args, Iterable):
+            args = list(args)
+        else:
+            return args
     minimum = args[0]
     for n in args:
         if n < minimum:
             minimum = n
     return minimum
 
+
 def all(*args):
     if not args:
-        raise TypeError("all expected at least 1 argument, 0 received")
-    elif len(args) == 1 and isinstance(args, Iterable):
+        return True
+    elif len(args) == 1:
         args = args[0]
+        if isinstance(args, Iterable):
+            args = list(args)
+        else:
+            return args
     for n in args:
         if not n:
             return False
     return True
 
+
 def any(*args):
     if not args:
-        raise TypeError("any expected at least 1 argument, 0 received")
-    elif len(args) == 1 and isinstance(args, Iterable):
+        return False
+    elif len(args) == 1:
         args = args[0]
+        if isinstance(args, Iterable):
+            args = list(args)
+        else:
+            return args
     for n in args:
         if n:
             return True
     return False
 
-def count_find_str(input_str, target_str):
-    count = 0
+
+def find_all_str(input_str, target_str):
+    result = []
     current_ptr = 0
     for n in range(len(input_str)):
         if input_str[n] == target_str[current_ptr]:
             current_ptr += 1
             if current_ptr == len(target_str):
-                count += 1
+                result.append(n - current_ptr)
                 current_ptr = 0
         else:
             current_ptr = 0
-    return count
+    return result
 
 
 class linked_list:
@@ -359,11 +443,11 @@ class linked_list:
 
     class Node:
         """Node for linked list implementation."""
+
         def __init__(self, value):
             self.value = value
             self.next: linked_list.Node | None = None
 
-    
     def __init__(self, iterable=()):
         """
         Initialize a linked list.
@@ -374,7 +458,7 @@ class linked_list:
         self.head = None
         for item in iterable:
             self.append(item)
-    
+
     def copy(self):
         """
         Create a copy of the linked list.
@@ -383,7 +467,7 @@ class linked_list:
             A new linked list with the same values
         """
         return linked_list(list(self))
-    
+
     def insert(self, value, index):
         """
         Insert a value at the specified index.
@@ -400,11 +484,11 @@ class linked_list:
 
         current = self.head
         position = 0
-        
+
         while current and position < index - 1:
             current = current.next
             position += 1
-            
+
         if current:
             new_node = linked_list.Node(value)
             new_node.next = current.next
@@ -412,7 +496,7 @@ class linked_list:
         else:
             # If the index is beyond the end of the list, append
             self.append(value)
-    
+
     def append(self, value):
         """
         Append a value to the end of the list.
@@ -421,17 +505,17 @@ class linked_list:
             value: Value to append
         """
         new_node = linked_list.Node(value)
-        
+
         if not self.head:
             self.head = new_node
             return
-            
+
         current = self.head
         while current.next:
             current = current.next
-            
+
         current.next = new_node
-    
+
     def pop(self):
         """
         Remove the first element from the list.
@@ -441,11 +525,11 @@ class linked_list:
         """
         if not self.head:
             return None
-            
+
         value = self.head.value
         self.head = self.head.next
         return value
-    
+
     def deq(self):
         """
         Remove the last element from the list.
@@ -455,20 +539,20 @@ class linked_list:
         """
         if not self.head:
             return None
-            
+
         if not self.head.next:
             value = self.head.value
             self.head = None
             return value
-            
+
         current = self.head
         while current.next and current.next.next:
             current = current.next
-            
+
         value = current.next.value
         current.next = None
         return value
-    
+
     def remove(self, index):
         """
         Remove the element at the specified index.
@@ -481,23 +565,23 @@ class linked_list:
         """
         if not self.head:
             return None
-            
+
         if index == 0:
             return self.pop()
-            
+
         current = self.head
         position = 0
-        
+
         while current.next and position < index - 1:
             current = current.next
             position += 1
-            
+
         if current.next:
             value = current.next.value
             current.next = current.next.next
             return value
         return None
-    
+
     def remove_by_content(self, value):
         """
         Remove the first occurrence of value.
@@ -510,20 +594,20 @@ class linked_list:
         """
         if not self.head:
             return False
-            
+
         if self.head.value == value:
             self.head = self.head.next
             return True
-            
+
         current = self.head
         while current.next:
             if current.next.value == value:
                 current.next = current.next.next
                 return True
             current = current.next
-            
+
         return False
-    
+
     def index(self, value):
         """
         Find the index of the first occurrence of value.
@@ -536,18 +620,18 @@ class linked_list:
         """
         if not self.head:
             return -1
-            
+
         current = self.head
         position = 0
-        
+
         while current:
             if current.value == value:
                 return position
             current = current.next
             position += 1
-            
+
         return -1
-    
+
     def __getitem__(self, index):
         """
         Get item at index.
@@ -564,41 +648,43 @@ class linked_list:
         if isinstance(index, int):
             if index < 0:
                 index = len(self) + index
-                
+
             if index < 0:
                 raise IndexError("Linked List index out of range")
-                
+
             current = self.head
             position = 0
-            
+
             while current and position < index:
                 current = current.next
                 position += 1
-                
+
             if current:
                 return current.value
             raise IndexError("Linked List index out of range")
         elif isinstance(index, slice):
             start, stop, step = index.indices(len(self))
             result = []
-            
+
             current = self.head
             position = 0
-            
+
             while current and position < start:
                 current = current.next
                 position += 1
-                
+
             while current and position < stop:
                 if (position - start) % step == 0:
                     result.append(current.value)
                 current = current.next
                 position += 1
-                
+
             return result
         else:
-            raise TypeError(f"Linked list indices must be integers or slices, not '{type(index).__name__}'")
-    
+            raise TypeError(
+                f"Linked list indices must be integers or slices, not '{type(index).__name__}'"
+            )
+
     def __setitem__(self, index, value):
         """
         Set item at index.
@@ -611,26 +697,28 @@ class linked_list:
             IndexError: If index is out of range
         """
         if not isinstance(index, int):
-            raise TypeError(f"Linked list indices must be integers, not '{type(index).__name__}'")
-            
+            raise TypeError(
+                f"Linked list indices must be integers, not '{type(index).__name__}'"
+            )
+
         if index < 0:
             index = len(self) + index
-            
+
         if index < 0:
             raise IndexError("Linked List index out of range")
-            
+
         current = self.head
         position = 0
-        
+
         while current and position < index:
             current = current.next
             position += 1
-            
+
         if current:
             current.value = value
         else:
             raise IndexError("Linked List index out of range")
-    
+
     def __len__(self):
         """
         Get the length of the list.
@@ -640,13 +728,13 @@ class linked_list:
         """
         count = 0
         current = self.head
-        
+
         while current:
             count += 1
             current = current.next
-            
+
         return count
-    
+
     def __str__(self):
         """
         Get string representation of the list.
@@ -656,19 +744,19 @@ class linked_list:
         """
         if not self.head:
             return "Linked []"
-            
+
         result = ["Linked ["]
         current = self.head
-        
+
         while current:
             result.append(repr(current.value))
             if current.next:
                 result.append(" -> ")
             current = current.next
-            
+
         result.append("]")
         return "".join(result)
-    
+
     def __repr__(self):
         """
         Get string representation of the list.
@@ -677,7 +765,7 @@ class linked_list:
             String representation
         """
         return self.__str__()
-    
+
     def __iter__(self):
         """
         Get iterator for the list.
@@ -689,7 +777,7 @@ class linked_list:
         while current:
             yield current.value
             current = current.next
-    
+
     def __add__(self, other):
         """
         Concatenate two lists.
@@ -703,12 +791,14 @@ class linked_list:
         result = self.copy()
 
         if not isinstance(other, (linked_list, list, tuple)):
-            raise TypeError(f"Cannot add object of type '{type(other).__name__}' to linked_list")
+            raise TypeError(
+                f"Cannot add object of type '{type(other).__name__}' to linked_list"
+            )
 
         for item in other:
             result.append(item)
         return result
-    
+
     def __iadd__(self, other, /):
         """
         Concatenate other list to this list.
@@ -720,7 +810,9 @@ class linked_list:
             None
         """
         if not isinstance(other, (linked_list, list, tuple)):
-            raise TypeError(f"Cannot add object of type '{type(other).__name__}' to linked_list")
+            raise TypeError(
+                f"Cannot add object of type '{type(other).__name__}' to linked_list"
+            )
         for item in other:
             self.append(item)
         return self

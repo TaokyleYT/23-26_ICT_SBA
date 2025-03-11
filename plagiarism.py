@@ -1,5 +1,5 @@
 import nltk
-from nltk.corpus import stopwords, framenet
+from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
