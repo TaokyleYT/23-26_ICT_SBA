@@ -190,6 +190,8 @@ def animated_print(txt,
                 txt_lst[-1] += word
             else:
                 break  #break while loop
+    if not _overload:
+        txt_lst = [split_exclude_ANSI(line) for line in txt_lst]
     txt_lst, truncated = txt_lst[:term_size.lines -
                                  1], txt_lst[term_size.lines - 1:]
     max_wordlen = max(len(line) for line in txt_lst)
@@ -623,45 +625,64 @@ def repeat_str_to_len(word: str,
 
 
 def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
-    return text.split(sep) if sep else list(text)  #temp
-    splitted_list = []
+    """
+    Splits a string by separator(s) while preserving ANSI escape sequences.
+
+    Args:
+        text: The string to split
+        sep: Separator(s) to split by. Can be a string, list of strings, or tuple of strings.
+             If empty string, split into individual characters.
+
+    Returns:
+        List of strings after splitting by separator(s)
+    """
     if not type_check(sep, str | list[str] | tuple[str]):
         raise TypeError(
             f"sep should be either string or list or tuple that contains only strings, not {type(sep)}"
         )
-    if isinstance(sep, str):
-        if not sep:
-            pass
-        else:
-            pass
-    else:
-        match_ptr = 0
-        last_ptr = 0
-        checking = []
-        for idx in range(len(text)):
-            if len(checking) > 0:
-                for check_idx in range(len(checking)):
-                    word = sep[checking[check_idx][0]]
-                    if text[idx] == word:
-                        checking[check_idx][1] += 1
-                        if checking[check_idx][1] == len(word):
-                            splitted_list.append(text[last_ptr:idx -
-                                                      len(word) + 1])
-                            last_ptr = idx + 1
-                            checking = []
-                    else:
-                        checking.remove(check_idx)
-            for check_idx in range(len(sep)):
-                if text[idx] == sep[check_idx]:
-                    checking.append([check_idx, 1])
-            if text[idx] == sep[match_ptr]:
-                match_ptr += 1
-                if match_ptr == len(sep):
-                    splitted_list.append(text[last_ptr:idx - len(sep) + 1])
-                    match_ptr = 0
-                    last_ptr = idx + 1
-        splitted_list.append(text[last_ptr:])
-    return splitted_list
+
+    # Handle empty text case
+    if not text:
+        return [""]
+
+    # Convert sep to list for uniform handling
+    separators = [sep] if isinstance(sep, str) else list(sep)
+
+    # Handle empty separator case (split into characters)
+    result = []
+    i = 0
+    start = 0
+    in_ansi = False
+    ansi_start = -1
+
+    while i < len(text):
+        # Check if we're in an ANSI escape sequence
+        if text[i] == '\x1b' and i + 1 < len(text) and text[i + 1] == '[':
+            in_ansi = True
+            ansi_start = i
+
+        # Check if we're at the end of an ANSI sequence
+        if in_ansi and i > ansi_start and text[i].isalpha():
+            in_ansi = False
+
+        # Only check for separators if we're not in an ANSI sequence
+        if not in_ansi:
+            if separators == [""]:
+                i += 1
+            # Check if current position matches any separator
+            for separator in separators:
+                if i + len(separator) <= len(text) and text[i:i + len(separator)] == separator:
+                    result.append(text[start:i])
+                    i += len(separator) - 1  # -1 because we'll increment i at the end of the loop
+                    start = i + 1
+                    break
+
+        i += 1
+
+    # Add the last segment
+    result.append(text[start:])
+
+    return result
 
 
 def max(*args):
@@ -738,383 +759,3 @@ def find_all_str(input_str, target_str):
         else:
             current_ptr = 0
     return result
-
-
-class linked_list:
-    """A simple linked list implementation."""
-
-    class Node:
-        """Node for linked list implementation."""
-
-        def __init__(self, value):
-            self.value = value
-            self.next: linked_list.Node | None = None
-
-    def __init__(self, iterable=()):
-        """
-        Initialize a linked list.
-        
-        Args:
-            iterable: Initial values for the list
-        """
-        self.head = None
-        for item in iterable:
-            self.append(item)
-
-    def copy(self):
-        """
-        Create a copy of the linked list.
-        
-        Returns:
-            A new linked list with the same values
-        """
-        return linked_list(list(self))
-
-    def insert(self, value, index):
-        """
-        Insert a value at the specified index.
-        
-        Args:
-            value: Value to insert
-            index: Position to insert at
-        """
-        if index == 0:
-            new_node = linked_list.Node(value)
-            new_node.next = self.head
-            self.head = new_node
-            return
-
-        current = self.head
-        position = 0
-
-        while current and position < index - 1:
-            current = current.next
-            position += 1
-
-        if current:
-            new_node = linked_list.Node(value)
-            new_node.next = current.next
-            current.next = new_node
-        else:
-            # If the index is beyond the end of the list, append
-            self.append(value)
-
-    def append(self, value):
-        """
-        Append a value to the end of the list.
-        
-        Args:
-            value: Value to append
-        """
-        new_node = linked_list.Node(value)
-
-        if not self.head:
-            self.head = new_node
-            return
-
-        current = self.head
-        while current.next:
-            current = current.next
-
-        current.next = new_node
-
-    def pop(self):
-        """
-        Remove the first element from the list.
-        
-        Returns:
-            The removed value
-        """
-        if not self.head:
-            return None
-
-        value = self.head.value
-        self.head = self.head.next
-        return value
-
-    def deq(self):
-        """
-        Remove the last element from the list.
-        
-        Returns:
-            The removed value
-        """
-        if not self.head:
-            return None
-
-        if not self.head.next:
-            value = self.head.value
-            self.head = None
-            return value
-
-        current = self.head
-        while current.next and current.next.next:
-            current = current.next
-
-        value = current.next.value
-        current.next = None
-        return value
-
-    def remove(self, index):
-        """
-        Remove the element at the specified index.
-        
-        Args:
-            index: Index of element to remove
-        
-        Returns:
-            The removed value
-        """
-        if not self.head:
-            return None
-
-        if index == 0:
-            return self.pop()
-
-        current = self.head
-        position = 0
-
-        while current.next and position < index - 1:
-            current = current.next
-            position += 1
-
-        if current.next:
-            value = current.next.value
-            current.next = current.next.next
-            return value
-        return None
-
-    def remove_by_content(self, value):
-        """
-        Remove the first occurrence of value.
-        
-        Args:
-            value: Value to remove
-        
-        Returns:
-            True if removed, False otherwise
-        """
-        if not self.head:
-            return False
-
-        if self.head.value == value:
-            self.head = self.head.next
-            return True
-
-        current = self.head
-        while current.next:
-            if current.next.value == value:
-                current.next = current.next.next
-                return True
-            current = current.next
-
-        return False
-
-    def index(self, value):
-        """
-        Find the index of the first occurrence of value.
-        
-        Args:
-            value: Value to find
-        
-        Returns:
-            Index of value if found, -1 otherwise
-        """
-        if not self.head:
-            return -1
-
-        current = self.head
-        position = 0
-
-        while current:
-            if current.value == value:
-                return position
-            current = current.next
-            position += 1
-
-        return -1
-
-    def __getitem__(self, index):
-        """
-        Get item at index.
-        
-        Args:
-            index: Index of item
-        
-        Returns:
-            Item at index
-        
-        Raises:
-            IndexError: If index is out of range
-        """
-        if isinstance(index, int):
-            if index < 0:
-                index = len(self) + index
-
-            if index < 0:
-                raise IndexError("Linked List index out of range")
-
-            current = self.head
-            position = 0
-
-            while current and position < index:
-                current = current.next
-                position += 1
-
-            if current:
-                return current.value
-            raise IndexError("Linked List index out of range")
-        elif isinstance(index, slice):
-            start, stop, step = index.indices(len(self))
-            result = []
-
-            current = self.head
-            position = 0
-
-            while current and position < start:
-                current = current.next
-                position += 1
-
-            while current and position < stop:
-                if (position - start) % step == 0:
-                    result.append(current.value)
-                current = current.next
-                position += 1
-
-            return result
-        else:
-            raise TypeError(
-                f"Linked list indices must be integers or slices, not '{type(index).__name__}'"
-            )
-
-    def __setitem__(self, index, value):
-        """
-        Set item at index.
-        
-        Args:
-            index: Index of item
-            value: New value
-        
-        Raises:
-            IndexError: If index is out of range
-        """
-        if not isinstance(index, int):
-            raise TypeError(
-                f"Linked list indices must be integers, not '{type(index).__name__}'"
-            )
-
-        if index < 0:
-            index = len(self) + index
-
-        if index < 0:
-            raise IndexError("Linked List index out of range")
-
-        current = self.head
-        position = 0
-
-        while current and position < index:
-            current = current.next
-            position += 1
-
-        if current:
-            current.value = value
-        else:
-            raise IndexError("Linked List index out of range")
-
-    def __len__(self):
-        """
-        Get the length of the list.
-        
-        Returns:
-            Number of elements in the list
-        """
-        count = 0
-        current = self.head
-
-        while current:
-            count += 1
-            current = current.next
-
-        return count
-
-    def __str__(self):
-        """
-        Get string representation of the list.
-        
-        Returns:
-            String representation
-        """
-        if not self.head:
-            return "Linked []"
-
-        result = ["Linked ["]
-        current = self.head
-
-        while current:
-            result.append(repr(current.value))
-            if current.next:
-                result.append(" -> ")
-            current = current.next
-
-        result.append("]")
-        return "".join(result)
-
-    def __repr__(self):
-        """
-        Get string representation of the list.
-        
-        Returns:
-            String representation
-        """
-        return self.__str__()
-
-    def __iter__(self):
-        """
-        Get iterator for the list.
-        
-        Returns:
-            Iterator
-        """
-        current = self.head
-        while current:
-            yield current.value
-            current = current.next
-
-    def __add__(self, other):
-        """
-        Concatenate two lists.
-        
-        Args:
-            other: List to concatenate
-        
-        Returns:
-            New concatenated list
-        """
-        result = self.copy()
-
-        if not isinstance(other, (linked_list, list, tuple)):
-            raise TypeError(
-                f"Cannot add object of type '{type(other).__name__}' to linked_list"
-            )
-
-        for item in other:
-            result.append(item)
-        return result
-
-    def __iadd__(self, other, /):
-        """
-        Concatenate other list to this list.
-        
-        Args:
-            other: List to concatenate
-        
-        Returns:
-            None
-        """
-        if not isinstance(other, (linked_list, list, tuple)):
-            raise TypeError(
-                f"Cannot add object of type '{type(other).__name__}' to linked_list"
-            )
-        for item in other:
-            self.append(item)
-        return self

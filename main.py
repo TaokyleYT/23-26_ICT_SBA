@@ -878,19 +878,19 @@ def compare_files(file_path1, file_path2):
     # Determine plagiarism level based on similarity
     if similarity > 80:
         print(
-            "\x1b[38;5;9mPlagiarism Level: HIGH - These texts are very similar\x1b[38;0m"
+            "\x1b[38;5;9mPlagiarism Level: HIGH - These texts are very similar\x1b[m"
         )
     elif similarity > 50:
         print(
-            "\x1b[38;5;11mPlagiarism Level: MEDIUM - These texts have significant overlap\x1b[38;0m"
+            "\x1b[38;5;11mPlagiarism Level: MEDIUM - These texts have significant overlap\x1b[m"
         )
     elif similarity > 20:
         print(
-            "\x1b[38;5;10mPlagiarism Level: LOW - These texts have some common elements\x1b[38;0m"
+            "\x1b[38;5;10mPlagiarism Level: LOW - These texts have some common elements\x1b[m"
         )
     else:
         print(
-            "\x1b[38;5;10mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[38;0m"
+            "\x1b[38;5;10mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[m"
         )
 
 
