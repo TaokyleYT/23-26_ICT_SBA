@@ -163,7 +163,7 @@ def animated_print(txt,
     term_size = os.get_terminal_size()
     txt_lst = []
     for line in txt:
-        if _overload: #optimisation by skipping an O(n^3)? algorithm if input alr processed
+        if _overload: #optimization by skipping an O(n^3)? algorithm if input alr processed
             txt_lst = txt
             break #dont wanna indent the entire thing even more or else it would be ugly
         if not line:
@@ -175,7 +175,6 @@ def animated_print(txt,
         index: int = 0
         while index < len(words):
             if len(words[index]) > term_size.columns-1:
-                #dk
                 for warpped_line in (
                         line[i:i + term_size.columns-1]
                         for i in range(0, len(line), term_size.columns-1)):
@@ -192,8 +191,7 @@ def animated_print(txt,
                 break  #break while loop
     if not _overload:
         txt_lst = [split_exclude_ANSI(line) for line in txt_lst]
-    txt_lst, truncated = txt_lst[:term_size.lines -
-                                 1], txt_lst[term_size.lines - 1:]
+    txt_lst, truncated = txt_lst[:term_size.lines - 1], txt_lst[term_size.lines - 1:]
     max_wordlen = max(len(line) for line in txt_lst)
     print('\n' * (len(txt_lst)), end='\x1b[A')
     for i in range(max_wordlen + line_offset * (len(txt_lst))):
@@ -643,7 +641,7 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
 
     # Handle empty text case
     if not text:
-        return [""]
+        return []
 
     # Convert sep to list for uniform handling
     separators = [sep] if isinstance(sep, str) else list(sep)
@@ -681,6 +679,9 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
 
     # Add the last segment
     result.append(text[start:])
+    
+    while result[-1] == "":
+        del result[-1] #in case null strings showed up at the end by some separator mess (causes trouble)
 
     return result
 
@@ -759,3 +760,4 @@ def find_all_str(input_str, target_str):
         else:
             current_ptr = 0
     return result
+
