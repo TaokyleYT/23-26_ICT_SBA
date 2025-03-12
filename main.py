@@ -1,6 +1,6 @@
 import os  #get terminal size for text overflowing on CLI mode
 import helpers  #a bunch of non-functions (by me ofc) that prevents me from losing ALOT of marks due to using built-in functions
-from helpers import animated_print as print, animated_input as input  #animate print lol
+from helpers import animated_print as print, animated_input as input  #animate print and input lol
 import tkinter as tk  #tkinter is a module that allows me to go GUI WOOOOOOO
 from tkinter import ttk, filedialog, messagebox  #frequently used stuff I dont wanna type "tkinter." everytime I use them
 import matplotlib.pyplot as plt  #graphs and charts so I dont need to suffer using pure tkinter

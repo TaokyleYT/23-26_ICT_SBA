@@ -10,6 +10,7 @@ def animated_print(txt,
                    delay: float = 0.02,
                    front_effect: str = '',
                    line_offset: int = 1,
+                   fancy_mode: bool = False,
                    _overload: bool = False):
     """
     Prints text with an animation effect, simulating a typewriter-style output.
@@ -20,8 +21,127 @@ def animated_print(txt,
     - delay: Time in seconds between each character print, default is 0.02 seconds.
     - front_effect: A string effect applied at the front of animated text.
     - line_offset: Number of lines to offset the text vertically.
+    - fancy_mode: Whether to use the fancy animation mode from fancy.py
+    - interval: Time in milliseconds between each character in fancy mode (default: 5ms)
     """
+    # Use fancy mode if enabled (from fancy.py)
+    if fancy_mode:
+        if isinstance(txt, (list, tuple)):
+            txt = '\n'.join(str(item) for item in txt)
+        
+        # Import required modules for fancy mode
+        import sys
+        import string
+        import re
+        import ctypes
+        import ctypes.wintypes
+        import termios
+        import tty
 
+        # Get terminal dimensions
+        t = os.get_terminal_size().columns - 1
+        
+        # Setup console mode for fancy print
+        if sys.platform == "win32":
+            c = ctypes
+            d = ctypes.wintypes.DWORD()
+            k = c.windll.kernel32
+            k.GetConsoleMode(k.GetStdHandle(-10), c.byref(d))
+            k.SetConsoleMode(k.GetStdHandle(-10), 0)
+            k.GetConsoleMode(k.GetStdHandle(-11), c.byref(d))
+            k.SetConsoleMode(k.GetStdHandle(-11), 7)
+            sys.stdout.write("\x1b[?25l\x1b[6n")
+            sys.stdout.flush()
+            
+            def read_cursor_pos(a):
+                if a.endswith("R"):
+                    return a
+                return read_cursor_pos(a + sys.stdin.read(1))
+            
+            b = read_cursor_pos(sys.stdin.read(1))
+            k.SetConsoleMode(k.GetStdHandle(-10), d)
+            k.SetConsoleMode(k.GetStdHandle(-11), d)
+            r = re.match(r"^\x1b\[(\d*);(\d*)R", b)
+            b = int(r.groups()[1]) if r else 1
+        else:
+            s = sys.stdin.fileno()
+            ta = termios.tcgetattr(s)
+            tty.setcbreak(s, termios.TCSANOW)
+            sys.stdout.write("\x1b[?25l\x1b[6n")
+            sys.stdout.flush()
+            
+            def read_cursor_pos(a):
+                if a.endswith("R"):
+                    return a
+                return read_cursor_pos(a + sys.stdin.read(1))
+            
+            b = read_cursor_pos("")
+            termios.tcsetattr(s, termios.TCSANOW, ta)
+            r = re.match(r"^\x1b\[(\d*);(\d*)R", b)
+            b = int(r.groups()[1]) if r else 1
+        
+        # Prepare text for fancy printing
+        p = list(string.printable)[:-6]
+        o = sys.stdout.write
+        m = (str(txt) + str(end) + "\0").split("\n")
+        
+        if len(m) > 0:
+            m = [" \b" * ((b - 1) // 2) + "\0" * ((b - 1) % 2) + m[0]] + (m[1:] if len(m) > 1 else [])
+            a = ""
+            
+            # Print each line
+            for l in (a for b in ([l[a:a+t] for a in range(0, len(l)+1, t)] for l in m[:-1]) for a in b):
+                for n in l:
+                    if n == "\x1b":
+                        a = n
+                    elif a:
+                        a = a + n
+                    
+                    # Animation effect for each character
+                    for c in p[:(p.index(n) + 1 if n in p else 0 if n in "\0 \b" or a else len(p))]:
+                        o(c + "\b")
+                        sys.stdout.flush()
+                        time.sleep(delay/10)
+                    
+                    # Write actual character
+                    if a == "":
+                        o(n)
+                    elif a == "\x1b[" or a[-1] < "@" or a[-1] > "~":
+                        pass
+                    else:
+                        o(a + " \b")
+                        a = ""
+                
+                o("\x1b[1C\n")
+            
+            # Process the last line
+            for l in (a for b in ([l[a:a+t] for a in range(0, len(l)+1, t)] for l in m[-1:]) for a in b):
+                for n in l:
+                    if n == "\x1b":
+                        a = n
+                    elif a:
+                        a = a + n
+                    
+                    # Animation effect for each character
+                    for c in p[:(p.index(n) + 1 if n in p else 0 if n in "\0 \b" or a else len(p))]:
+                        o(a)
+                        o(c + "\b")
+                        sys.stdout.flush()
+                        time.sleep(delay/10)
+                    
+                    # Write actual character
+                    if a == "":
+                        o(n)
+                    elif a == "\x1b[" or a[-1] < "@" or a[-1] > "~":
+                        pass
+                    else:
+                        o(a + " \b")
+                        a = ""
+            
+        # Show cursor again
+        o("\x1b[?25h")
+        sys.stdout.flush()
+        return
     if len(txt) == 0:
         return
     if all(
@@ -43,9 +163,9 @@ def animated_print(txt,
     term_size = os.get_terminal_size()
     txt_lst = []
     for line in txt:
-        if _overload:
+        if _overload: #optimisation by skipping an O(n^3)? algorithm if input alr processed
             txt_lst = txt
-            break  #dont wanna indent the entire thing even more or else it would be ugly
+            break #dont wanna indent the entire thing even more or else it would be ugly
         if not line:
             txt_lst.append("")
             continue
@@ -54,17 +174,17 @@ def animated_print(txt,
                             for i, item in enumerate(temp)]
         index: int = 0
         while index < len(words):
-            if len(words[index]) > term_size.columns:
+            if len(words[index]) > term_size.columns-1:
                 #dk
                 for warpped_line in (
-                        line[i:i + term_size.columns]
-                        for i in range(0, len(line), term_size.columns)):
+                        line[i:i + term_size.columns-1]
+                        for i in range(0, len(line), term_size.columns-1)):
                     txt_lst.append(warpped_line)
                 index += 1
                 continue
             txt_lst.append("")
             for i, word in enumerate(words[index:]):
-                if len(txt_lst[-1]) + len(word) > term_size.columns:
+                if len(txt_lst[-1]) + len(word) > term_size.columns-1:
                     index += i
                     break  #break for loop
                 txt_lst[-1] += word
@@ -99,6 +219,7 @@ def animated_print(txt,
                    delay,
                    front_effect,
                    line_offset,
+                   fancy_mode=False,  # Don't use fancy mode for recursion
                    _overload=True)
     return
     #deprecated cuz buggy
@@ -132,11 +253,192 @@ def animated_print(txt,
 def animated_input(prompt: str,
                    delay: float = 0.02,
                    front_effect="",
-                   line_offset: int = 1):
+                   line_offset: int = 1,
+                   fancy_mode: bool = False,
+                   interval: int = 5):
     """
     Same as animated_print but with input
+    
+    Parameters:
+    - prompt: Text to display before the input
+    - delay: Time in seconds between each character print (for non-fancy mode)
+    - front_effect: A string effect applied at the front of animated text
+    - line_offset: Number of lines to offset the text vertically
+    - fancy_mode: Whether to use the fancy animation mode from fancy.py
+    - interval: Time in milliseconds between each character in fancy mode
     """
-    animated_print(prompt, "", delay, front_effect, line_offset)
+    # Use fancy input mode if enabled
+    if fancy_mode:
+        # Import required modules for fancy input
+        import sys
+        import string
+        import re
+        import ctypes
+        import ctypes.wintypes
+        import termios
+        import tty
+        
+        # Get terminal dimensions
+        t = os.get_terminal_size().columns - 1
+        
+        # Setup console mode for fancy input
+        if sys.platform == "win32":
+            c = ctypes
+            d = ctypes.wintypes.DWORD()
+            k = c.windll.kernel32
+            k.GetConsoleMode(k.GetStdHandle(-10), c.byref(d))
+            k.SetConsoleMode(k.GetStdHandle(-10), 0)
+            k.GetConsoleMode(k.GetStdHandle(-11), c.byref(d))
+            k.SetConsoleMode(k.GetStdHandle(-11), 7)
+            sys.stdout.write("\x1b[?25l\x1b[6n")
+            sys.stdout.flush()
+            
+            def read_cursor_pos(a):
+                if a.endswith("R"):
+                    return a
+                return read_cursor_pos(a + sys.stdin.read(1))
+            
+            b = read_cursor_pos(sys.stdin.read(1))
+            r = re.match(r"^\x1b\[(\d*);(\d*)R", b)
+            b = int(r.groups()[1]) if r else 1
+        else:
+            s = sys.stdin.fileno()
+            ta = termios.tcgetattr(s)
+            tty.setcbreak(s, termios.TCSANOW)
+            sys.stdout.write("\x1b[?25l\x1b[6n")
+            sys.stdout.flush()
+            
+            def read_cursor_pos(a):
+                if a.endswith("R"):
+                    return a
+                return read_cursor_pos(a + sys.stdin.read(1))
+            
+            b = read_cursor_pos(sys.stdin.read(1))
+            r = re.match(r"^\x1b\[(\d*);(\d*)R", b)
+            b = int(r.groups()[1]) if r else 1
+        
+        # Prepare prompt for fancy input
+        p = [" "] + list(string.printable)[:-6]
+        o = sys.stdout.write
+        m = (str(prompt) + "\0").split("\n")
+        
+        if len(m) > 0:
+            m = [" \b" * ((b - 1) // 2) + "\0" * ((b - 1) % 2) + m[0]] + (m[1:] if len(m) > 1 else [])
+            a = ""
+            
+            # Print each line of the prompt
+            for l in (a for b in ([l[a:a+t] for a in range(0, len(l)+1, t)] for l in m[:-1]) for a in b):
+                for n in l:
+                    if n == "\x1b":
+                        a = n
+                    elif a:
+                        a = a + n
+                    
+                    # Animation effect for each character
+                    for c in p[:(p.index(n) + 1 if n in p else 0 if n in "\0 \b" or a else len(p))]:
+                        o(c + "\b")
+                        sys.stdout.flush()
+                        time.sleep(interval / 1000)
+                    
+                    # Write actual character
+                    if a == "":
+                        o(n)
+                    elif a == "\x1b[" or a[-1] < "@" or a[-1] > "~":
+                        pass
+                    else:
+                        o(a + " \b")
+                        a = ""
+                
+                o("\x1b[1C\n")
+            
+            # Process the last line
+            for l in (a for b in ([l[a:a+t] for a in range(0, len(l)+1, t)] for l in m[-1:]) for a in b):
+                for n in l:
+                    if n == "\x1b":
+                        a = n
+                    elif a:
+                        a = a + n
+                    
+                    # Animation effect for each character
+                    for c in p[:(p.index(n) + 1 if n in p else 0 if n in "\0 \b" or a else len(p))]:
+                        o(a)
+                        o(c + "\b")
+                        sys.stdout.flush()
+                        time.sleep(interval / 1000)
+                    
+                    # Write actual character
+                    if a == "":
+                        o(n)
+                    elif a == "\x1b[" or a[-1] < "@" or a[-1] > "~":
+                        pass
+                    else:
+                        o(a + " \b")
+                        a = ""
+            
+            o("\x1b[?25h")
+            sys.stdout.flush()
+            
+            # Handle input with fancy animation
+            def read_input(a, u, pt):
+                l = sys.stdin.read(1)
+                
+                # Handle backspace
+                if l in "\x7f\x08" and len(u) > 0:
+                    u = u[:-1]
+                    if pt % (t - 1) != 0:
+                        o("\b \b")
+                    else:
+                        o(f"\x1b[F\x1b[{t-2}G\b \b")
+                    sys.stdout.flush()
+                    pt = pt - 1
+                # Handle regular input
+                elif l != "\n":
+                    u = u + l
+                    if pt % (t - 1) == 0:
+                        o(" \n")
+                    
+                    # Animation for input character
+                    if l == "\x1b":
+                        a = l
+                    elif a:
+                        a = a + l
+                    
+                    for c in p[:(p.index(l) + 1 if l in p else 0 if l in "\0 \b\n" or a else len(p))]:
+                        o(a)
+                        o(c + "\b")
+                        sys.stdout.flush()
+                        time.sleep(interval / 1000)
+                    
+                    if a == "":
+                        o(l)
+                    elif a == "\x1b[" or a[-1] < "@" or a[-1] > "~":
+                        pass
+                    else:
+                        o(a + " \b")
+                        a = ""
+                    
+                    sys.stdout.flush()
+                    pt = pt + 1
+                
+                # Continue reading or return result
+                if l != "\n":
+                    return read_input(a, u, pt)
+                return u
+            
+            # Read user input with animation
+            result = read_input("", "", (len(m[-1]) + (b if len(m) == 1 else 0)) % (t - 1))[:-1]
+            
+            # Restore terminal state
+            if sys.platform == "win32":
+                k.SetConsoleMode(k.GetStdHandle(-10), d)
+                k.SetConsoleMode(k.GetStdHandle(-11), d)
+            else:
+                termios.tcsetattr(s, termios.TCSANOW, ta)
+            
+            return result
+    
+    # Use original animated_input if fancy mode is disabled
+    animated_print(prompt, "", delay, front_effect, line_offset, fancy_mode=False)
     return input()
 
 
