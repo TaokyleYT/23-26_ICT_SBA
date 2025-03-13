@@ -59,25 +59,7 @@ def test_quick_sort(input_list, ascending, expected_output, test_id):
     assert sorted_list == expected_output
 
 
-@pytest.mark.parametrize("input_list, value, expected_output, test_id", [
-    ([1, 2, 3, 4, 5], 3, 2, "middle_element"),
-    ([1, 2, 3, 4, 5], 1, 0, "first_element"),
-    ([1, 2, 3, 4, 5], 5, 4, "last_element"),
-    ([1, 2, 3, 4, 5], 0, -1, "element_not_present"),
-    ([1, 2, 3, 4, 5], 6, -1, "element_greater_than_all"),
-    ([1, 3, 5, 7, 9], 4, -1, "element_between_elements"),
-    ([], 3, -1, "empty_list"),
-    ([1], 1, 0, "single_element_list_present"),
-    ([1], 2, -1, "single_element_list_not_present"),
-    ([1, 1, 1, 1, 1], 1, 2, "duplicate_elements"),
-])
-def test_binary_search(input_list, value, expected_output, test_id):
 
-    # Act
-    index = binary_search(input_list, value)
-
-    # Assert
-    assert index == expected_output
 
 @pytest.mark.parametrize("input_list, value, start, stop, expected_output, test_id", [
     ([1, 2, 3, 4, 5], 3, 0, 5, 2, "middle_element"),
@@ -102,60 +84,6 @@ def test_linear_search(input_list, value, start, stop, expected_output, test_id)
 
     # Assert
     assert index == expected_output
-
-
-@pytest.mark.parametrize("input_list, default, expected_output, test_id", [
-    ([1, 2, 3, 4, 5], 1, 1, "ascending_order"),
-    ([5, 4, 3, 2, 1], 1, -1, "descending_order"),
-    ([1, 3, 2, 4, 5], 1, 0, "not_sorted"),
-    ([], 1, 1, "empty_list"),
-    ([1], 1, 1, "single_element_list"),
-    ([1, 1, 1, 1, 1], 1, 1, "list_with_same_elements"),
-    ([1, 2, 3, 4, 5], -1, 1, "ascending_order_different_default"),
-    ([5, 4, 3, 2, 1], -1, -1, "descending_order_different_default"),
-    ([1, 3, 2, 4, 5], -1, 0, "not_sorted_different_default"),
-    ([], -1, -1, "empty_list_different_default"),
-    ([1], -1, -1, "single_element_list_different_default"),
-    ([1, 1, 1, 1, 1], -1, -1, "list_with_same_elements_different_default"),
-])
-def test_is_sorted(input_list, default, expected_output, test_id):
-
-    # Act
-    result = is_sorted(input_list, default)
-
-    # Assert
-    assert result == expected_output
-
-
-@pytest.mark.parametrize("word, length, start_index, expected_output, expected_new_start_index, test_id", [
-    ("abc", 5, 0, "abcab", 2, "basic_repeat"),
-    ("abc", 3, 0, "abc", 0, "repeat_to_same_length"),
-    ("abc", 0, 0, "", 0, "zero_length"),
-    ("abc", 6, 1, "bcabca", 1, "start_index_not_zero"),
-    ("abcdef", 10, 3, "defabcdefa", 1, "long_word"),
-    ("a", 5, 0, "aaaaa", 0, "single_char_word"),
-    ("", 5, 0, "", 0, "empty_word"),
-])
-def test_repeat_str_to_len(word, length, start_index, expected_output, expected_new_start_index, test_id):
-
-    # Act
-    result, new_start_index = repeat_str_to_len(word, length, start_index)
-
-    # Assert
-    assert result == expected_output
-    assert new_start_index == expected_new_start_index
-
-@pytest.mark.parametrize("word, length, start_index, expected_exception, test_id", [
-    (123, 5, 0, TypeError, "word_not_string"),
-    ("abc", "5", 0, TypeError, "length_not_int"),
-    ("abc", -5, 0, TypeError, "negative_length"),
-    ("abc", 5, "0", TypeError, "start_index_not_int"),
-    ("abc", 5, -1, TypeError, "negative_start_index"),
-    ("abc", 5, 3, TypeError, "start_index_too_large"),
-])
-def test_repeat_str_to_len_exceptions(word, length, start_index, expected_exception, test_id):
-    with pytest.raises(expected_exception):
-        repeat_str_to_len(word, length, start_index)
 
 
 """

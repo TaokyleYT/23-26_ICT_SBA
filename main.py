@@ -14,13 +14,13 @@ def read_file(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         if not content.strip():
-            print(f"Warning: File '{file_path}' is empty.")
+            print(f"\x1b[33;40mWarning: File '{file_path}' is empty.\x1b[m")
         return content
     except FileNotFoundError:
-        print(f"Error: File '{file_path}' not found.")
+        print(f"\x1b[31;40mError: File '{file_path}' not found.\x1b[m")
         return None
     except Exception as e:
-        print(f"Error reading file '{file_path}': {str(e)}")
+        print(f"\x1b[31;40mError reading file '{file_path}': {str(e)}\x1b[m")
         return None
 
 
@@ -129,12 +129,12 @@ def calculate_similarity(word_count1, word_count2):
     return (common_words / len(all_words)) * 100
 
 
-class TextAnalysisApp:
+class WordAnalysisApp:
 
-    def __init__(self, root):
+    def __init__(self, root, size="1000x700"):
         self.root = root
-        self.root.title("Text Analysis and Plagiarism Detection")
-        self.root.geometry("1000x700")
+        self.root.title("Word Analysis and Plagiarism Detection")
+        self.root.geometry(size)
 
         # Create the main notebook (tabbed interface)
         self.notebook = ttk.Notebook(root)
@@ -143,8 +143,6 @@ class TextAnalysisApp:
         # Create tabs
         self.create_analyze_tab()
         self.create_compare_tab()
-        self.create_search_tab()
-        self.create_replace_tab()
 
         # Variables to store file paths and analysis results
         self.file_path1 = ""
@@ -321,126 +319,6 @@ class TextAnalysisApp:
         self.compare_canvas = tk.Canvas(graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-    def create_search_tab(self):
-        """Create the Search tab for word searching."""
-        search_tab = ttk.Frame(self.notebook)
-        self.notebook.add(search_tab, text="Search Word")
-
-        # File selection
-        file_frame = ttk.Frame(search_tab)
-        file_frame.pack(fill=tk.X, pady=10)
-
-        ttk.Label(file_frame, text="Select File:").pack(side=tk.LEFT, padx=5)
-        self.search_file_entry = ttk.Entry(file_frame, width=50)
-        self.search_file_entry.pack(side=tk.LEFT,
-                                    padx=5,
-                                    fill=tk.X,
-                                    expand=True)
-
-        browse_btn = ttk.Button(file_frame,
-                                text="Browse",
-                                command=self.browse_search_file)
-        browse_btn.pack(side=tk.LEFT, padx=5)
-
-        # Search frame
-        search_frame = ttk.Frame(search_tab)
-        search_frame.pack(fill=tk.X, pady=10)
-
-        ttk.Label(search_frame, text="Search for word:").pack(side=tk.LEFT,
-                                                              padx=5)
-        self.search_entry = ttk.Entry(search_frame, width=30)
-        self.search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-
-        search_btn = ttk.Button(search_frame,
-                                text="Search",
-                                command=self.search_word)
-        search_btn.pack(side=tk.LEFT, padx=5)
-
-        # Results frame
-        results_frame = ttk.LabelFrame(search_tab, text="Search Results")
-        results_frame.pack(fill=tk.BOTH, expand=True, pady=10, padx=10)
-
-        self.search_results = tk.Text(results_frame, wrap=tk.WORD)
-        self.search_results.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-    def create_replace_tab(self):
-        """Create the Replace tab for word replacement."""
-        replace_tab = ttk.Frame(self.notebook)
-        self.notebook.add(replace_tab, text="Replace Word")
-
-        # File selection
-        file_frame = ttk.Frame(replace_tab)
-        file_frame.pack(fill=tk.X, pady=10)
-
-        ttk.Label(file_frame, text="Select File:").pack(side=tk.LEFT, padx=5)
-        self.replace_file_entry = ttk.Entry(file_frame, width=50)
-        self.replace_file_entry.pack(side=tk.LEFT,
-                                     padx=5,
-                                     fill=tk.X,
-                                     expand=True)
-
-        browse_btn = ttk.Button(file_frame,
-                                text="Browse",
-                                command=self.browse_replace_file)
-        browse_btn.pack(side=tk.LEFT, padx=5)
-
-        # Replace frame
-        replace_frame = ttk.Frame(replace_tab)
-        replace_frame.pack(fill=tk.X, pady=10)
-
-        # Word to replace
-        word_frame = ttk.Frame(replace_frame)
-        word_frame.pack(fill=tk.X, pady=5)
-
-        ttk.Label(word_frame, text="Word to replace:").pack(side=tk.LEFT,
-                                                            padx=5)
-        self.word_entry = ttk.Entry(word_frame, width=30)
-        self.word_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-
-        # Replacement word
-        replacement_frame = ttk.Frame(replace_frame)
-        replacement_frame.pack(fill=tk.X, pady=5)
-
-        ttk.Label(replacement_frame,
-                  text="Replacement word:").pack(side=tk.LEFT, padx=5)
-        self.replacement_entry = ttk.Entry(replacement_frame, width=30)
-        self.replacement_entry.pack(side=tk.LEFT,
-                                    padx=5,
-                                    fill=tk.X,
-                                    expand=True)
-
-        replace_btn = ttk.Button(replace_frame,
-                                 text="Replace",
-                                 command=self.replace_word)
-        replace_btn.pack(pady=5)
-
-        # Text display frames
-        text_frame = ttk.Frame(replace_tab)
-        text_frame.pack(fill=tk.BOTH, expand=True, pady=10)
-
-        # Original text
-        original_frame = ttk.LabelFrame(text_frame,
-                                        text="Original Text (Cleaned)")
-        original_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
-
-        self.original_text = tk.Text(original_frame, wrap=tk.WORD)
-        self.original_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Modified text
-        modified_frame = ttk.LabelFrame(text_frame, text="Modified Text")
-        modified_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
-
-        self.modified_text = tk.Text(modified_frame, wrap=tk.WORD)
-        self.modified_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Save button
-        save_frame = ttk.Frame(replace_tab)
-        save_frame.pack(fill=tk.X, pady=10)
-
-        save_btn = ttk.Button(save_frame,
-                              text="Save Modified Text",
-                              command=self.save_modified_text)
-        save_btn.pack()
 
     def browse_file1(self):
         """Browse for a file to analyze."""
@@ -464,24 +342,6 @@ class TextAnalysisApp:
             self.compare_file_entry2.delete(0, tk.END)
             self.compare_file_entry2.insert(0, file_path)
 
-    def browse_search_file(self):
-        """Browse for a file to search."""
-        if file_path := filedialog.askopenfilename(
-                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):
-            self.search_file_entry.delete(0, tk.END)
-            self.search_file_entry.insert(0, file_path)
-
-    def browse_replace_file(self):
-        """Browse for a file to perform word replacement."""
-        if file_path := filedialog.askopenfilename(
-                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):
-            self.replace_file_entry.delete(0, tk.END)
-            self.replace_file_entry.insert(0, file_path)
-
-            if content := read_file(file_path):
-                clean_content = clean_text(content)
-                self.original_text.delete(1.0, tk.END)
-                self.original_text.insert(tk.END, clean_content)
 
     def analyze_file(self):
         """Analyze a single file and display the results."""
@@ -713,97 +573,7 @@ class TextAnalysisApp:
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-    def search_word(self):
-        """Search for a word in the selected file."""
-        file_path = self.search_file_entry.get()
-        target_word = self.search_entry.get()
 
-        if not file_path:
-            messagebox.showerror("Error", "Please select a file first.")
-            return
-
-        if not target_word:
-            messagebox.showerror("Error", "Please enter a word to search for.")
-            return
-
-        content = read_file(file_path)
-        if content is None:
-            messagebox.showerror("Error", f"Could not read file: {file_path}")
-            return
-
-        clean_content = clean_text(content)
-        positions = helpers.find_all_str(clean_content, target_word)
-
-        self.search_results.delete(1.0, tk.END)
-
-        if positions:
-            self.search_results.insert(
-                tk.END,
-                f"The word '{target_word}' appears {len(positions)} times at positions: {positions}\n\n"
-            )
-
-            # Show each occurrence in context
-            words = clean_content.split()
-            for pos in positions:
-                # Get a window of words around the occurrence
-                start = helpers.max(0, pos - 3)
-                end = helpers.min(len(words), pos + 4)
-                context = " ".join(words[start:end])
-
-                if pos > 3:
-                    context = f"... {context}"
-                if pos + 4 < len(words):
-                    context += " ..."
-
-                self.search_results.insert(tk.END,
-                                           f"Position {pos}: {context}\n")
-        else:
-            self.search_results.insert(
-                tk.END, f"The word '{target_word}' was not found in the file.")
-
-    def replace_word(self):
-        """Replace occurrences of a word in the selected file."""
-        file_path = self.replace_file_entry.get()
-        target_word = self.word_entry.get()
-        replacement_word = self.replacement_entry.get()
-
-        if not file_path:
-            messagebox.showerror("Error", "Please select a file first.")
-            return
-
-        if not target_word:
-            messagebox.showerror("Error", "Please enter a word to replace.")
-            return
-
-        content = read_file(file_path)
-        if content is None:
-            messagebox.showerror("Error", f"Could not read file: {file_path}")
-            return
-
-        modified_content = clean_text(content).replace(target_word,
-                                                       replacement_word)
-
-        # Display modified content
-        self.modified_text.delete(1.0, tk.END)
-        self.modified_text.insert(tk.END, modified_content)
-
-    def save_modified_text(self):
-        """Save the modified text to a new file."""
-        if not self.modified_text.get(1.0, tk.END).strip():
-            messagebox.showerror("Error", "No modified text to save.")
-            return
-
-        if file_path := filedialog.asksaveasfilename(
-                defaultextension=".txt",
-                filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
-        ):
-            try:
-                with open(file_path, 'w', encoding='utf-8') as file:
-                    file.write(self.modified_text.get(1.0, tk.END))
-                messagebox.showinfo("Success",
-                                    f"Modified text saved to '{file_path}'")
-            except Exception as e:
-                messagebox.showerror("Error", f"Error saving file: {str(e)}")
 
 
 def display_results(file_path,
@@ -848,7 +618,7 @@ def compare_files(file_path1, file_path2):
 
     if content1 is None or content2 is None:
         print(
-            "\x1b[38;5;9mError: Cannot compare files due to reading errors.\x1b[38;0m"
+            "\x1b[31;40mError: Cannot compare files due to reading errors.\x1b[m"
         )
         return
 
@@ -878,19 +648,19 @@ def compare_files(file_path1, file_path2):
     # Determine plagiarism level based on similarity
     if similarity > 80:
         print(
-            "\x1b[38;5;9mPlagiarism Level: HIGH - These texts are very similar\x1b[m"
+            "\x1b[31;40mPlagiarism Level: HIGH - These texts are very similar\x1b[m"
         )
     elif similarity > 50:
         print(
-            "\x1b[38;5;11mPlagiarism Level: MEDIUM - These texts have significant overlap\x1b[m"
+            "\x1b[33;40mPlagiarism Level: MEDIUM - These texts have significant overlap\x1b[m"
         )
     elif similarity > 20:
         print(
-            "\x1b[38;5;10mPlagiarism Level: LOW - These texts have some common elements\x1b[m"
+            "\x1b[92;40mPlagiarism Level: LOW - These texts have some common elements\x1b[m"
         )
     else:
         print(
-            "\x1b[38;5;10mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[m"
+            "\x1b[32;40mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[m"
         )
 
 
@@ -916,7 +686,7 @@ def analyze_file(file_path):
 def mainGUI():
     """Main function to run the Word Analysis and Plagiarism Detection System GUI."""
     root = tk.Tk()
-    app = TextAnalysisApp(
+    app = WordAnalysisApp(
         root)  #app is unused because tkinter does the job for me :)
     root.protocol(
         "WM_DELETE_WINDOW", lambda: root.destroy()
