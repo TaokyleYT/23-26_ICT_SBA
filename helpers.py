@@ -16,6 +16,7 @@ else:
 
 
 def animated_print(txt,
+                   end: str = "\n",
                    delay: float = 0.02,
                    line_offset: int = 1,
                    _overload: bool = False):
@@ -31,6 +32,10 @@ def animated_print(txt,
         line_offset (int): Number of lines to offset the text vertically.
         _overload (bool): Internal parameter for optimization during recursion.
     """
+    
+    if len(txt) == 0:
+        return #if need print nothing, prints nothing
+    
     if all(
         (all(isinstance(subchar, str) for subchar in char)\
          if (isinstance(char, (list, tuple)) and _overload)\
@@ -45,9 +50,7 @@ def animated_print(txt,
     if not isinstance(delay, (int, float)):
         raise TypeError("delay must be a number")
     
-    if len(txt) == 0:
-        return #if need print nothing, prints nothing
-    input(txt)
+
 
     # Get terminal size for text wrapping
     term_size = os.get_terminal_size()
@@ -100,7 +103,7 @@ def animated_print(txt,
     print('\n' * (len(txt_lst)), end='\x1b[A')
 
     # Animate text character by character
-    for i in range(max_wordlen + line_offset * (len(txt_lst))):
+    for i in range(max_wordlen + line_offset * len(txt_lst)):
         print("\x1b[A" * (len(txt_lst) - 1), end='')
         time.sleep(delay)
         for j, line in enumerate(txt_lst):
@@ -119,7 +122,7 @@ def animated_print(txt,
                 print("\x1b[1B", end='', flush=True)
         print("\x1b[1A\x1b[1C", end='', flush=True)
     time.sleep(delay)
-    print("\x1b[" + str(line_offset * len(txt_lst)) + "D", end='\n', flush=True)
+    print("\x1b[" + str(line_offset * len(txt_lst)) + "D", end='' if len(truncated) else end, flush=True)
     animated_print(truncated,
                    delay,
                    line_offset,
@@ -175,7 +178,7 @@ def animated_input(prompt: str,
         str: The user's input string (without the trailing newline).
     """
     # Display the prompt with animation
-    animated_print(prompt, "", delay, front_effect, line_offset)
+    animated_print(prompt, "", delay, line_offset)
     
     # Get terminal width
     columns = os.get_terminal_size().columns - 2

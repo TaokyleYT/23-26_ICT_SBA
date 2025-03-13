@@ -865,7 +865,13 @@ def analyze_file(file_path):
     # Display analysis results
     display_results(file_path, word_count, total_words, unique_words)
 
-    return word_count, clean_content
+    return word_count, 
+
+def GUIexit(root):
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        messagebox.showwarning("Thank you, app closing...", message="Thank you for using WAPDS")
+        root.destroy()
+        exit()
 
 
 def mainGUI():
@@ -880,9 +886,7 @@ def mainGUI():
         root)  # app is unused because tkinter handles the UI events
 
     # Set up close confirmation dialog
-    root.protocol(
-        "WM_DELETE_WINDOW", lambda: root.destroy()
-        if messagebox.askokcancel("Quit", "Do you want to quit?") else None)
+    root.protocol("WM_DELETE_WINDOW", lambda: GUIexit(root))
 
     # Start the main event loop
     root.mainloop()
@@ -925,7 +929,7 @@ def mainCLI():
 
         elif choice == '4':
             print(
-                "Thank you for using the Word Analysis and Plagiarism Detection System!"
+                "Thank you for using WAPDS!"
             )
             break
         else:
@@ -937,7 +941,7 @@ def mainCLI():
 if __name__ == "__main__":
     # Parse command line arguments to determine whether to run GUI or CLI
     parser = argparse.ArgumentParser(
-        description="Word Analysis and Plagiarism Detection System")
+        description="Word Analysis and Plagiarism Detection System (WAPDS)")
     parser.add_argument(
         "run_type",
         help=
