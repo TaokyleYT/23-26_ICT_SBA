@@ -16,9 +16,7 @@ else:
 
 
 def animated_print(txt,
-                   end: str = '\n',
                    delay: float = 0.02,
-                   front_effect: str = '',
                    line_offset: int = 1,
                    _overload: bool = False):
     """
@@ -29,50 +27,43 @@ def animated_print(txt,
     
     Args:
         txt (str or list): The text to print. Can be a string or list of strings.
-        end (str): String appended after the last value, default is a newline.
         delay (float): Time in seconds between each character print (0.02s default).
-        front_effect (str): A string to display at the front of animated text.
         line_offset (int): Number of lines to offset the text vertically.
         _overload (bool): Internal parameter for optimization during recursion.
     """
-    # Input validation
-    if len(txt) == 0:
-        return
     if all(
         (all(isinstance(subchar, str) for subchar in char)\
          if (isinstance(char, (list, tuple)) and _overload)\
          else isinstance(char, str)) for char in txt):
         if all(len(char) == 1 for char in txt):
             # It's a str, convert to lines
-            txt = ''.join(txt).split('\n')
+            txt = (''.join(txt)).split('\n')
         else:
             txt = list(txt)
     else:
         raise TypeError("txt must be a str or iterable of str")
     if not isinstance(delay, (int, float)):
         raise TypeError("delay must be a number")
-    if not isinstance(front_effect, str):
-        raise TypeError("front_effect must be a str")
+    
+    if len(txt) == 0:
+        return #if need print nothing, prints nothing
+    input(txt)
 
     # Get terminal size for text wrapping
     term_size = os.get_terminal_size()
     txt_lst = []
-    
+
     # Process each line for wrapping and animation
     for line in txt:
-        if _overload:  # Skip processing if already processed
+        if _overload: #optimization by skipping an O(n^3)? algorithm if input already processed
             txt_lst = txt
             break
-            
         if not line:
-            txt_lst.append("")
+            txt_lst.append("") #newline, use empty string to replace
             continue
-            
-        # Split line by spaces, preserving ANSI codes
-        temp = split_exclude_ANSI(line, " ")
+        temp = split_exclude_ANSI(line, " ") # Split line by spaces, preserving ANSI codes
         words: list[str] = [(item if i == len(temp) else item + " ")
                             for i, item in enumerate(temp)]
-        
         # Wrap text to terminal width
         index: int = 0
         while index < len(words):
@@ -84,69 +75,53 @@ def animated_print(txt,
                     txt_lst.append(warpped_line)
                 index += 1
                 continue
-                
             # Add words to line until it would exceed terminal width
             txt_lst.append("")
             for i, word in enumerate(words[index:]):
                 if len(txt_lst[-1]) + len(word) > term_size.columns-1:
                     index += i
-                    break  # Break for loop
+                    break  #break for loop
                 txt_lst[-1] += word
             else:
                 break  # Break while loop if all words processed
-                
-    # Split each line into characters (preserving ANSI codes)
     if not _overload:
+        # Split each line into characters while preserving ANSI codes
+        # (Because ANSI codes are technically >=4 characters long, but prints as 0 characters, treating them as a character won't cause issue)
+        # (and if they are not preserved, they will be seperated and broken and thus raw ANSI code is being printed)
         txt_lst = [split_exclude_ANSI(line) for line in txt_lst]
-        
+
     # Truncate text if it would exceed terminal height
     txt_lst, truncated = txt_lst[:term_size.lines - 1], txt_lst[term_size.lines - 1:]
-    
-    # Find the maximum line length for animation timing
+
+    # Find the maximum line length (aka width of animation rectangle) for animation timing
     max_wordlen = max(len(line) for line in txt_lst)
-    
+
     # Create space for the animation
     print('\n' * (len(txt_lst)), end='\x1b[A')
-    
+
     # Animate text character by character
     for i in range(max_wordlen + line_offset * (len(txt_lst))):
         print("\x1b[A" * (len(txt_lst) - 1), end='')
         time.sleep(delay)
-        
         for j, line in enumerate(txt_lst):
             current_char = j * line_offset + 1
-            # Clear front effect space
-            print(' ' * len(front_effect) + "\x1b[D" * len(front_effect),
-                  end='')
-                  
             # Determine if this line needs updating at this step
             if (i - current_char >= 0
-                    and i - current_char < len(line)):  # Needs animated update
+                    and i - current_char < len(line)):
                 # Print current character with front effect
-                print("\x1b[" + str(current_char) + "D" +  # Move cursor left
-                      line[i - current_char] +            # Print character
-                      front_effect +                      # Print front effect
-                      "\x1b[D" * len(front_effect) +      # Move cursor left over front effect
-                      "\x1b[" + str(current_char) + "C" + # Move cursor right to original position
-                      "\b\x1b[1B",                        # Move cursor down one line
+                print("\x1b[" + str(current_char) + "D" + # Move cursor left
+                      line[i - current_char] + 
+                      "\x1b[" + str(current_char) + 
+                      "C" + "\b\x1b[1B",
                       end='',
                       flush=True)
             else:
-                # Just move to next line
                 print("\x1b[1B", end='', flush=True)
-                
-        # Reposition cursor for next animation step
         print("\x1b[1A\x1b[1C", end='', flush=True)
-        
-    # Finalize animation
     time.sleep(delay)
-    print("\x1b[" + str(line_offset * len(txt_lst)) + "D", end=end, flush=True)
-    
-    # Recursively handle any truncated text
+    print("\x1b[" + str(line_offset * len(txt_lst)) + "D", end='\n', flush=True)
     animated_print(truncated,
-                   end,
                    delay,
-                   front_effect,
                    line_offset,
                    _overload=True)
     return
@@ -240,8 +215,13 @@ def animated_input(prompt: str,
     result = ""
     ansi = ""
     
+    if _log:
+        with open("input_log.txt", "a") as f:
+            f.write("\n-----\nInput started\n-----\n")
     # Handle input with fancy animation
-    while char != "\n":    
+    while char != "\n":
+        if char in "\x03\x04":
+            raise KeyboardInterrupt
         if char in "\x7f\x08":  # Backspace character
             if len(result) > 0:  # If can backspace
                 if _log:
@@ -465,7 +445,6 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
     Raises:
         TypeError: If sep is not a string, list of strings, or tuple of strings
     """
-    # Validate separator type
     if not type_check(sep, str | list[str] | tuple[str]):
         raise TypeError(
             f"sep should be either string or list or tuple that contains only strings, not {type(sep)}"
@@ -478,7 +457,7 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
     # Convert sep to list for uniform handling
     separators = [sep] if isinstance(sep, str) else list(sep)
 
-    # Process string character by character
+    # Handle empty separator case (split into characters)
     result = []
     i = 0
     start = 0
@@ -486,36 +465,34 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
     ansi_start = -1
 
     while i < len(text):
-        # Check if we're starting an ANSI escape sequence
+        # Check if we're in an ANSI escape sequence
         if text[i] == '\x1b' and i + 1 < len(text) and text[i + 1] == '[':
             in_ansi = True
             ansi_start = i
 
-        # Check if we're at the end of an ANSI sequence (character in range @ to ~)
+        # Check if we're at the end of an ANSI sequence
         if in_ansi and i > ansi_start+1 and text[i] > "@" and text[i] < "~":
             in_ansi = False
 
         # Only check for separators if we're not in an ANSI sequence
         if not in_ansi:
-            if separators == [""]:  # Split into individual characters
+            if separators == [""]:
                 i += 1
-            else:
-                # Check if current position matches any separator
-                for separator in separators:
-                    if i + len(separator) <= len(text) and text[i:i + len(separator)] == separator:
-                        result.append(text[start:i])
-                        i += len(separator) - 1  # -1 because we'll increment i at the end of the loop
-                        start = i + 1
-                        break
+            # Check if current position matches any separator
+            for separator in separators:
+                if i + len(separator) <= len(text) and text[i:i + len(separator)] == separator:
+                    result.append(text[start:i])
+                    i += len(separator) - 1  # -1 because we'll increment i at the end of the loop
+                    start = i + 1
+                    break
 
         i += 1
 
     # Add the last segment
     result.append(text[start:])
     
-    # Remove empty strings at the end (can happen with certain separators)
-    while result and result[-1] == "":
-        del result[-1]
+    while result[-1] == "":
+        del result[-1] #in case null strings showed up at the end by some separator mess (causes trouble)
 
     return result
 
