@@ -1,15 +1,23 @@
-import os  #get terminal size for text overflowing on CLI mode
-import helpers  #a bunch of non-functions (by me ofc) that prevents me from losing ALOT of marks due to using built-in functions
-from helpers import animated_print as print, animated_input as input  #animate print and input lol
-import tkinter as tk  #tkinter is a module that allows me to go GUI WOOOOOOO
-from tkinter import ttk, filedialog, messagebox  #frequently used stuff I dont wanna type "tkinter." everytime I use them
-import matplotlib.pyplot as plt  #graphs and charts so I dont need to suffer using pure tkinter
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  #used whenever I make a chart, COMEON NOBODY WANNA TYPE THIS LONG AHH THING EVERYTIME
-import argparse  #so I know if u want CLI or GUI :) you are on CLI if u can use this   anyways
+import os  # Import module for terminal size detection and file operations
+import helpers  # Import custom helper functions that avoid using built-in functions
+from helpers import animated_print as print, animated_input as input  # Use animated versions of print/input
+import tkinter as tk  # Import tkinter for GUI implementation
+from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
+import matplotlib.pyplot as plt  # Import matplotlib for data visualization
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
+import argparse  # For command-line argument parsing
 
 
 def read_file(file_path):
-    """Read a text file and return its content as a string."""
+    """
+    Read a text file and return its content as a string.
+    
+    Args:
+        file_path (str): Path to the file to be read
+        
+    Returns:
+        str or None: The content of the file as a string, or None if an error occurred
+    """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
@@ -25,13 +33,24 @@ def read_file(file_path):
 
 
 def clean_text(text):
-    """Remove punctuation and convert text to lowercase."""
+    """
+    Remove punctuation and convert text to lowercase.
+    
+    Args:
+        text (str or None): Text to be cleaned
+        
+    Returns:
+        str: Cleaned text with punctuation removed, converted to lowercase
+             and with no extra spaces
+    """
     if text is None:
         return ""
 
+    # Replace any character that isn't a letter, digit, or space with a space
     cleaned_text = "".join((char if 'a' <= char <= 'z' or '0' <= char <= '9'
                             or char == ' ' else ' ') for char in text.lower())
-    # Remove extra spaces
+
+    # Remove extra spaces (replace double spaces with single until no doubles remain)
     while '  ' in cleaned_text:
         cleaned_text = cleaned_text.replace('  ', ' ')
 
@@ -39,18 +58,33 @@ def clean_text(text):
 
 
 def count_words(text):
-    """Count the frequency of each word in the text."""
+    """
+    Count the frequency of each word in the text.
+    
+    Args:
+        text (str): Cleaned text to analyze
+        
+    Returns:
+        tuple: A tuple containing two lists:
+            - List of unique words
+            - List of corresponding frequencies
+    """
     if not text:
         return ([], [])
 
+    # Initialize result structure as a tuple of two lists
     word_count = ([], [])
     words = text.split(" ")
 
+    # Count frequency of each word
     for n in range(len(words)):
         word = words[n]
         if word in word_count[0]:
-            word_count[1][helpers.linear_search(word_count[0], word)] += 1
+            # If word already exists in our list, increment its count
+            word_index = helpers.linear_search(word_count[0], word)
+            word_count[1][word_index] += 1
         else:
+            # Otherwise, add it to our list with a count of 1
             word_count[0].append(word)
             word_count[1].append(1)
 
@@ -58,7 +92,15 @@ def count_words(text):
 
 
 def get_total_words(word_count):
-    """Return the total number of words in a text."""
+    """
+    Calculate the total number of words in a text.
+    
+    Args:
+        word_count (tuple): A tuple of (words, frequencies) as returned by count_words()
+        
+    Returns:
+        int: Total word count (sum of all frequencies)
+    """
     total = 0
     for count in word_count[1]:
         total += count
@@ -66,40 +108,69 @@ def get_total_words(word_count):
 
 
 def get_unique_words(word_count):
-    """Return the number of unique words in a text."""
+    """
+    Get the number of unique words in a text.
+    
+    Args:
+        word_count (tuple): A tuple of (words, frequencies) as returned by count_words()
+        
+    Returns:
+        int: Number of unique words
+    """
     return len(word_count[0])
 
 
 def sort_alphabetically(word_count):
-    """Sort words alphabetically using quick_sort from helpers."""
+    """
+    Sort words alphabetically using quick_sort from helpers.
+    
+    Args:
+        word_count (tuple): A tuple of (words, frequencies) as returned by count_words()
+        
+    Returns:
+        list: List of (word, frequency) tuples sorted alphabetically
+    """
     words = word_count[0]
+    # Sort words alphabetically
     sorted_words = helpers.quick_sort(words)
+
+    # Create list of (word, frequency) pairs
     result = []
     for n in range(len(sorted_words)):
         word = sorted_words[n]
+        # Find the index of the word in the original list to get its frequency
         result.append(
             (word, word_count[1][helpers.linear_search(word_count[0], word)]))
     return result
 
 
 def sort_by_frequency(word_count):
-    """Sort words by frequency (highest to lowest)."""
+    """
+    Sort words by frequency (highest to lowest).
+    
+    Args:
+        word_count (tuple): A tuple of (words, frequencies) as returned by count_words()
+        
+    Returns:
+        list: List of (word, frequency) tuples sorted by frequency (highest first)
+    """
     # Create a list of (word, count) tuples
     word_items = []
     for idx in range(len(word_count[0])):
         word_items.append((word_count[0][idx], word_count[1][idx]))
 
-    # Sort based on count (second element in tuple)
-    # Create a custom comparison function for the quick_sort
+    # Create a function that generates a comparison key for sorting
     def get_comparison_key(item):
-        return (-item[1], item[0])  # Sort by -count, then by word
+        return (-item[1], item[0]
+                )  # Sort by -count (for descending), then by word
 
     # Create a list that can be sorted using the quick_sort function
-    # We'll sort based on the negative count, so higher counts come first
+    # Using indices to maintain the original items
     items_to_sort = []
     for i, item in enumerate(word_items):
         items_to_sort.append((get_comparison_key(item), i))
 
+    # Sort the indices
     sorted_indices = helpers.quick_sort(items_to_sort)
 
     # Reconstruct the result using the sorted indices
@@ -111,27 +182,53 @@ def sort_by_frequency(word_count):
 
 
 def calculate_similarity(word_count1, word_count2):
-    """Calculate the similarity percentage between two texts based on word frequencies."""
+    """
+    Calculate the similarity percentage between two texts based on word frequencies.
+    
+    Args:
+        word_count1 (tuple): Word count data for the first text
+        word_count2 (tuple): Word count data for the second text
+        
+    Returns:
+        float: Similarity percentage (0-100)
+    """
     # Get all unique words from both texts
     all_words = []
     common_words = 0
 
+    # Add all words from first text to all_words list
     for word in word_count1[0]:
         if word not in all_words:
             all_words.append(word)
 
+    # Count common words and add unique words from second text
     for word in word_count2[0]:
         if word in word_count1[0]:
             common_words += 1
         if word not in all_words:
             all_words.append(word)
 
+    # Calculate similarity percentage
     return (common_words / len(all_words)) * 100
 
 
 class WordAnalysisApp:
+    """
+    GUI application for word analysis and plagiarism detection.
+    
+    This class implements a tkinter-based graphical user interface for:
+    - Analyzing individual text files (word count, sorting, frequency graphs)
+    - Comparing two files for potential plagiarism
+    """
 
     def __init__(self, root, size="1000x700"):
+        """
+        Initialize the application with the tkinter root window.
+        
+        Args:
+            root: Tkinter root window
+            size (str): Window size in format "widthxheight"
+        """
         self.root = root
         self.root.title("Word Analysis and Plagiarism Detection")
         self.root.geometry(size)
@@ -159,7 +256,15 @@ class WordAnalysisApp:
         style.configure("TFrame", background="#f0f0f0")
 
     def create_analyze_tab(self):
-        """Create the Analyze tab for single file analysis."""
+        """
+        Create the Analyze tab for single file analysis.
+        
+        This tab contains:
+        - File selection controls
+        - Word statistics display
+        - Word frequency and alphabetical lists
+        - Word frequency graph
+        """
         analyze_tab = ttk.Frame(self.notebook)
         self.notebook.add(analyze_tab, text="Analyze File")
 
@@ -226,7 +331,15 @@ class WordAnalysisApp:
         self.graph_canvas1.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
     def create_compare_tab(self):
-        """Create the Compare tab for plagiarism detection."""
+        """
+        Create the Compare tab for plagiarism detection.
+        
+        This tab contains:
+        - File selection for two files
+        - Statistics for both files
+        - Similarity comparison results
+        - Word frequency comparison graph
+        """
         compare_tab = ttk.Frame(self.notebook)
         self.notebook.add(compare_tab, text="Compare Files")
 
@@ -319,9 +432,11 @@ class WordAnalysisApp:
         self.compare_canvas = tk.Canvas(graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-
     def browse_file1(self):
-        """Browse for a file to analyze."""
+        """
+        Open a file dialog to browse for a file to analyze.
+        Updates the file path entry field with the selected path.
+        """
         if file_path := filedialog.askopenfilename(
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):
             self.file_entry1.delete(0, tk.END)
@@ -329,27 +444,42 @@ class WordAnalysisApp:
             self.file_path1 = file_path
 
     def browse_compare_file1(self):
-        """Browse for the first file to compare."""
+        """
+        Open a file dialog to browse for the first file to compare.
+        Updates the file path entry field with the selected path.
+        """
         if file_path := filedialog.askopenfilename(
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):
             self.compare_file_entry1.delete(0, tk.END)
             self.compare_file_entry1.insert(0, file_path)
 
     def browse_compare_file2(self):
-        """Browse for the second file to compare."""
+        """
+        Open a file dialog to browse for the second file to compare.
+        Updates the file path entry field with the selected path.
+        """
         if file_path := filedialog.askopenfilename(
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):
             self.compare_file_entry2.delete(0, tk.END)
             self.compare_file_entry2.insert(0, file_path)
 
-
     def analyze_file(self):
-        """Analyze a single file and display the results."""
+        """
+        Analyze a single file and display the results.
+        
+        This method:
+        1. Reads the file content
+        2. Cleans and analyzes the text
+        3. Updates the statistics display
+        4. Updates the word lists
+        5. Creates and displays the frequency graph
+        """
         file_path = self.file_entry1.get()
         if not file_path:
             messagebox.showerror("Error", "Please select a file first.")
             return
 
+        # Read and process file
         content = read_file(file_path)
         if content is None:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
@@ -386,7 +516,14 @@ class WordAnalysisApp:
         self.clean_content1 = clean_content
 
     def create_frequency_graph(self, word_count, canvas_widget, max_words=10):
-        """Create a bar graph of word frequencies."""
+        """
+        Create a bar graph of word frequencies.
+        
+        Args:
+            word_count (tuple): Word count data
+            canvas_widget: Tkinter canvas to display the graph
+            max_words (int): Maximum number of words to display in the graph
+        """
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
@@ -428,7 +565,16 @@ class WordAnalysisApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
     def compare_files(self):
-        """Compare two files for plagiarism detection."""
+        """
+        Compare two files for plagiarism detection.
+        
+        This method:
+        1. Reads both files
+        2. Cleans and analyzes the texts
+        3. Calculates similarity percentage
+        4. Updates the statistics and comparison displays
+        5. Creates and displays the comparison graph
+        """
         file_path1 = self.compare_file_entry1.get()
         file_path2 = self.compare_file_entry2.get()
 
@@ -436,6 +582,7 @@ class WordAnalysisApp:
             messagebox.showerror("Error", "Please select both files.")
             return
 
+        # Read and process both files
         content1 = read_file(file_path1)
         content2 = read_file(file_path2)
 
@@ -499,7 +646,15 @@ class WordAnalysisApp:
                                 word_count2,
                                 canvas_widget,
                                 max_words=5):
-        """Create a comparison graph of word frequencies between two files."""
+        """
+        Create a comparison graph of word frequencies between two files.
+        
+        Args:
+            word_count1 (tuple): Word count data for the first file
+            word_count2 (tuple): Word count data for the second file
+            canvas_widget: Tkinter canvas to display the graph
+            max_words (int): Maximum number of words to display from each file
+        """
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
@@ -574,17 +729,28 @@ class WordAnalysisApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 
-
-
 def display_results(file_path,
                     word_count,
                     total_words,
                     unique_words,
                     show_nums=10,
                     warp=os.get_terminal_size().columns):
-    """Display analysis results for a single file."""
+    """
+    Display analysis results for a single file in CLI mode.
+    
+    Args:
+        file_path (str): Path to the analyzed file
+        word_count (tuple): Word count data
+        total_words (int): Total number of words
+        unique_words (int): Number of unique words
+        show_nums (int): Number of top words to display
+        warp (int): Number of columns to use for text wrapping
+    """
+    # Limit number of words to display to available words
     show_nums = helpers.min(show_nums, len(word_count[0]))
     hyphen_warp = helpers.min(warp, len(str(show_nums)) + 30)
+
+    # Print header and statistics
     print(f"\
 \n\
 {'='*helpers.min(warp, len(file_path)+15)}\n\
@@ -596,12 +762,15 @@ Unique words: {unique_words}\n\
 \n\
 Top {show_nums} Most Frequent Words:\n\
 {'-'*hyphen_warp}")
+
+    # Print frequency-sorted words
     frequency_sorted = sort_by_frequency(word_count)
     txt = "".join(f"{i + 1}. '{word}': {count} times\n"
                   for i, (word,
                           count) in enumerate(frequency_sorted[:show_nums]))
     print(txt)
 
+    # Print alphabetically-sorted words
     txt = f"\nFirst {show_nums} Words (Alphabetically):\n{'-'*hyphen_warp}\n"
     alpha_sorted = sort_alphabetically(word_count)
     for i, (word, count) in enumerate(alpha_sorted[:show_nums]):
@@ -610,8 +779,15 @@ Top {show_nums} Most Frequent Words:\n\
 
 
 def compare_files(file_path1, file_path2):
-    """Compare two text files and calculate their similarity percentage."""
+    """
+    Compare two text files and calculate their similarity percentage for CLI mode.
+    
+    Args:
+        file_path1 (str): Path to the first file
+        file_path2 (str): Path to the second file
+    """
     columns = os.get_terminal_size().columns
+
     # Read and process the files
     content1 = read_file(file_path1)
     content2 = read_file(file_path2)
@@ -622,6 +798,7 @@ def compare_files(file_path1, file_path2):
         )
         return
 
+    # Clean and analyze texts
     clean_content1 = clean_text(content1)
     clean_content2 = clean_text(content2)
 
@@ -645,7 +822,7 @@ def compare_files(file_path1, file_path2):
         f"\n{'='*helpers.min(columns, len(file_path1)+len(file_path2)+30)}\nComparison between '{file_path1}' and '{file_path2}':\n{'='*helpers.min(columns, len(file_path1)+len(file_path2)+30)}\nSimilarity percentage: {similarity:.2f}%"
     )
 
-    # Determine plagiarism level based on similarity
+    # Determine and display plagiarism level with color coding
     if similarity > 80:
         print(
             "\x1b[31;40mPlagiarism Level: HIGH - These texts are very similar\x1b[m"
@@ -665,7 +842,15 @@ def compare_files(file_path1, file_path2):
 
 
 def analyze_file(file_path):
-    """Analyze a single text file."""
+    """
+    Analyze a single text file for CLI mode.
+    
+    Args:
+        file_path (str): Path to the file to analyze
+        
+    Returns:
+        tuple: Word count data and cleaned content, or None if an error occurred
+    """
     # Read and process the file
     content = read_file(file_path)
 
@@ -684,32 +869,45 @@ def analyze_file(file_path):
 
 
 def mainGUI():
-    """Main function to run the Word Analysis and Plagiarism Detection System GUI."""
+    """
+    Start the GUI version of the Word Analysis and Plagiarism Detection System.
+    
+    Creates a tkinter window and initializes the application with a confirmation
+    dialog when attempting to close the window.
+    """
     root = tk.Tk()
     app = WordAnalysisApp(
-        root)  #app is unused because tkinter does the job for me :)
+        root)  # app is unused because tkinter handles the UI events
+
+    # Set up close confirmation dialog
     root.protocol(
         "WM_DELETE_WINDOW", lambda: root.destroy()
         if messagebox.askokcancel("Quit", "Do you want to quit?") else None)
+
+    # Start the main event loop
     root.mainloop()
 
 
 def mainCLI():
+    """
+    Start the CLI version of the Word Analysis and Plagiarism Detection System.
+    
+    Presents a menu-based interface for file analysis and comparison.
+    """
     columns = os.get_terminal_size().columns
-    """Main function to run the Word Analysis and Plagiarism Detection System."""
     print("Word Analysis and Plagiarism Detection System\n" +
           "-" * helpers.min(columns, 45))
 
     while True:
+        # Display main menu
         print("\
 \nMenu:\n\
 1. Analyze a single file\n\
 2. Compare two files for plagiarism\n\
-3. Search for a word in a file\n\
-4. Replace a word in a file\n\
-5. Exit\n")
+3. Configure settings\n\
+4. Exit\n")
 
-        choice = input("\nEnter your choice (1-5): ").strip()
+        choice = input("\nEnter your choice (1-4): ").strip()
 
         if choice == '1':
             file_path = input("Enter the path to the text file: ").strip()
@@ -723,66 +921,21 @@ def mainCLI():
             compare_files(file_path1, file_path2)
 
         elif choice == '3':
-            file_path = input("Enter the path to the text file: ").strip()
-            content = read_file(file_path)
-
-            if content is not None:
-                target_word = input("Enter the word to search for: ").strip()
-                if positions := helpers.find_all_str(clean_text(content),
-                                                     target_word):
-                    print(
-                        f"The word '{target_word}' appears {len(positions)} times at positions: {positions}"
-                    )
-                else:
-                    print(
-                        f"The word '{target_word}' was not found in the file.")
+            pass  # Settings feature not implemented
 
         elif choice == '4':
-            file_path = input("Enter the path to the text file: ").strip()
-            content = read_file(file_path)
-
-            if content is not None:
-                target_word = input("Enter the word to replace: ").strip()
-                replacement_word = input(
-                    "Enter the replacement word: ").strip()
-
-                clean_content = clean_text(content)
-                modified_content = clean_content.replace(
-                    target_word, replacement_word)
-
-                print("\nOriginal text (cleaned):")
-                print(f"{clean_content[:100]}..." if len(clean_content) >
-                      100 else clean_content)
-
-                print(
-                    '\nModified text:\n{modified_content[:100]}{"..." if len(modified_content) > 100 else modified_content}'
-                )
-
-                save_option = input(
-                    "\nDo you want to save the modified text to a new file? (y/n): "
-                ).strip().lower()
-                if save_option == 'y':
-                    new_file_path = input(
-                        "Enter the path for the new file: ").strip()
-                    try:
-                        with open(new_file_path, 'w',
-                                  encoding='utf-8') as file:
-                            file.write(modified_content)
-                        print(f"Modified text saved to '{new_file_path}'")
-                    except Exception as e:
-                        print(f"Error saving file: {str(e)}")
-
-        elif choice == '5':
             print(
                 "Thank you for using the Word Analysis and Plagiarism Detection System!"
             )
             break
-
         else:
-            print("Invalid choice. Please enter a number between 1 and 5.")
+            print(
+                f"Invalid choice {repr(choice)}. Please enter a number between 1 and 4."
+            )
 
 
 if __name__ == "__main__":
+    # Parse command line arguments to determine whether to run GUI or CLI
     parser = argparse.ArgumentParser(
         description="Word Analysis and Plagiarism Detection System")
     parser.add_argument(
@@ -792,6 +945,8 @@ if __name__ == "__main__":
         nargs="?",
         default="GUI")
     args = parser.parse_args()
+
+    # Start appropriate interface based on argument
     if args.run_type == "GUI":
         mainGUI()
     elif args.run_type == "CLI":
