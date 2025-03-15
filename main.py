@@ -727,6 +727,12 @@ class WordAnalysisApp:
         canvas = FigureCanvasTkAgg(fig, master=canvas_widget)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
+        
+        
+def configure():
+    #idk help me
+    pass
 
 
 def display_results(file_path,
@@ -812,8 +818,8 @@ def compare_files(file_path1, file_path2):
     unique_words2 = get_unique_words(word_count2)
 
     # Display analysis results for each file
-    display_results(file_path1, word_count1, total_words1, unique_words1, 5)
-    display_results(file_path2, word_count2, total_words2, unique_words2, 5)
+    display_results(file_path1, word_count1, total_words1, unique_words1, config.compare_file_display_line)
+    display_results(file_path2, word_count2, total_words2, unique_words2, config.compare_file_display_line)
 
     # Calculate and display similarity percentage
     similarity = calculate_similarity(word_count1, word_count2)
@@ -863,8 +869,7 @@ def analyze_file(file_path):
     unique_words = get_unique_words(word_count)
 
     # Display analysis results
-    display_results(file_path, word_count, total_words, unique_words)
-
+    display_results(file_path, word_count, total_words, unique_words, config.single_file_display_line)
     return word_count, 
 
 def GUIexit(root):
@@ -925,8 +930,7 @@ def mainCLI():
             compare_files(file_path1, file_path2)
 
         elif choice == '3':
-            pass  # Settings feature not implemented
-
+            configure()
         elif choice == '4':
             print(
                 "Thank you for using WAPDS!"
@@ -936,6 +940,13 @@ def mainCLI():
             print(
                 f"Invalid choice {repr(choice)}. Please enter a number between 1 and 4."
             )
+            
+            
+class config:
+    with open("WAPDS.config", "r") as f:
+        config_data = f.readline().split(";")
+    single_file_display_line = config_data[0]
+    compare_file_display_line = config_data[1]
 
 
 if __name__ == "__main__":

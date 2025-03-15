@@ -397,7 +397,7 @@ def quick_sort(input_list: Sequence, ascending: bool = True):
 def linear_search(input_list: list,
                   value,
                   start=0,
-                  stop=9223372036854775807,
+                  stop=2147483647,
                   /):
     """
     Performs a linear search for a value in a list.
