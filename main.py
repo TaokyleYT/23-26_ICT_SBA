@@ -221,7 +221,7 @@ class WordAnalysisApp:
     - Comparing two files for potential plagiarism
     """
 
-    def __init__(self, root, size="1000x700"):
+    def __init__(self, root, size=config.window_size):
         """
         Initialize the application with the tkinter root window.
         
@@ -582,7 +582,7 @@ class WordAnalysisApp:
         self.word_count1 = word_count
         self.clean_content1 = clean_content
 
-    def create_frequency_graph(self, word_count, canvas_widget, max_words=10):
+    def create_frequency_graph(self, word_count, canvas_widget, max_words=config.graph_max_words):
         """
         Create a bar graph of word frequencies.
         
@@ -712,7 +712,7 @@ class WordAnalysisApp:
                                 word_count1,
                                 word_count2,
                                 canvas_widget,
-                                max_words=5):
+                                max_words=config.compare_max_words):
         """
         Create a comparison graph of word frequencies between two files.
         
@@ -1084,22 +1084,52 @@ def mainCLI():
             
             
 class config:
+    # Default values
+    DEFAULTS = {
+        'cli': {
+            'single_file_display_line': 10,
+            'compare_file_display_line': 5
+        },
+        'gui': {
+            'window_size': "1000x700",
+            'graph_max_words': 10,
+            'graph_figsize': (5, 4),
+            'compare_max_words': 5
+        }
+    }
+
     try:
         with open("WAPDS.config", "r") as f:
             config_data = f.readline().split(";")
+            # CLI settings
+            single_file_display_line = int(config_data[0])
+            compare_file_display_line = int(config_data[1])
     except:
-        f = open("WAPDS.config", "w") #if doesn't exist or corrupted etc, create a new one
-        f.close()
-    try:
-        single_file_display_line = int(config_data[0])
-    except:
-        single_file_display_line = 10
-    try:
-        compare_file_display_line = int(config_data[1])
-    except:
-        compare_file_display_line = 5
-    with open("WAPDS.config", "w") as f: #replace corrupted values with default values
+        # Use defaults if file doesn't exist or is corrupted
+        single_file_display_line = DEFAULTS['cli']['single_file_display_line']
+        compare_file_display_line = DEFAULTS['cli']['compare_file_display_line']
+        
+    # Write/update config file
+    with open("WAPDS.config", "w") as f:
         f.write(f"{single_file_display_line};{compare_file_display_line}")
+
+    # GUI settings with defaults
+    window_size = DEFAULTS['gui']['window_size']
+    graph_max_words = DEFAULTS['gui']['graph_max_words']
+    graph_figsize = DEFAULTS['gui']['graph_figsize']
+    compare_max_words = DEFAULTS['gui']['compare_max_words']
+
+    @classmethod
+    def reset_to_defaults(cls):
+        """Reset all settings to their default values"""
+        # CLI defaults
+        cls.single_file_display_line = cls.DEFAULTS['cli']['single_file_display_line']
+        cls.compare_file_display_line = cls.DEFAULTS['cli']['compare_file_display_line']
+        # GUI defaults
+        cls.window_size = cls.DEFAULTS['gui']['window_size']
+        cls.graph_max_words = cls.DEFAULTS['gui']['graph_max_words']
+        cls.graph_figsize = cls.DEFAULTS['gui']['graph_figsize']
+        cls.compare_max_words = cls.DEFAULTS['gui']['compare_max_words']
 
 
 if __name__ == "__main__":
