@@ -22,13 +22,13 @@ def read_file(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         if not content.strip():
-            print(f"\x1b[33;40mWarning: File '{file_path}' is empty.\x1b[m")
+            print(f"\x1b[33mWarning: File '{file_path}' is empty.\x1b[m")
         return content
     except FileNotFoundError:
-        print(f"\x1b[31;40mError: File '{file_path}' not found.\x1b[m")
+        print(f"\x1b[31mError: File '{file_path}' not found.\x1b[m")
         return None
     except Exception as e:
-        print(f"\x1b[31;40mError reading file '{file_path}': {str(e)}\x1b[m")
+        print(f"\x1b[31mError reading file '{file_path}': {str(e)}\x1b[m")
         return None
 
 
@@ -240,6 +240,7 @@ class WordAnalysisApp:
         # Create tabs
         self.create_analyze_tab()
         self.create_compare_tab()
+        self.create_config_tab()
 
         # Variables to store file paths and analysis results
         self.file_path1 = ""
@@ -431,6 +432,72 @@ class WordAnalysisApp:
 
         self.compare_canvas = tk.Canvas(graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+    
+    def create_config_tab(self):
+        """
+        Create the Configuration tab for changing application settings.
+
+        This tab allows users to modify:
+        - Number of words to display in Analyze File tab
+        - Number of words to display in Compare Files tab
+        """
+        config_tab = ttk.Frame(self.notebook)
+        self.notebook.add(config_tab, text="Configuration")
+        
+        settings_frame = ttk.LabelFrame(config_tab, text="Application Settings")
+        settings_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # Single file display setting
+        single_file_frame = ttk.Frame(settings_frame)
+        single_file_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Label(single_file_frame, 
+                  text="Number of words to display in Analyze File tab:").pack(side=tk.LEFT, padx=5)
+
+        self.single_file_display_var = tk.StringVar(value=str(config.single_file_display_line))
+        self.single_file_display_entry = ttk.Entry(single_file_frame, 
+                                                   width=10, 
+                                                   textvariable=self.single_file_display_var)
+        self.single_file_display_entry.pack(side=tk.LEFT, padx=5)
+
+        # Compare files display setting
+        compare_file_frame = ttk.Frame(settings_frame)
+        compare_file_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Label(compare_file_frame, 
+                  text="Number of words to display in Compare Files tab:").pack(side=tk.LEFT, padx=5)
+
+        self.compare_file_display_var = tk.StringVar(value=str(config.compare_file_display_line))
+        self.compare_file_display_entry = ttk.Entry(compare_file_frame, 
+                                                    width=10, 
+                                                    textvariable=self.compare_file_display_var)
+        self.compare_file_display_entry.pack(side=tk.LEFT, padx=5)
+
+        # Buttons frame
+        buttons_frame = ttk.Frame(settings_frame)
+        buttons_frame.pack(fill=tk.X, pady=20)
+
+        save_btn = ttk.Button(buttons_frame, 
+                              text="Save Settings", 
+                              command=self.save_config)
+        save_btn.pack(side=tk.RIGHT, padx=5)
+
+        cancel_btn = ttk.Button(buttons_frame, 
+                                text="Reset", 
+                                command=self.reset_config)
+        cancel_btn.pack(side=tk.RIGHT, padx=5)
+
+        # Add an info text
+        info_frame = ttk.Frame(config_tab)
+        info_frame.pack(fill=tk.X, pady=10)
+
+        info_text = tk.Text(info_frame, height=5, wrap=tk.WORD)
+        info_text.pack(fill=tk.X, padx=10)
+        info_text.insert(tk.END, 
+                        "These settings control how many words are displayed in the word lists and graphs. " 
+                        "Changes will be saved to the configuration file and applied immediately.")
+        info_text.config(state=tk.DISABLED)  # Make the text read-only
+
 
     def browse_file1(self):
         """
@@ -728,11 +795,84 @@ class WordAnalysisApp:
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         
+    def save_config(self):
+        """
+        Save the configuration settings to the config file.
+        """
+        try:
+            # Get values from entry fields
+            single_file_display = int(self.single_file_display_var.get())
+            compare_file_display = int(self.compare_file_display_var.get())
+
+            if single_file_display <= 0 or compare_file_display <= 0:
+                messagebox.showerror("Error", "Settings must be positive numbers.")
+                return
+
+            # Update config
+            config.single_file_display_line = single_file_display
+            config.compare_file_display_line = compare_file_display
+
+            # Write to config file
+            with open("WAPDS.config", "w") as f:
+                f.write(f"{single_file_display};{compare_file_display}")
+
+            messagebox.showinfo("Configuration", "Settings saved successfully!")
+        except ValueError:
+            messagebox.showerror("Error", "Please enter valid numbers for both settings.")
+
+    def reset_config(self):
+        """
+        Reset the configuration fields to their current values.
+        """
+        self.single_file_display_var.set(str(config.single_file_display_line))
+        self.compare_file_display_var.set(str(config.compare_file_display_line))
+        
         
         
 def configure():
-    #idk help me
-    pass
+    """
+    Configure the settings for the program.
+    """
+    unsaved_single_file_display_line: int|None = None
+    unsaved_compare_file_display_line: int|None = None
+    while True:
+        print([f"Change settings{'' if unsaved_single_file_display_line is None and unsaved_compare_file_display_line is None else ' (unsaved)'}:",
+        ["\x1b[1;4mA\x1b[m", *f"nalyse file: show first {config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})'} sorted words appeared"],
+        ["\x1b[1;4mC\x1b[m", *f"ompare files: show first {config.compare_file_display_line if unsaved_compare_file_display_line is None else f'{unsaved_compare_file_display_line} (was {config.compare_file_display_line})'} sorted words appeared"],
+        ["\x1b[1;4mS\x1b[m", *"ave and exit"],
+        ["\x1b[1;4mE\x1b[m", *"xit without saving"]], _override=True) # because multi-line print containing ANSI is not supported, input text is sliced manually to make it work
+        config_option = input("Enter option: ", single_letter=True).upper().strip()
+
+        if config_option == "A":
+            try:
+                temp_unsaved = int(input(f"Enter number of sorted words to display in Analyse File mode (was {config.single_file_display_line}): "))
+                if temp_unsaved > 0:
+                    unsaved_single_file_display_line = temp_unsaved
+                else:
+                    raise ValueError
+            except ValueError:
+                print("Invalid input. Please enter a positive number.")
+        elif config_option == "C":
+            try:
+                temp_unsaved = int(input(f"Enter number of sorted words to display in Compare Files mode (was {config.compare_file_display_line}): "))
+                if temp_unsaved > 0:
+                    unsaved_compare_file_display_line = temp_unsaved
+                else:
+                    raise ValueError
+            except ValueError:
+                print("Invalid input. Please enter a positive number.")
+        elif config_option in "ES":
+            break
+        else:
+            print(f"Invalid option {repr(config_option)}. Please try again.")
+    if config_option == "S":
+        if unsaved_single_file_display_line is not None:
+            config.single_file_display_line = unsaved_single_file_display_line
+        if unsaved_compare_file_display_line is not None:
+            config.compare_file_display_line = unsaved_compare_file_display_line
+        with open("WAPDS.config", "w") as f:
+            f.write(f"{config.single_file_display_line};{config.single_file_display_line}")
+    return
 
 
 def display_results(file_path,
@@ -800,7 +940,7 @@ def compare_files(file_path1, file_path2):
 
     if content1 is None or content2 is None:
         print(
-            "\x1b[31;40mError: Cannot compare files due to reading errors.\x1b[m"
+            "\x1b[31mError: Cannot compare files due to reading errors.\x1b[m"
         )
         return
 
@@ -831,19 +971,19 @@ def compare_files(file_path1, file_path2):
     # Determine and display plagiarism level with color coding
     if similarity > 80:
         print(
-            "\x1b[31;40mPlagiarism Level: HIGH - These texts are very similar\x1b[m"
+            "\x1b[31mPlagiarism Level: HIGH - These texts are very similar\x1b[m"
         )
     elif similarity > 50:
         print(
-            "\x1b[33;40mPlagiarism Level: MEDIUM - These texts have significant overlap\x1b[m"
+            "\x1b[33mPlagiarism Level: MEDIUM - These texts have significant overlap\x1b[m"
         )
     elif similarity > 20:
         print(
-            "\x1b[92;40mPlagiarism Level: LOW - These texts have some common elements\x1b[m"
+            "\x1b[92mPlagiarism Level: LOW - These texts have some common elements\x1b[m"
         )
     else:
         print(
-            "\x1b[32;40mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[m"
+            "\x1b[32mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[m"
         )
 
 
@@ -870,7 +1010,7 @@ def analyze_file(file_path):
 
     # Display analysis results
     display_results(file_path, word_count, total_words, unique_words, config.single_file_display_line)
-    return word_count, 
+
 
 def GUIexit(root):
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -916,7 +1056,8 @@ def mainCLI():
 3. Configure settings\n\
 4. Exit\n")
 
-        choice = input("\nEnter your choice (1-4): ").strip()
+        choice = input("\nEnter your choice (1-4): ", single_letter=True).strip()
+
 
         if choice == '1':
             file_path = input("Enter the path to the text file: ").strip()
@@ -943,10 +1084,22 @@ def mainCLI():
             
             
 class config:
-    with open("WAPDS.config", "r") as f:
-        config_data = f.readline().split(";")
-    single_file_display_line = config_data[0]
-    compare_file_display_line = config_data[1]
+    try:
+        with open("WAPDS.config", "r") as f:
+            config_data = f.readline().split(";")
+    except:
+        f = open("WAPDS.config", "w") #if doesn't exist or corrupted etc, create a new one
+        f.close()
+    try:
+        single_file_display_line = int(config_data[0])
+    except:
+        single_file_display_line = 10
+    try:
+        compare_file_display_line = int(config_data[1])
+    except:
+        compare_file_display_line = 5
+    with open("WAPDS.config", "w") as f: #replace corrupted values with default values
+        f.write(f"{single_file_display_line};{compare_file_display_line}")
 
 
 if __name__ == "__main__":
