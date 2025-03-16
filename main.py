@@ -517,6 +517,32 @@ class WordAnalysisApp:
                                                     textvariable=self.compare_file_display_var)
         self.compare_file_display_entry.pack(side=tk.LEFT, padx=5)
 
+        # Graph settings
+        graph_frame = ttk.Frame(settings_frame)
+        graph_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Label(graph_frame, 
+                  text="Maximum number of words to display in graph:").pack(side=tk.LEFT, padx=5)
+
+        self.graph_max_words_var = tk.StringVar(value=str(config.graph_max_words))
+        self.graph_max_words_entry = ttk.Entry(graph_frame, 
+                                               width=10, 
+                                               textvariable=self.graph_max_words_var)
+        self.graph_max_words_entry.pack(side=tk.LEFT, padx=5)
+
+        # Compare graph settings
+        compare_graph_frame = ttk.Frame(settings_frame)
+        compare_graph_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Label(compare_graph_frame, 
+                  text="Maximum number of words to display in compare graph:").pack(side=tk.LEFT, padx=5)
+
+        self.compare_max_words_var = tk.StringVar(value=str(config.compare_max_words))
+        self.compare_max_words_entry = ttk.Entry(compare_graph_frame, 
+                                                 width=10, 
+                                                 textvariable=self.compare_max_words_var)
+        self.compare_max_words_entry.pack(side=tk.LEFT, padx=5)
+
         # Buttons frame
         buttons_frame = ttk.Frame(settings_frame)
         buttons_frame.pack(fill=tk.X, pady=20)
@@ -540,7 +566,7 @@ class WordAnalysisApp:
         info_text.insert(tk.END, 
                         "These settings control how many words are displayed in the word lists and graphs. " 
                         "Changes will be saved to the configuration file and applied immediately.")
-        info_text.config(state=tk.DISABLED)  # Make the text read-only
+        info_text.config(state=tk.DISABLED) # make the text read-only
 
 
     def browse_file1(self):
@@ -603,8 +629,7 @@ class WordAnalysisApp:
 
         # Display statistics
         self.stats_text.delete(1.0, tk.END)
-        self.stats_text.insert(tk.END,
-                               f"File: {os.path.basename(file_path)}\n")
+        self.stats_text.insert(tk.END, f"File: {os.path.basename(file_path)}\n")
         self.stats_text.insert(tk.END, f"Total words: {total_words}\n")
         self.stats_text.insert(tk.END, f"Unique words: {unique_words}\n")
 
