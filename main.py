@@ -8,6 +8,50 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding
 import argparse  # For command-line argument parsing
 
 
+class config:
+    # Default values
+    CLI_DEFAULTS = [10, 5]
+    GUI_DEFAULTS = ["1000x700", 10, (5, 4), 5]
+
+
+    try:
+        with open("WAPDS.config", "r") as f:
+            config_data = f.readline().split(";")
+            # CLI settings
+            single_file_display_line = int(config_data[0])
+            compare_file_display_line = int(config_data[1])
+            window_size = str(config_data[2])
+            graph_max_words = int(config_data[3])
+            graph_figsize = (config_data[4], config_data[5])
+            compare_max_words = int(config_data[6])
+
+    except:
+        # Use defaults if file doesn't exist or is corrupted
+        single_file_display_line = CLI_DEFAULTS[0]
+        compare_file_display_line = CLI_DEFAULTS[1]
+        window_size = GUI_DEFAULTS[0]
+        graph_max_words = GUI_DEFAULTS[1]
+        graph_figsize = GUI_DEFAULTS[2]
+        compare_max_words = GUI_DEFAULTS[3]
+
+    # Write/update config file
+    with open("WAPDS.config", "w") as f:
+        f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};{compare_max_words}")
+
+    @classmethod
+    def reset_to_defaults(cls):
+        """Reset all settings to their default values"""
+        # CLI defaults
+        cls.single_file_display_line = cls.CLI_DEFAULTS[0]
+        cls.compare_file_display_line = cls.CLI_DEFAULTS[1]
+        # GUI defaults
+        cls.window_size = cls.GUI_DEFAULTS[0]
+        cls.graph_max_words = cls.GUI_DEFAULTS[1]
+        cls.graph_figsize = cls.GUI_DEFAULTS[2]
+        cls.compare_max_words = cls.GUI_DEFAULTS[3]
+
+
+
 def read_file(file_path):
     """
     Read a text file and return its content as a string.
@@ -871,7 +915,7 @@ def configure():
         if unsaved_compare_file_display_line is not None:
             config.compare_file_display_line = unsaved_compare_file_display_line
         with open("WAPDS.config", "w") as f:
-            f.write(f"{config.single_file_display_line};{config.single_file_display_line}")
+            f.write(f"{config.single_file_display_line};{config.compare_file_display_line};{config.window_size};{config.graph_max_words};{config.graph_figsize[0]};{config.graph_figsize[1]};{config.compare_max_words}")
     return
 
 
@@ -1083,54 +1127,6 @@ def mainCLI():
             )
             
             
-class config:
-    # Default values
-    DEFAULTS = {
-        'cli': {
-            'single_file_display_line': 10,
-            'compare_file_display_line': 5
-        },
-        'gui': {
-            'window_size': "1000x700",
-            'graph_max_words': 10,
-            'graph_figsize': (5, 4),
-            'compare_max_words': 5
-        }
-    }
-
-    try:
-        with open("WAPDS.config", "r") as f:
-            config_data = f.readline().split(";")
-            # CLI settings
-            single_file_display_line = int(config_data[0])
-            compare_file_display_line = int(config_data[1])
-    except:
-        # Use defaults if file doesn't exist or is corrupted
-        single_file_display_line = DEFAULTS['cli']['single_file_display_line']
-        compare_file_display_line = DEFAULTS['cli']['compare_file_display_line']
-        
-    # Write/update config file
-    with open("WAPDS.config", "w") as f:
-        f.write(f"{single_file_display_line};{compare_file_display_line}")
-
-    # GUI settings with defaults
-    window_size = DEFAULTS['gui']['window_size']
-    graph_max_words = DEFAULTS['gui']['graph_max_words']
-    graph_figsize = DEFAULTS['gui']['graph_figsize']
-    compare_max_words = DEFAULTS['gui']['compare_max_words']
-
-    @classmethod
-    def reset_to_defaults(cls):
-        """Reset all settings to their default values"""
-        # CLI defaults
-        cls.single_file_display_line = cls.DEFAULTS['cli']['single_file_display_line']
-        cls.compare_file_display_line = cls.DEFAULTS['cli']['compare_file_display_line']
-        # GUI defaults
-        cls.window_size = cls.DEFAULTS['gui']['window_size']
-        cls.graph_max_words = cls.DEFAULTS['gui']['graph_max_words']
-        cls.graph_figsize = cls.DEFAULTS['gui']['graph_figsize']
-        cls.compare_max_words = cls.DEFAULTS['gui']['compare_max_words']
-
 
 if __name__ == "__main__":
     # Parse command line arguments to determine whether to run GUI or CLI

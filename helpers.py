@@ -14,7 +14,7 @@ else:
     import tty
 
 
-def animated_print(txt: str = "",
+def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                    end: str = "\n",
                    delay: float = 0.02,
                    line_offset: int = 1,
