@@ -426,17 +426,20 @@ class WordAnalysisApp:
                                  text="Compare Files",
                                  command=self.compare_files)
         compare_btn.pack(pady=10)
-
+        
         # Results section
         results_frame = ttk.Frame(compare_tab)
         results_frame.pack(fill=tk.BOTH, expand=True, pady=10)
 
-        # Side by side comparison of file statistics
-        stats_frame = ttk.Frame(results_frame)
-        stats_frame.pack(fill=tk.X, pady=5)
+        # Left side - stats and lists
+        left_frame = ttk.Frame(results_frame)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+
+        lists_frame = ttk.Frame(left_frame)
+        lists_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         # File 1 stats
-        file1_stats_frame = ttk.LabelFrame(stats_frame,
+        file1_stats_frame = ttk.LabelFrame(lists_frame,
                                            text="File 1 Statistics")
         file1_stats_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
 
@@ -447,7 +450,7 @@ class WordAnalysisApp:
         self.file1_stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # File 2 stats
-        file2_stats_frame = ttk.LabelFrame(stats_frame,
+        file2_stats_frame = ttk.LabelFrame(lists_frame,
                                            text="File 2 Statistics")
         file2_stats_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
 
@@ -456,9 +459,10 @@ class WordAnalysisApp:
                                         width=40,
                                         wrap=tk.WORD)
         self.file2_stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
 
         # Comparison results
-        comparison_frame = ttk.LabelFrame(results_frame,
+        comparison_frame = ttk.LabelFrame(left_frame,
                                           text="Comparison Results")
         comparison_frame.pack(fill=tk.X, pady=10)
 
@@ -467,13 +471,22 @@ class WordAnalysisApp:
                                        wrap=tk.WORD)
         self.comparison_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        # Right side - graph
+        right_frame = ttk.Frame(results_frame)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5)
+
         # Graph comparing word frequencies
-        graph_frame = ttk.LabelFrame(results_frame,
-                                     text="Word Frequency Comparison")
+        graph_frame = ttk.LabelFrame(right_frame, text="Word Frequency Comparison")
         graph_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         self.compare_canvas = tk.Canvas(graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+
+
+
+
+
     
     def create_config_tab(self):
         """
