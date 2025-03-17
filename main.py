@@ -11,8 +11,7 @@ import argparse  # For command-line argument parsing
 class config:
     # Default values
     CLI_DEFAULTS = [10, 5]
-    GUI_DEFAULTS = ["1000x700", 10, (5, 4), 5]
-
+    GUI_DEFAULTS = ["1000x700", 10, (5, 4), 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10]
 
     try:
         with open("WAPDS.config", "r") as f:
@@ -22,8 +21,13 @@ class config:
             compare_file_display_line = int(config_data[1])
             window_size = str(config_data[2])
             graph_max_words = int(config_data[3])
-            graph_figsize = (config_data[4], config_data[5])
+            graph_figsize = (float(config_data[4]), float(config_data[5]))
             analyze_max_words = int(config_data[6])
+            graph_bar_color_single = str(config_data[7])
+            graph_bar_color_compare1 = str(config_data[8])
+            graph_bar_color_compare2 = str(config_data[9])
+            graph_title_fontsize = int(config_data[10])
+            graph_label_fontsize = int(config_data[11])
 
     except:
         # Use defaults if file doesn't exist or is corrupted
@@ -33,10 +37,15 @@ class config:
         graph_max_words = GUI_DEFAULTS[1]
         graph_figsize = GUI_DEFAULTS[2]
         analyze_max_words = GUI_DEFAULTS[3]
+        graph_bar_color_single = GUI_DEFAULTS[4]
+        graph_bar_color_compare1 = GUI_DEFAULTS[5]
+        graph_bar_color_compare2 = GUI_DEFAULTS[6]
+        graph_title_fontsize = GUI_DEFAULTS[7]
+        graph_label_fontsize = GUI_DEFAULTS[8]
 
     # Write/update config file
     with open("WAPDS.config", "w") as f:
-        f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};{analyze_max_words}")
+        f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};{analyze_max_words};{graph_bar_color_single};{graph_bar_color_compare1};{graph_bar_color_compare2};{graph_title_fontsize};{graph_label_fontsize}")
 
     @classmethod
     def reset_to_defaults(cls):
@@ -49,6 +58,11 @@ class config:
         cls.graph_max_words = cls.GUI_DEFAULTS[1]
         cls.graph_figsize = cls.GUI_DEFAULTS[2]
         cls.analyze_max_words = cls.GUI_DEFAULTS[3]
+        cls.graph_bar_color_single = cls.GUI_DEFAULTS[4]
+        cls.graph_bar_color_compare1 = cls.GUI_DEFAULTS[5]
+        cls.graph_bar_color_compare2 = cls.GUI_DEFAULTS[6]
+        cls.graph_title_fontsize = cls.GUI_DEFAULTS[7]
+        cls.graph_label_fontsize = cls.GUI_DEFAULTS[8]
 
 
 
@@ -501,31 +515,64 @@ class WordAnalysisApp:
                                                     textvariable=self.compare_file_display_var)
         self.compare_file_display_entry.pack(side=tk.LEFT, padx=5)
 
-        # Graph settings
-        graph_frame = ttk.Frame(settings_frame)
-        graph_frame.pack(fill=tk.X, pady=10)
-
-        ttk.Label(graph_frame, 
-                  text="Maximum number of words to display in graph:").pack(side=tk.LEFT, padx=5)
-
+        # Graph settings frame
+        graph_settings_frame = ttk.LabelFrame(settings_frame, text="Graph Settings")
+        graph_settings_frame.pack(fill=tk.X, pady=10, padx=5)
+        
+        # Words display settings
+        words_frame = ttk.Frame(graph_settings_frame)
+        words_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(words_frame, text="Max words in graph:").pack(side=tk.LEFT, padx=5)
         self.graph_max_words_var = tk.StringVar(value=str(config.graph_max_words))
-        self.graph_max_words_entry = ttk.Entry(graph_frame, 
-                                               width=10, 
-                                               textvariable=self.graph_max_words_var)
+        self.graph_max_words_entry = ttk.Entry(words_frame, width=10, textvariable=self.graph_max_words_var)
         self.graph_max_words_entry.pack(side=tk.LEFT, padx=5)
 
-        # Compare graph settings
-        compare_graph_frame = ttk.Frame(settings_frame)
-        compare_graph_frame.pack(fill=tk.X, pady=10)
-
-        ttk.Label(compare_graph_frame, 
-                  text="Maximum number of words to display in compare graph:").pack(side=tk.LEFT, padx=5)
-
+        ttk.Label(words_frame, text="Compare graph words:").pack(side=tk.LEFT, padx=5)
         self.analyze_max_words_var = tk.StringVar(value=str(config.analyze_max_words))
-        self.analyze_max_words_entry = ttk.Entry(compare_graph_frame, 
-                                                 width=10, 
-                                                 textvariable=self.analyze_max_words_var)
+        self.analyze_max_words_entry = ttk.Entry(words_frame, width=10, textvariable=self.analyze_max_words_var)
         self.analyze_max_words_entry.pack(side=tk.LEFT, padx=5)
+
+        # Graph size settings
+        size_frame = ttk.Frame(graph_settings_frame)
+        size_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(size_frame, text="Graph size (width, height):").pack(side=tk.LEFT, padx=5)
+        self.graph_width_var = tk.StringVar(value=str(config.graph_figsize[0]))
+        self.graph_width_entry = ttk.Entry(size_frame, width=5, textvariable=self.graph_width_var)
+        self.graph_width_entry.pack(side=tk.LEFT, padx=2)
+        
+        self.graph_height_var = tk.StringVar(value=str(config.graph_figsize[1]))
+        self.graph_height_entry = ttk.Entry(size_frame, width=5, textvariable=self.graph_height_var)
+        self.graph_height_entry.pack(side=tk.LEFT, padx=2)
+
+        # Font settings
+        font_frame = ttk.Frame(graph_settings_frame)
+        font_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(font_frame, text="Title font size:").pack(side=tk.LEFT, padx=5)
+        self.title_font_var = tk.StringVar(value=str(config.graph_title_fontsize))
+        self.title_font_entry = ttk.Entry(font_frame, width=5, textvariable=self.title_font_var)
+        self.title_font_entry.pack(side=tk.LEFT, padx=5)
+
+        ttk.Label(font_frame, text="Label font size:").pack(side=tk.LEFT, padx=5)
+        self.label_font_var = tk.StringVar(value=str(config.graph_label_fontsize))
+        self.label_font_entry = ttk.Entry(font_frame, width=5, textvariable=self.label_font_var)
+        self.label_font_entry.pack(side=tk.LEFT, padx=5)
+
+        # Color settings
+        colors_frame = ttk.Frame(graph_settings_frame)
+        colors_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(colors_frame, text="Bar colors:").pack(side=tk.LEFT, padx=5)
+        self.bar_color_single_var = tk.StringVar(value=str(config.graph_bar_color_single))
+        ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_single_var).pack(side=tk.LEFT, padx=2)
+        
+        self.bar_color_compare1_var = tk.StringVar(value=str(config.graph_bar_color_compare1))
+        ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_compare1_var).pack(side=tk.LEFT, padx=2)
+        
+        self.bar_color_compare2_var = tk.StringVar(value=str(config.graph_bar_color_compare2))
+        ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_compare2_var).pack(side=tk.LEFT, padx=2)
 
         # Buttons frame
         buttons_frame = ttk.Frame(settings_frame)
@@ -662,11 +709,12 @@ class WordAnalysisApp:
         counts = [count for _, count in top_words]
 
         # Create horizontal bar chart
-        bars = ax.barh(words, counts, color='skyblue')
+        bars = ax.barh(words, counts, color=config.graph_bar_color_single)
 
         # Add labels
-        ax.set_xlabel('Frequency')
-        ax.set_title('Top Word Frequencies')
+        ax.set_xlabel('Frequency', fontsize=config.graph_label_fontsize)
+        ax.set_title('Top Word Frequencies', fontsize=config.graph_title_fontsize)
+        ax.tick_params(labelsize=config.graph_label_fontsize)
 
         # Add count labels on bars
         for bar in bars:
@@ -824,14 +872,14 @@ class WordAnalysisApp:
             counts1,
             width,
             label='File 1',
-            color='skyblue',
+            color=config.graph_bar_color_compare1,
         )
         ax.bar(
             [i + width / 2 for i in x],
             counts2,
             width,
             label='File 2',
-            color='lightgreen',
+            color=config.graph_bar_color_compare2,
         )
 
         # Add labels and legend
@@ -853,21 +901,43 @@ class WordAnalysisApp:
         Save the configuration settings to the config file.
         """
         try:
-            # Get values from entry fields
+            # Get and validate values from entry fields
             single_file_display = int(self.single_file_display_var.get())
             compare_file_display = int(self.compare_file_display_var.get())
+            graph_max_words = int(self.graph_max_words_var.get())
+            analyze_max_words = int(self.analyze_max_words_var.get())
+            graph_width = float(self.graph_width_var.get())
+            graph_height = float(self.graph_height_var.get())
+            title_fontsize = int(self.title_font_var.get())
+            label_fontsize = int(self.label_font_var.get())
 
-            if single_file_display <= 0 or compare_file_display <= 0:
-                messagebox.showerror("Error", "Settings must be positive numbers.")
+            if any(x <= 0 for x in [single_file_display, compare_file_display, 
+                                  graph_max_words, analyze_max_words,
+                                  graph_width, graph_height,
+                                  title_fontsize, label_fontsize]):
+                messagebox.showerror("Error", "All numeric settings must be positive numbers.")
                 return
 
             # Update config
             config.single_file_display_line = single_file_display
             config.compare_file_display_line = compare_file_display
+            config.graph_max_words = graph_max_words
+            config.analyze_max_words = analyze_max_words
+            config.graph_figsize = (graph_width, graph_height)
+            config.graph_title_fontsize = title_fontsize
+            config.graph_label_fontsize = label_fontsize
+            config.graph_bar_color_single = self.bar_color_single_var.get()
+            config.graph_bar_color_compare1 = self.bar_color_compare1_var.get()
+            config.graph_bar_color_compare2 = self.bar_color_compare2_var.get()
 
             # Write to config file
             with open("WAPDS.config", "w") as f:
-                f.write(f"{config.single_file_display_line};{config.compare_file_display_line};{config.window_size};{config.graph_max_words};{config.graph_figsize[0]};{config.graph_figsize[1]};{config.analyze_max_words}")
+                f.write(f"{config.single_file_display_line};{config.compare_file_display_line};" + 
+                       f"{config.window_size};{config.graph_max_words};" +
+                       f"{config.graph_figsize[0]};{config.graph_figsize[1]};" +
+                       f"{config.analyze_max_words};{config.graph_bar_color_single};" +
+                       f"{config.graph_bar_color_compare1};{config.graph_bar_color_compare2};" +
+                       f"{config.graph_title_fontsize};{config.graph_label_fontsize}")
 
             messagebox.showinfo("Configuration", "Settings saved successfully!")
         except ValueError:
