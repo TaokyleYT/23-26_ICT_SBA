@@ -23,7 +23,7 @@ class config:
             window_size = str(config_data[2])
             graph_max_words = int(config_data[3])
             graph_figsize = (config_data[4], config_data[5])
-            compare_max_words = int(config_data[6])
+            analyze_max_words = int(config_data[6])
 
     except:
         # Use defaults if file doesn't exist or is corrupted
@@ -32,11 +32,11 @@ class config:
         window_size = GUI_DEFAULTS[0]
         graph_max_words = GUI_DEFAULTS[1]
         graph_figsize = GUI_DEFAULTS[2]
-        compare_max_words = GUI_DEFAULTS[3]
+        analyze_max_words = GUI_DEFAULTS[3]
 
     # Write/update config file
     with open("WAPDS.config", "w") as f:
-        f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};{compare_max_words}")
+        f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};{analyze_max_words}")
 
     @classmethod
     def reset_to_defaults(cls):
@@ -48,7 +48,7 @@ class config:
         cls.window_size = cls.GUI_DEFAULTS[0]
         cls.graph_max_words = cls.GUI_DEFAULTS[1]
         cls.graph_figsize = cls.GUI_DEFAULTS[2]
-        cls.compare_max_words = cls.GUI_DEFAULTS[3]
+        cls.analyze_max_words = cls.GUI_DEFAULTS[3]
 
 
 
@@ -151,17 +151,6 @@ def get_total_words(word_count):
     return total
 
 
-def get_unique_words(word_count):
-    """
-    Get the number of unique words in a text.
-    
-    Args:
-        word_count (tuple): A tuple of (words, frequencies) as returned by count_words()
-        
-    Returns:
-        int: Number of unique words
-    """
-    return len(word_count[0])
 
 
 def sort_alphabetically(word_count):
@@ -203,19 +192,14 @@ def sort_by_frequency(word_count):
     for idx in range(len(word_count[0])):
         word_items.append((word_count[0][idx], word_count[1][idx]))
 
-    # Create a function that generates a comparison key for sorting
-    def get_comparison_key(item):
-        return (-item[1], item[0]
-                )  # Sort by -count (for descending), then by word
-
     # Create a list that can be sorted using the quick_sort function
     # Using indices to maintain the original items
     items_to_sort = []
     for i, item in enumerate(word_items):
-        items_to_sort.append((get_comparison_key(item), i))
+        items_to_sort.append(((item[1], item[0]), i))
 
     # Sort the indices
-    sorted_indices = helpers.quick_sort(items_to_sort)
+    sorted_indices = helpers.quick_sort(items_to_sort, ascending=False)
 
     # Reconstruct the result using the sorted indices
     result = []
@@ -537,11 +521,11 @@ class WordAnalysisApp:
         ttk.Label(compare_graph_frame, 
                   text="Maximum number of words to display in compare graph:").pack(side=tk.LEFT, padx=5)
 
-        self.compare_max_words_var = tk.StringVar(value=str(config.compare_max_words))
-        self.compare_max_words_entry = ttk.Entry(compare_graph_frame, 
+        self.analyze_max_words_var = tk.StringVar(value=str(config.analyze_max_words))
+        self.analyze_max_words_entry = ttk.Entry(compare_graph_frame, 
                                                  width=10, 
-                                                 textvariable=self.compare_max_words_var)
-        self.compare_max_words_entry.pack(side=tk.LEFT, padx=5)
+                                                 textvariable=self.analyze_max_words_var)
+        self.analyze_max_words_entry.pack(side=tk.LEFT, padx=5)
 
         # Buttons frame
         buttons_frame = ttk.Frame(settings_frame)
@@ -625,7 +609,7 @@ class WordAnalysisApp:
         clean_content = clean_text(content)
         word_count = count_words(clean_content)
         total_words = get_total_words(word_count)
-        unique_words = get_unique_words(word_count)
+        unique_words = len(word_count[0])
 
         # Display statistics
         self.stats_text.delete(1.0, tk.END)
@@ -635,12 +619,12 @@ class WordAnalysisApp:
 
         # Display word lists
         self.freq_list.delete(0, tk.END)
-        freq_sorted = sort_by_frequency(word_count)
+        freq_sorted = sort_by_frequency(word_count)[:config.analyze_max_words]
         for i, (word, count) in enumerate(freq_sorted):
             self.freq_list.insert(tk.END, f"{i+1}. '{word}': {count} times")
 
         self.alpha_list.delete(0, tk.END)
-        alpha_sorted = sort_alphabetically(word_count)
+        alpha_sorted = sort_alphabetically(word_count)[:config.analyze_max_words]
         for i, (word, count) in enumerate(alpha_sorted):
             self.alpha_list.insert(tk.END, f"{i+1}. '{word}': {count} times")
 
@@ -672,7 +656,7 @@ class WordAnalysisApp:
             return
 
         # Create figure
-        fig, ax = plt.subplots(figsize=(5, 4))
+        fig, ax = plt.subplots(figsize=config.graph_figsize)
 
         words = [word for word, _ in top_words]
         counts = [count for _, count in top_words]
@@ -735,8 +719,8 @@ class WordAnalysisApp:
         total_words1 = get_total_words(word_count1)
         total_words2 = get_total_words(word_count2)
 
-        unique_words1 = get_unique_words(word_count1)
-        unique_words2 = get_unique_words(word_count2)
+        unique_words1 = len(word_count1[0])
+        unique_words2 = len(word_count2[0])
 
         # Display statistics for file 1
         self.file1_stats_text.delete(1.0, tk.END)
@@ -781,7 +765,7 @@ class WordAnalysisApp:
                                 word_count1,
                                 word_count2,
                                 canvas_widget,
-                                max_words=config.compare_max_words):
+                                max_words=config.graph_max_words):
         """
         Create a comparison graph of word frequencies between two files.
         
@@ -829,7 +813,7 @@ class WordAnalysisApp:
                 counts2.append(0)
 
         # Create figure
-        fig, ax = plt.subplots(figsize=(5, 4))
+        fig, ax = plt.subplots(figsize=config.graph_figsize)
 
         x = range(len(combined_top_words))
         width = 0.35
@@ -883,7 +867,7 @@ class WordAnalysisApp:
 
             # Write to config file
             with open("WAPDS.config", "w") as f:
-                f.write(f"{single_file_display};{compare_file_display}")
+                f.write(f"{config.single_file_display_line};{config.compare_file_display_line};{config.window_size};{config.graph_max_words};{config.graph_figsize[0]};{config.graph_figsize[1]};{config.analyze_max_words}")
 
             messagebox.showinfo("Configuration", "Settings saved successfully!")
         except ValueError:
@@ -914,7 +898,7 @@ def configure():
 
         if config_option == "A":
             try:
-                temp_unsaved = int(input(f"Enter number of sorted words to display in Analyse File mode (was {config.single_file_display_line}): "))
+                temp_unsaved = int(input(f"Enter number of sorted words to display in Analyze File mode (was {config.single_file_display_line}): "))
                 if temp_unsaved > 0:
                     unsaved_single_file_display_line = temp_unsaved
                 else:
@@ -940,7 +924,7 @@ def configure():
         if unsaved_compare_file_display_line is not None:
             config.compare_file_display_line = unsaved_compare_file_display_line
         with open("WAPDS.config", "w") as f:
-            f.write(f"{config.single_file_display_line};{config.compare_file_display_line};{config.window_size};{config.graph_max_words};{config.graph_figsize[0]};{config.graph_figsize[1]};{config.compare_max_words}")
+            f.write(f"{config.single_file_display_line};{config.compare_file_display_line};{config.window_size};{config.graph_max_words};{config.graph_figsize[0]};{config.graph_figsize[1]};{config.analyze_max_words}")
     return
 
 
@@ -1023,8 +1007,8 @@ def compare_files(file_path1, file_path2):
     total_words1 = get_total_words(word_count1)
     total_words2 = get_total_words(word_count2)
 
-    unique_words1 = get_unique_words(word_count1)
-    unique_words2 = get_unique_words(word_count2)
+    unique_words1 = len(word_count1[0])
+    unique_words2 = len(word_count2[0])
 
     # Display analysis results for each file
     display_results(file_path1, word_count1, total_words1, unique_words1, config.compare_file_display_line)
@@ -1075,7 +1059,7 @@ def analyze_file(file_path):
     clean_content = clean_text(content)
     word_count = count_words(clean_content)
     total_words = get_total_words(word_count)
-    unique_words = get_unique_words(word_count)
+    unique_words = len(word_count[0])
 
     # Display analysis results
     display_results(file_path, word_count, total_words, unique_words, config.single_file_display_line)
