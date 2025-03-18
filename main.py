@@ -1,6 +1,5 @@
 import os  # Import module for terminal size detection and file operations
 import helpers  # Import custom helper functions that avoid using built-in functions
-from helpers import animated_print as print, animated_input as input  # Use animated versions of print/input
 import tkinter as tk  # Import tkinter for GUI implementation
 from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
 import matplotlib.pyplot as plt  # Import matplotlib for data visualization
@@ -933,13 +932,14 @@ class WordAnalysisApp:
             analyze_max_words = int(self.analyze_max_words_var.get())
             graph_width = float(self.graph_width_var.get())
             graph_height = float(self.graph_height_var.get())
-            title_fontsize = int(self.title_font_var.get())
-            label_fontsize = int(self.label_font_var.get())
+            title_fontsize = float(self.title_font_var.get())
+            label_fontsize = float(self.label_font_var.get())
 
-            if any(x <= 0 for x in [single_file_display, compare_file_display, 
-                                  graph_max_words, analyze_max_words,
-                                  graph_width, graph_height,
-                                  title_fontsize, label_fontsize]):
+            if helpers.any(x <= 0 for x in [
+                single_file_display, compare_file_display, 
+                graph_max_words, analyze_max_words,
+                graph_width, graph_height,
+                title_fontsize, label_fontsize]):
                 messagebox.showerror("Error", "All numeric settings must be positive numbers.")
                 return
 
@@ -985,8 +985,34 @@ class WordAnalysisApp:
         config.reset_to_defaults()
         self.reset_last_save_config()
 
- 
+        messagebox.showinfo("Configuration", "Settings reset to default values.")
         
+        
+def configure_test_input(prompt:str, type, was:str, error:str = ""):
+    try:
+        temp_unsaved = input(f"{prompt} (was {was}): ")
+        if type == int:
+            if temp_unsaved > 0:
+                return int(temp_unsaved)
+            else:
+                raise ValueError
+        elif type == float:
+            if temp_unsaved > 0:
+                return float(temp_unsaved)
+            else:
+                raise ValueError
+        else:
+            return temp_unsaved
+    except ValueError:
+        print("Invalid input. ", end="")
+        if error:
+            print(error)
+        elif type == int:
+            print("Please enter a positive integer.")
+        elif type == float:
+            print("Please enter a positive float.")
+        else:
+            print(error)
         
         
 def configure():
@@ -995,41 +1021,59 @@ def configure():
     """
     unsaved_single_file_display_line: int|None = None
     unsaved_compare_file_display_line: int|None = None
+    unsaved_graph_max_words: int|None = None
+    unsaved_graph_figsize_h: int|None = None
+    unsaved_graph_figsize_w: int|None = None
+    unsaved_analyze_max_words: int|None = None
+    unsaved_graph_bar_color_single: int|None = None
+    unsaved_graph_bar_color_compare1: int|None = None
+    unsaved_graph_bar_color_compare2: int|None = None
+    unsaved_graph_title_fontsize: int|None = None
+    unsaved_graph_label_fontsize: int|None = None
     while True:
-        print([f"Change settings{'' if unsaved_single_file_display_line is None and unsaved_compare_file_display_line is None else ' (unsaved)'}:",
-        ["\x1b[1;4mA\x1b[m", *f"nalyse file: show first {config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})'} sorted words appeared"],
-        ["\x1b[1;4mC\x1b[m", *f"ompare files: show first {config.compare_file_display_line if unsaved_compare_file_display_line is None else f'{unsaved_compare_file_display_line} (was {config.compare_file_display_line})'} sorted words appeared"],
-        W config.window_size
-        G config.graph_max_word
-        F graph_figsize
-        N analyze_max_words
-        S graph_bar_color_single
-        1 graph_bar_color_compare1
-        2 graph_bar_color_compare2
-        T config.graph_title_fontsize
-        L config.graph_label_fontsize
+        print(
+        [f"Change settings{'' if unsaved_single_file_display_line is None and unsaved_compare_file_display_line is None else ' (unsaved)'}:",
+        [],
+        [*"CLI settings:"],
+        ["\x1b[1;4;97mA\x1b[m", *f"nalyse file: show first {config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})'} sorted words appeared"],
+        ["\x1b[1;4;97mC\x1b[m", *f"ompare files: show first {config.compare_file_display_line if unsaved_compare_file_display_line is None else f'{unsaved_compare_file_display_line} (was {config.compare_file_display_line})'} sorted words appeared"],
+        [],
+        [*"GUI settings:"],
+        ["a", "\x1b[1;4;97mN\x1b[m", *f"alyse file: show first {config.analyze_max_words if unsaved_analyze_max_words is None else f'{unsaved_analyze_max_words} (was {config.analyze_max_words})'} sorted words appeared"],
+        [*"Graph: ", "\x1b[1;4;97mM\x1b[m", *f"ax word: show first {config.graph_max_words if unsaved_graph_max_words is None else f'{unsaved_graph_max_words} (was {config.graph_max_words})'} sorted words appeared"],
+        [*"Graph figure size: set the figure ", "\x1b[1;4;97mH\x1b[m", *f"eight to {config.graph_figsize[1] if unsaved_graph_figsize_h is None else f'{unsaved_graph_figsize_h} (was {config.graph_figsize[1]})'}"],
+        [*"Graph figure size: set the figure ", "\x1b[1;4;97mW\x1b[m", *f"idth to {config.graph_figsize[0] if unsaved_graph_figsize_w is None else f'{unsaved_graph_figsize_w} (was {config.graph_figsize[0]})'}"],
+        [*"Graph bar: set color of ", "\x1b[1;4;97mS\x1b[m", *f"ingle bar (analyse file) to {config.graph_bar_color_single if unsaved_graph_bar_color_single is None else f'{unsaved_graph_bar_color_single} (was {config.graph_bar_color_single})'}"],
+        [*"Graph bar: set color of File", "\x1b[1;4;97m1\x1b[m", *f"'s bar (compare file) to {config.graph_bar_color_compare1 if unsaved_graph_bar_color_compare1 is None else f'{unsaved_graph_bar_color_compare1} (was {config.graph_bar_color_compare1})'}"],
+        [*"Graph bar: set color of File", "\x1b[1;4;97m2\x1b[m", *f"'s bar (compare file) to {config.graph_bar_color_compare2 if unsaved_graph_bar_color_compare2 is None else f'{unsaved_graph_bar_color_compare2} (was {config.graph_bar_color_compare2})'}"],
+        [*"Graph ", "\x1b[1;4;97mT\x1b[m", *f"itle: set font size to {config.graph_title_fontsize if unsaved_graph_title_fontsize is None else f'{unsaved_graph_title_fontsize} (was {config.graph_title_fontsize})'}"],
+        [*"Graph ", "\x1b[1;4;97mL\x1b[m", *f"itle: set font size to {config.graph_label_fontsize if unsaved_graph_label_fontsize is None else f'{unsaved_graph_label_fontsize} (was {config.graph_label_fontsize})'}"],
         ["\x1b[1;4mS\x1b[m", *"ave and exit"],
-        ["\x1b[1;4mE\x1b[m", *"xit without saving"]], _override=True) # because multi-line print containing ANSI is not supported, input text is sliced manually to make it work
+        ["\x1b[1;4;97mE\x1b[m", *"xit without saving"]], _override=True) # because multi-line print containing ANSI is not supported, input text is sliced manually to make it work
         config_option = input("Enter option: ", single_letter=True).upper().strip()
 
         if config_option == "A":
-            try:
-                temp_unsaved = int(input(f"Enter number of sorted words to display in Analyze File mode (was {config.single_file_display_line}): "))
-                if temp_unsaved > 0:
-                    unsaved_single_file_display_line = temp_unsaved
-                else:
-                    raise ValueError
-            except ValueError:
-                print("Invalid input. Please enter a positive number.")
+            unsaved_single_file_display_line = configure_test_input("Enter number of sorted words to display in Analyze File mode", int, str(config.single_file_display_line))
         elif config_option == "C":
-            try:
-                temp_unsaved = int(input(f"Enter number of sorted words to display in Compare Files mode (was {config.compare_file_display_line}): "))
-                if temp_unsaved > 0:
-                    unsaved_compare_file_display_line = temp_unsaved
-                else:
-                    raise ValueError
-            except ValueError:
-                print("Invalid input. Please enter a positive number.")
+            unsaved_compare_file_display_line = configure_test_input("Enter number of sorted words to display in Compare Files mode", int, str(config.compare_file_display_line))
+        elif config_option == "N":
+            unsaved_analyze_max_words = configure_test_input("Enter number of sorted words to display in Analyze File mode", int, str(config.analyze_max_words))
+        elif config_option == "M":
+            unsaved_graph_max_words = configure_test_input("Enter number of sorted words to display in the result figure", int, str(config.graph_max_words))
+        elif config_option == "H":
+            unsaved_graph_figsize_h = configure_test_input("Enter height of the figure", float, str(config.graph_figsize[1]))
+        elif config_option == "W":
+            unsaved_graph_figsize_w = configure_test_input("Enter width of the figure", float, str(config.graph_figsize[0]))
+        elif config_option == "S":
+            unsaved_graph_bar_color_single = configure_test_input("Enter color of the bar in Analyze File mode", str, str(config.graph_bar_color_single))
+        elif config_option == "1":
+            unsaved_graph_bar_color_compare1 = configure_test_input("Enter color of File1's bar in Compare Files mode", str, str(config.graph_bar_color_compare1))
+        elif config_option == "2":
+            unsaved_graph_bar_color_compare2 = configure_test_input("Enter color of File2's bar in Compare Files mode", str, str(config.graph_bar_color_compare2))
+        elif config_option == "T":
+            unsaved_graph_title_fontsize = configure_test_input("Enter font size of the figure's title", float, str(config.graph_title_fontsize))
+        elif config_option == "L":
+            unsaved_graph_label_fontsize = configure_test_input("Enter font size of the figure's labels", float, str(config.graph_label_fontsize))
         elif config_option in "ES":
             break
         else:
@@ -1039,6 +1083,24 @@ def configure():
             config.single_file_display_line = unsaved_single_file_display_line
         if unsaved_compare_file_display_line is not None:
             config.compare_file_display_line = unsaved_compare_file_display_line
+        if unsaved_analyze_max_words is not None:
+            config.analyze_max_words = unsaved_analyze_max_words
+        if unsaved_graph_max_words is not None:
+            config.graph_max_words = unsaved_graph_max_words
+        if unsaved_graph_figsize_h is not None:
+            config.graph_figsize[1] = unsaved_graph_figsize_h
+        if unsaved_graph_figsize_w is not None:
+            config.graph_figsize[0] = unsaved_graph_figsize_w
+        if unsaved_graph_bar_color_single is not None:
+            config.graph_bar_color_single = unsaved_graph_bar_color_single
+        if unsaved_graph_bar_color_compare1 is not None:
+            config.graph_bar_color_compare1 = unsaved_graph_bar_color_compare1
+        if unsaved_graph_bar_color_compare2 is not None:
+            config.graph_bar_color_compare2 = unsaved_graph_bar_color_compare2
+        if unsaved_graph_title_fontsize is not None:
+            config.graph_title_fontsize = unsaved_graph_title_fontsize
+        if unsaved_graph_label_fontsize is not None:
+            config.graph_label_fontsize = unsaved_graph_label_fontsize
         config.save()
     return
 
@@ -1288,6 +1350,7 @@ if __name__ == "__main__":
         config.save()
         mainGUI()
     elif args.run_type == "CLI":
+        from helpers import animated_print as print, animated_input as input  # Use animated versions of print/input (CLI only)
         mainCLI()
     else:
         parser.error(

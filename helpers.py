@@ -161,7 +161,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
 
 
 def animated_input(prompt: str = "",
-                   delay: float = 0.02,
+                   delay: float = 0.01,
                    front_effect="",
                    line_offset: int = 1,
                    single_letter:bool = False,
@@ -219,6 +219,11 @@ def animated_input(prompt: str = "",
             # Long story short, ever notice when not using single_letter=True, you need to press enter twice to input (on windows)?
             # Thats buffer overflow or whatever overflow I forgot the name, anyways blame microsoft for this.
             result = sys.stdin.read(1)
+        if result in "\x03\x04":
+            if _log:
+                with open("input_log.txt", "a") as f:
+                    f.write(f"KeyboardInterrupt with {result}\n")
+            raise KeyboardInterrupt
         print(result, end='')
         # Restore terminal state
         if sys.platform == "win32":
