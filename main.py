@@ -999,6 +999,15 @@ def configure():
         print([f"Change settings{'' if unsaved_single_file_display_line is None and unsaved_compare_file_display_line is None else ' (unsaved)'}:",
         ["\x1b[1;4mA\x1b[m", *f"nalyse file: show first {config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})'} sorted words appeared"],
         ["\x1b[1;4mC\x1b[m", *f"ompare files: show first {config.compare_file_display_line if unsaved_compare_file_display_line is None else f'{unsaved_compare_file_display_line} (was {config.compare_file_display_line})'} sorted words appeared"],
+        W config.window_size
+        G config.graph_max_word
+        F graph_figsize
+        N analyze_max_words
+        S graph_bar_color_single
+        1 graph_bar_color_compare1
+        2 graph_bar_color_compare2
+        T config.graph_title_fontsize
+        L config.graph_label_fontsize
         ["\x1b[1;4mS\x1b[m", *"ave and exit"],
         ["\x1b[1;4mE\x1b[m", *"xit without saving"]], _override=True) # because multi-line print containing ANSI is not supported, input text is sliced manually to make it work
         config_option = input("Enter option: ", single_letter=True).upper().strip()
