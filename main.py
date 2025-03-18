@@ -19,6 +19,7 @@ class config:
             # CLI settings
             single_file_display_line = int(config_data[0])
             compare_file_display_line = int(config_data[1])
+            # GUI settings
             window_size = str(config_data[2])
             graph_max_words = int(config_data[3])
             graph_figsize = (float(config_data[4]), float(config_data[5]))
@@ -63,6 +64,16 @@ class config:
         cls.graph_bar_color_compare2 = cls.GUI_DEFAULTS[6]
         cls.graph_title_fontsize = cls.GUI_DEFAULTS[7]
         cls.graph_label_fontsize = cls.GUI_DEFAULTS[8]
+    
+    @classmethod  
+    def save(cls):
+        with open("WAPDS.config", "w") as f:
+            f.write(f"{cls.single_file_display_line};{cls.compare_file_display_line};" + 
+                   f"{cls.window_size};{cls.graph_max_words};" +
+                   f"{cls.graph_figsize[0]};{cls.graph_figsize[1]};" +
+                   f"{cls.analyze_max_words};{cls.graph_bar_color_single};" +
+                   f"{cls.graph_bar_color_compare1};{cls.graph_bar_color_compare2};" +
+                   f"{cls.graph_title_fontsize};{cls.graph_label_fontsize}")
 
 
 
@@ -241,12 +252,12 @@ def calculate_similarity(word_count1, word_count2):
     # Add all words from first text to all_words list
     for word in word_count1[0]:
         if word not in all_words:
+            if word in word_count1[1]:
+                common_words += 1
             all_words.append(word)
 
     # Count common words and add unique words from second text
     for word in word_count2[0]:
-        if word in word_count1[0]:
-            common_words += 1
         if word not in all_words:
             all_words.append(word)
 
@@ -263,13 +274,13 @@ class WordAnalysisApp:
     - Comparing two files for potential plagiarism
     """
 
-    def __init__(self, root, size=config.window_size):
+    def __init__(self, root, size):
         """
         Initialize the application with the tkinter root window.
         
         Args:
             root: Tkinter root window
-            size (str): Window size in format "widthxheight"
+            size (str): Window size in format "{width}x{height}"
         """
         self.root = root
         self.root.title("Word Analysis and Plagiarism Detection")
@@ -481,12 +492,6 @@ class WordAnalysisApp:
 
         self.compare_canvas = tk.Canvas(graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-
-
-
-
-
     
     def create_config_tab(self):
         """
@@ -499,11 +504,13 @@ class WordAnalysisApp:
         config_tab = ttk.Frame(self.notebook)
         self.notebook.add(config_tab, text="Configuration")
         
-        settings_frame = ttk.LabelFrame(config_tab, text="Application Settings")
-        settings_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        CLI_settings_frame = ttk.LabelFrame(config_tab, text="CLI Settings")
+        CLI_settings_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        GUI_settings_frame = ttk.LabelFrame(config_tab, text="GUI Settings")
+        GUI_settings_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Single file display setting
-        single_file_frame = ttk.Frame(settings_frame)
+        single_file_frame = ttk.Frame(CLI_settings_frame)
         single_file_frame.pack(fill=tk.X, pady=10)
 
         ttk.Label(single_file_frame, 
@@ -516,7 +523,7 @@ class WordAnalysisApp:
         self.single_file_display_entry.pack(side=tk.LEFT, padx=5)
 
         # Compare files display setting
-        compare_file_frame = ttk.Frame(settings_frame)
+        compare_file_frame = ttk.Frame(CLI_settings_frame)
         compare_file_frame.pack(fill=tk.X, pady=10)
 
         ttk.Label(compare_file_frame, 
@@ -529,7 +536,7 @@ class WordAnalysisApp:
         self.compare_file_display_entry.pack(side=tk.LEFT, padx=5)
 
         # Graph settings frame
-        graph_settings_frame = ttk.LabelFrame(settings_frame, text="Graph Settings")
+        graph_settings_frame = ttk.LabelFrame(GUI_settings_frame, text="Graph Settings")
         graph_settings_frame.pack(fill=tk.X, pady=10, padx=5)
         
         # Words display settings
@@ -541,7 +548,7 @@ class WordAnalysisApp:
         self.graph_max_words_entry = ttk.Entry(words_frame, width=10, textvariable=self.graph_max_words_var)
         self.graph_max_words_entry.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(words_frame, text="Compare graph words:").pack(side=tk.LEFT, padx=5)
+        ttk.Label(words_frame, text="Max words to show in text:").pack(side=tk.LEFT, padx=5)
         self.analyze_max_words_var = tk.StringVar(value=str(config.analyze_max_words))
         self.analyze_max_words_entry = ttk.Entry(words_frame, width=10, textvariable=self.analyze_max_words_var)
         self.analyze_max_words_entry.pack(side=tk.LEFT, padx=5)
@@ -588,18 +595,23 @@ class WordAnalysisApp:
         ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_compare2_var).pack(side=tk.LEFT, padx=2)
 
         # Buttons frame
-        buttons_frame = ttk.Frame(settings_frame)
+        buttons_frame = ttk.Frame(config_tab)
         buttons_frame.pack(fill=tk.X, pady=20)
 
         save_btn = ttk.Button(buttons_frame, 
-                              text="Save Settings", 
+                              text="Save settings", 
                               command=self.save_config)
         save_btn.pack(side=tk.RIGHT, padx=5)
 
         cancel_btn = ttk.Button(buttons_frame, 
-                                text="Reset", 
-                                command=self.reset_config)
+                                text="Cancel changes", 
+                                command=self.reset_last_save_config)
         cancel_btn.pack(side=tk.RIGHT, padx=5)
+        
+        reset_btn = ttk.Button(buttons_frame, 
+                                text="Reset values to default", 
+                                command=self.reset_default_config)
+        reset_btn.pack(side=tk.RIGHT, padx=5)
 
         # Add an info text
         info_frame = ttk.Frame(config_tab)
@@ -609,7 +621,7 @@ class WordAnalysisApp:
         info_text.pack(fill=tk.X, padx=10)
         info_text.insert(tk.END, 
                         "These settings control how many words are displayed in the word lists and graphs. " 
-                        "Changes will be saved to the configuration file and applied immediately.")
+                        "Changes will be saved to the configuration file and applied immediately once the save button is pressed.")
         info_text.config(state=tk.DISABLED) # make the text read-only
 
 
@@ -944,24 +956,36 @@ class WordAnalysisApp:
             config.graph_bar_color_compare2 = self.bar_color_compare2_var.get()
 
             # Write to config file
-            with open("WAPDS.config", "w") as f:
-                f.write(f"{config.single_file_display_line};{config.compare_file_display_line};" + 
-                       f"{config.window_size};{config.graph_max_words};" +
-                       f"{config.graph_figsize[0]};{config.graph_figsize[1]};" +
-                       f"{config.analyze_max_words};{config.graph_bar_color_single};" +
-                       f"{config.graph_bar_color_compare1};{config.graph_bar_color_compare2};" +
-                       f"{config.graph_title_fontsize};{config.graph_label_fontsize}")
+            config.save()
 
             messagebox.showinfo("Configuration", "Settings saved successfully!")
         except ValueError:
             messagebox.showerror("Error", "Please enter valid numbers for both settings.")
 
-    def reset_config(self):
+    def reset_last_save_config(self):
         """
         Reset the configuration fields to their current values.
         """
         self.single_file_display_var.set(str(config.single_file_display_line))
         self.compare_file_display_var.set(str(config.compare_file_display_line))
+        self.graph_max_words_var.set(str(config.graph_max_words))
+        self.analyze_max_words_var.set(str(config.analyze_max_words))
+        self.graph_width_var.set(str(config.graph_figsize[0]))
+        self.graph_height_var.set(str(config.graph_figsize[1]))
+        self.title_font_var.set(str(config.graph_title_fontsize))
+        self.label_font_var.set(str(config.graph_label_fontsize))
+        self.bar_color_single_var.set(str(config.graph_bar_color_single))
+        self.bar_color_compare1_var.set(str(config.graph_bar_color_compare1))
+        self.bar_color_compare2_var.set(str(config.graph_bar_color_compare2))
+        
+    def reset_default_config(self):
+        """
+        Reset the configuration fields to their default values.
+        """
+        config.reset_to_defaults()
+        self.reset_last_save_config()
+
+ 
         
         
         
@@ -1006,8 +1030,7 @@ def configure():
             config.single_file_display_line = unsaved_single_file_display_line
         if unsaved_compare_file_display_line is not None:
             config.compare_file_display_line = unsaved_compare_file_display_line
-        with open("WAPDS.config", "w") as f:
-            f.write(f"{config.single_file_display_line};{config.compare_file_display_line};{config.window_size};{config.graph_max_words};{config.graph_figsize[0]};{config.graph_figsize[1]};{config.analyze_max_words}")
+        config.save()
     return
 
 
@@ -1163,8 +1186,7 @@ def mainGUI():
     dialog when attempting to close the window.
     """
     root = tk.Tk()
-    app = WordAnalysisApp(
-        root)  # app is unused because tkinter handles the UI events
+    app = WordAnalysisApp(root, config.window_size)  # app is unused because tkinter handles the UI events
 
     # Set up close confirmation dialog
     root.protocol("WM_DELETE_WINDOW", lambda: GUIexit(root))
@@ -1222,6 +1244,7 @@ def mainCLI():
 
 if __name__ == "__main__":
     # Parse command line arguments to determine whether to run GUI or CLI
+    some_text = "{width}x{height}" #still can't figure out how to put {} in f-strings :)
     parser = argparse.ArgumentParser(
         description="Word Analysis and Plagiarism Detection System (WAPDS)")
     parser.add_argument(
@@ -1230,10 +1253,30 @@ if __name__ == "__main__":
         'enter "GUI" or "CLI", determine whether a CLI or GUI version should run. default is GUI',
         nargs="?",
         default="GUI")
+    parser.add_argument(
+        "GUI_window_size",
+        help=
+        f'enter in format of {some_text}, set the GUI window size and will be saved, defaults to last window size (currently {repr(config.window_size)})',
+        nargs="?",
+        default=config.window_size)
     args = parser.parse_args()
 
     # Start appropriate interface based on argument
     if args.run_type == "GUI":
+        try:
+            GUI_window_size_check = args.GUI_window_size.strip().split("x")
+            GUI_window_size_check = [int(dimension) for dimension in GUI_window_size_check] #errors if not correct size
+            if len(GUI_window_size_check) != 2:
+                raise ValueError
+            for n in GUI_window_size_check:
+                if n <= 0:
+                    raise ValueError
+        except ValueError:
+            parser.error(
+            f'Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}'
+        )
+        config.window_size = args.GUI_window_size.strip()
+        config.save()
         mainGUI()
     elif args.run_type == "CLI":
         mainCLI()
