@@ -8,11 +8,36 @@ import argparse  # For command-line argument parsing
 
 
 class config:
+    """
+    Configuration management class for WAPDS.
+    
+    This class handles loading, storing, and saving application settings.
+    It maintains default values and provides methods to reset settings.
+    
+    Attributes:
+        CLI_DEFAULTS (list): Default values for CLI settings
+        GUI_DEFAULTS (list): Default values for GUI settings
+        single_file_display_line (int): Number of words to display in single file analysis (CLI)
+        compare_file_display_line (int): Number of words to display in file comparison (CLI)
+        window_size (str): Size of the GUI window in format "widthxheight"
+        graph_max_words (int): Maximum number of words to display in graphs
+        graph_figsize (tuple): Size of matplotlib figures (width, height)
+        analyze_max_words (int): Maximum number of words to display in analysis lists
+        graph_bar_color_single (str): Color for bars in single file analysis
+        graph_bar_color_compare1 (str): Color for bars of first file in comparison
+        graph_bar_color_compare2 (str): Color for bars of second file in comparison
+        graph_title_fontsize (int): Font size for graph titles
+        graph_label_fontsize (int): Font size for graph labels
+    """
     # Default values
-    CLI_DEFAULTS = [10, 5]
+    CLI_DEFAULTS = [10, 5]  # [single_file_display_line, compare_file_display_line]
     GUI_DEFAULTS = ["1000x700", 10, (5, 4), 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10]
+    # [window_size, graph_max_words, graph_figsize, analyze_max_words, 
+    #  graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2,
+    #  graph_title_fontsize, graph_label_fontsize]
 
     try:
+        # Attempt to load configuration from file
         with open("WAPDS.config", "r") as f:
             config_data = f.readline().split(";")
             # CLI settings
@@ -43,13 +68,18 @@ class config:
         graph_title_fontsize = GUI_DEFAULTS[7]
         graph_label_fontsize = GUI_DEFAULTS[8]
 
-    # Write/update config file
+    # Write/update config file with current settings
     with open("WAPDS.config", "w") as f:
         f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};{analyze_max_words};{graph_bar_color_single};{graph_bar_color_compare1};{graph_bar_color_compare2};{graph_title_fontsize};{graph_label_fontsize}")
 
     @classmethod
     def reset_to_defaults(cls):
-        """Reset all settings to their default values"""
+        """
+        Reset all settings to their default values.
+        
+        This method restores all configuration parameters to the predefined
+        default values but does not save them to the configuration file.
+        """
         # CLI defaults
         cls.single_file_display_line = cls.CLI_DEFAULTS[0]
         cls.compare_file_display_line = cls.CLI_DEFAULTS[1]
@@ -66,6 +96,12 @@ class config:
     
     @classmethod  
     def save(cls):
+        """
+        Save current configuration settings to the config file.
+        
+        This method writes all current configuration parameters to the
+        WAPDS.config file in a semicolon-delimited format.
+        """
         with open("WAPDS.config", "w") as f:
             f.write(f"{cls.single_file_display_line};{cls.compare_file_display_line};" + 
                    f"{cls.window_size};{cls.graph_max_words};" +
@@ -73,7 +109,6 @@ class config:
                    f"{cls.analyze_max_words};{cls.graph_bar_color_single};" +
                    f"{cls.graph_bar_color_compare1};{cls.graph_bar_color_compare2};" +
                    f"{cls.graph_title_fontsize};{cls.graph_label_fontsize}")
-
 
 
 def read_file(file_path):
@@ -85,6 +120,9 @@ def read_file(file_path):
         
     Returns:
         str or None: The content of the file as a string, or None if an error occurred
+    
+    This function handles file reading with error checking for file not found
+    and other exceptions. It also warns if the file is empty.
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -110,6 +148,11 @@ def clean_text(text):
     Returns:
         str: Cleaned text with punctuation removed, converted to lowercase
              and with no extra spaces
+    
+    This function normalizes text by:
+    1. Converting to lowercase
+    2. Replacing all non-alphanumeric characters with spaces
+    3. Removing extra spaces
     """
     if text is None:
         return ""
@@ -136,6 +179,9 @@ def count_words(text):
         tuple: A tuple containing two lists:
             - List of unique words
             - List of corresponding frequencies
+    
+    This function splits the text into words and counts how many times
+    each word appears, using custom helper functions instead of built-ins.
     """
     if not text:
         return ([], [])
@@ -159,24 +205,6 @@ def count_words(text):
     return word_count
 
 
-def get_total_words(word_count):
-    """
-    Calculate the total number of words in a text.
-    
-    Args:
-        word_count (tuple): A tuple of (words, frequencies) as returned by count_words()
-        
-    Returns:
-        int: Total word count (sum of all frequencies)
-    """
-    total = 0
-    for count in word_count[1]:
-        total += count
-    return total
-
-
-
-
 def sort_alphabetically(word_count):
     """
     Sort words alphabetically using quick_sort from helpers.
@@ -186,6 +214,9 @@ def sort_alphabetically(word_count):
         
     Returns:
         list: List of (word, frequency) tuples sorted alphabetically
+    
+    This function sorts the words in alphabetical order and returns a list of
+    (word, frequency) pairs maintaining the original frequency information.
     """
     words = word_count[0]
     # Sort words alphabetically
@@ -210,6 +241,9 @@ def sort_by_frequency(word_count):
         
     Returns:
         list: List of (word, frequency) tuples sorted by frequency (highest first)
+    
+    This function sorts words by their frequency in descending order and returns
+    a list of (word, frequency) pairs.
     """
     # Create a list of (word, count) tuples
     word_items = []
@@ -243,6 +277,9 @@ def calculate_similarity(word_count1, word_count2):
         
     Returns:
         float: Similarity percentage (0-100)
+    
+    This function calculates similarity by finding the ratio of common words
+    to the total number of unique words across both texts.
     """
     # Get all unique words from both texts
     all_words = []
@@ -271,6 +308,17 @@ class WordAnalysisApp:
     This class implements a tkinter-based graphical user interface for:
     - Analyzing individual text files (word count, sorting, frequency graphs)
     - Comparing two files for potential plagiarism
+    - Configuring application settings
+    
+    Attributes:
+        root: Tkinter root window
+        notebook: Main tabbed interface
+        file_path1: Path to the first file
+        file_path2: Path to the second file
+        word_count1: Word count data for the first file
+        word_count2: Word count data for the second file
+        clean_content1: Cleaned text content of the first file
+        clean_content2: Cleaned text content of the second file
     """
 
     def __init__(self, root, size):
@@ -280,6 +328,9 @@ class WordAnalysisApp:
         Args:
             root: Tkinter root window
             size (str): Window size in format "{width}x{height}"
+        
+        This constructor sets up the main window, creates the tabbed interface,
+        and initializes all UI components and variables.
         """
         self.root = root
         self.root.title("Word Analysis and Plagiarism Detection")
@@ -317,6 +368,9 @@ class WordAnalysisApp:
         - Word statistics display
         - Word frequency and alphabetical lists
         - Word frequency graph
+        
+        The tab is organized into sections for file selection, statistics,
+        word lists, and visualization.
         """
         analyze_tab = ttk.Frame(self.notebook)
         self.notebook.add(analyze_tab, text="Analyze File")
@@ -392,6 +446,9 @@ class WordAnalysisApp:
         - Statistics for both files
         - Similarity comparison results
         - Word frequency comparison graph
+        
+        The tab is organized into sections for file selection, statistics,
+        comparison results, and visualization.
         """
         compare_tab = ttk.Frame(self.notebook)
         self.notebook.add(compare_tab, text="Compare Files")
@@ -497,8 +554,11 @@ class WordAnalysisApp:
         Create the Configuration tab for changing application settings.
 
         This tab allows users to modify:
-        - Number of words to display in Analyze File tab
-        - Number of words to display in Compare Files tab
+        - CLI settings (display lines for analysis and comparison)
+        - GUI settings (window size, graph appearance, font sizes)
+        
+        The tab includes input fields for all configurable parameters and
+        buttons to save, cancel, or reset settings.
         """
         config_tab = ttk.Frame(self.notebook)
         self.notebook.add(config_tab, text="Configuration")
@@ -679,7 +739,7 @@ class WordAnalysisApp:
 
         clean_content = clean_text(content)
         word_count = count_words(clean_content)
-        total_words = get_total_words(word_count)
+        total_words = len(clean_content.split(" "))
         unique_words = len(word_count[0])
 
         # Display statistics
@@ -788,8 +848,8 @@ class WordAnalysisApp:
         word_count1 = count_words(clean_content1)
         word_count2 = count_words(clean_content2)
 
-        total_words1 = get_total_words(word_count1)
-        total_words2 = get_total_words(word_count2)
+        total_words1 = len(clean_content1.split(" "))
+        total_words2 = len(clean_content2.split(" "))
 
         unique_words1 = len(word_count1[0])
         unique_words2 = len(word_count2[0])
@@ -1181,8 +1241,8 @@ def compare_files(file_path1, file_path2):
     word_count1 = count_words(clean_content1)
     word_count2 = count_words(clean_content2)
 
-    total_words1 = get_total_words(word_count1)
-    total_words2 = get_total_words(word_count2)
+    total_words1 = len(clean_content1.split(" "))
+    total_words2 = len(clean_content2.split(" "))
 
     unique_words1 = len(word_count1[0])
     unique_words2 = len(word_count2[0])
@@ -1235,7 +1295,7 @@ def analyze_file(file_path):
 
     clean_content = clean_text(content)
     word_count = count_words(clean_content)
-    total_words = get_total_words(word_count)
+    total_words = len(clean_content.split(" "))
     unique_words = len(word_count[0])
 
     # Display analysis results
