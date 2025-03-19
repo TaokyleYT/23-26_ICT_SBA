@@ -900,14 +900,19 @@ class WordAnalysisApp:
         # Determine plagiarism level based on similarity percentage
         if similarity > 80:
             level = "HIGH - These texts are very similar"
+            self.comparison_text.tag_configure("color", foreground="red")
         elif similarity > 50:
             level = "MEDIUM - These texts have significant overlap"
+            self.comparison_text.tag_configure("color", foreground="orange")
         elif similarity > 20:
             level = "LOW - These texts have some common elements"
+            self.comparison_text.tag_configure("color", foreground="yellow")
         else:
             level = "MINIMAL - These texts are mostly different"
+            self.comparison_text.tag_configure("color", foreground="green")
 
         self.comparison_text.insert(tk.END, f"Plagiarism Level: {level}")  # Display plagiarism level
+        self.comparison_text.tag_add("color", "end -1 lines", tk.END)
         
         # Create comparison graph
         self.create_comparison_graph(word_count1, word_count2, self.compare_canvas)  # Draw graph for comparisons

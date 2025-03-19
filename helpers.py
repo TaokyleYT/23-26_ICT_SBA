@@ -85,7 +85,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
          else isinstance(char, str)) 
         for char in txt):  # Ensure all elements are strings
         if all(len(char) == 1 for char in txt):  # If all items are single characters
-            txt = (''.join(txt)).split('\n')  # Merge and split into lines
+            txt = (''.join(txt)).split('\n')  # Merge the txt and split it into lines
         else:
             txt = list(txt)  # Convert txt to a list for processing
     else:
@@ -156,7 +156,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                     "\x1b[" + str(current_char) + "D" +  # Move cursor left to overwrite character
                     line[i - current_char] +  # Print the current character
                     "\x1b[" + str(current_char) + "C" +  # Move cursor right
-                    "\b\x1b[B",  # Move to the next line
+                    "\b\x1b[B",  # Move cursor to the next line
                     end='',
                     flush=True)  # Ensure immediate printing
             else:
@@ -176,7 +176,6 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
 
 def animated_input(prompt: str = "",
                    delay: float = 0.01,
-                   front_effect="",
                    line_offset: int = 1,
                    single_letter: bool = False,
                    _log: bool = False):
@@ -195,8 +194,6 @@ def animated_input(prompt: str = "",
             Text to display before the input field.
         delay (float): 
             Time in seconds between character animations (default: 0.01s).
-        front_effect (str): 
-            String to display at front of animated text (currently unused).
         line_offset (int): 
             Number of lines to offset the text vertically (default: 1).
         single_letter (bool): 
