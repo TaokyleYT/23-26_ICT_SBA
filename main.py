@@ -1052,27 +1052,30 @@ def configure_test_input(prompt:str, type, was:str, error:str = ""):
     try:
         temp_unsaved = input(f"{prompt} (was {was}): ")
         if type == int:
+            temp_unsaved = int(temp_unsaved)
             if temp_unsaved > 0:
-                return int(temp_unsaved)
+                return temp_unsaved
             else:
                 raise ValueError
         elif type == float:
+            temp_unsaved = float(temp_unsaved)
             if temp_unsaved > 0:
-                return float(temp_unsaved)
+                return temp_unsaved
             else:
                 raise ValueError
         else:
             return temp_unsaved
     except ValueError:
-        print("Invalid input. ", end="")
+        print("\x1b[31mInvalid input. ", end="")
         if error:
-            print(error)
+            print(error, end="")
         elif type == int:
-            print("Please enter a positive integer.")
+            print("Please enter a positive integer.", end="")
         elif type == float:
-            print("Please enter a positive float.")
+            print("Please enter a positive float.", end="")
         else:
-            print(error)
+            print(error, end="")
+        print("\x1b[m")
         
         
 def configure():
@@ -1362,14 +1365,10 @@ def mainCLI():
         elif choice == '3':
             configure()
         elif choice == '4':
-            print(
-                "Thank you for using WAPDS!"
-            )
+            print("Thank you for using WAPDS!")
             break
         else:
-            print(
-                f"Invalid choice {repr(choice)}. Please enter a number between 1 and 4."
-            )
+            print(f"Invalid choice {repr(choice)}. Please enter a number between 1 and 4.")
             
             
 
@@ -1403,9 +1402,7 @@ if __name__ == "__main__":
                 if n <= 0:
                     raise ValueError
         except ValueError:
-            parser.error(
-            f'Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}'
-        )
+            parser.error(f'Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}')
         config.window_size = args.GUI_window_size.strip()
         config.save()
         mainGUI()
@@ -1413,6 +1410,4 @@ if __name__ == "__main__":
         from helpers import animated_print as print, animated_input as input  # Use animated versions of print/input (CLI only)
         mainCLI()
     else:
-        parser.error(
-            f'Please enter either "GUI" or "CLI" for run type, not {repr(args.run_type)}'
-        )
+        parser.error(f'Please enter either "GUI" or "CLI" for run type, not {repr(args.run_type)}')

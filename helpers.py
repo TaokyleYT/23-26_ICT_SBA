@@ -92,7 +92,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
             continue
         temp = split_exclude_ANSI(
             line, " ")  # Split line by spaces, preserving ANSI codes
-        words: list[str] = [(item if i == len(temp) else item + " ")
+        words: list[str] = [(item if i == len(temp)-1 else item + " ")
                             for i, item in enumerate(temp)]
         # Wrap text to terminal width
         index: int = 0
@@ -148,7 +148,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                     flush=True)
             else:
                 print("\x1b[B", end='', flush=True) #go to the next line without printing anything
-        print("\x1b[A\x1b[C", end='', flush=True) #move cursor up and then right
+        print("\x1b[A\x1b[C", end='', flush=True) #move cursor up and then right for next iteration
     time.sleep(delay)
     # Reset cursor position
     print("\x1b[" + str(line_offset * len(txt_lst)) + "D",
@@ -190,7 +190,7 @@ def animated_input(prompt: str = "",
                    delay: float = 0.01,
                    front_effect="",
                    line_offset: int = 1,
-                   single_letter:bool = False,
+                   single_letter: bool = False,
                    _log: bool = False):
     """
     Animated version of input() that displays a prompt with animation effects.
@@ -279,7 +279,7 @@ def animated_input(prompt: str = "",
     while not result.endswith("R"):
         result += sys.stdin.read(1)
 
-    # Parse cursor position response from termina
+    # Parse cursor position response from terminal
     reg = re.match(r"^\x1b\[(\d*);(\d*)R", result)
     ptr = int(reg.groups()[1]) if reg else 1
 
@@ -295,14 +295,16 @@ def animated_input(prompt: str = "",
     if _log:
         with open("input_log.txt", "a") as f:
             f.write("\n-----\nInput started\n-----\n")
-    # Handle input with fancy animation
-    while char != "\n":
+    # Main input loop
+    while char != "\n": #continue to receive input until enter ("\n")
+        # Handle Ctrl+C and Ctrl+D
         if char in "\x03\x04":
             if _log:
                 with open("input_log.txt", "a") as f:
                     f.write(f"KeyboardInterrupt with {char}\n")
             raise KeyboardInterrupt
-        if char in "\x7f\x08":  # Backspace character
+        # Handle backspace character
+        if char in "\x7f\x08":
             if len(result) > 0:  # If can backspace
                 if _log:
                     with open("input_log.txt", "a") as f:
@@ -326,7 +328,7 @@ def animated_input(prompt: str = "",
             if ptr % columns == 0:
                 output(" \n")  # Create new line if at end of terminal
 
-            # Determine animation for this character
+            # Handle ANSI escape sequences
             if char == "\x1b":  # Start of ANSI escape sequence
                 ansi = char
             elif ansi:  # Continue ANSI sequence
@@ -340,7 +342,7 @@ def animated_input(prompt: str = "",
             else:
                 end_cyc = len(printables)
 
-            # Perform character animation
+            # Animation (cycle through characters)
             for c in printables[:end_cyc]:
                 output(ansi)
                 output(c + "\b")  # Show character then backspace
@@ -382,16 +384,25 @@ def animated_input(prompt: str = "",
 def quick_sort(input_list: Sequence, ascending: bool = True):
     """
     Sorts a list using the quick sort algorithm.
-
-    This is a recursive implementation of the quick sort algorithm
-    that uses the first element as pivot.
-
+    
+    This is a recursive implementation of the quick sort algorithm that uses
+    the first element as pivot. It creates new lists rather than sorting in-place.
+    
     Args:
-        input_list (Sequence): The list/sequence to sort
-        ascending (bool): Sort in ascending order if True, descending if False
-
+        input_list (Sequence): 
+            The list/sequence to sort.
+        ascending (bool): 
+            Sort in ascending order if True, descending if False (default: True).
+        
     Returns:
-        list: A new sorted list containing the same elements
+        list: A new sorted list containing the same elements as input_list.
+        
+    Time Complexity:
+        - Average case: O(n log n)
+        - Worst case: O(n^2) when the list is already sorted
+        
+    Space Complexity:
+        O(n) due to the creation of new lists during recursion.
     """
     # Base case (when list has 1 or 0 items it's already sorted)
     if len(input_list) < 2:
@@ -421,19 +432,26 @@ def linear_search(input_list: list,
                   /):
     """
     Performs a linear search for a value in a list.
-
-    Sequentially checks each element in the list until
-    it finds a match or reaches the end.
-
+    
+    Sequentially checks each element in the list until it finds a match or reaches the end.
+    Allows specifying a range to search within.
+    
     Args:
-        input_list (list): The list to search in
-        value: The value to search for
-        start (int): Starting index for the search
-        stop (int): Ending index (exclusive) for the search
-            (default is max 64-bit integer to search entire list)
-
+        input_list (list): 
+            The list to search in.
+        value: 
+            The value to search for.
+        start (int): 
+            Starting index for the search (default: 0).
+        stop (int): 
+            Ending index (exclusive) for the search
+            (default: 9223372036854775807, which is 2^63-1, to search entire list).
+        
     Returns:
-        int: Index of the first occurrence of value if found, -1 otherwise
+        int: Index of the first occurrence of value if found, -1 otherwise.
+        
+    Time Complexity:
+        O(n) where n is the number of elements in the search range.
     """
     # Ensure stop doesn't exceed list length
     stop = min(stop, len(input_list))
@@ -448,21 +466,28 @@ def linear_search(input_list: list,
 def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
     """
     Splits a string by separator(s) while preserving ANSI escape sequences.
-
+    
     This is similar to str.split() but keeps ANSI escape codes intact within each
-    resulting substring. If separator is empty, splits into individual characters.
-
+    resulting substring. If separator is empty, splits into individual characters
+    while keeping ANSI sequences together.
+    
     Args:
-        text (str): The string to split
-        sep (str | list[str] | tuple[str]): Separator(s) to split by.
+        text (str): 
+            The string to split.
+        sep (str | list[str] | tuple[str]): 
+            Separator(s) to split by.
             Can be a string, list of strings, or tuple of strings.
             If empty string, splits into individual characters.
-
+            
     Returns:
-        list[str]: List of strings after splitting by separator(s)
-
+        list[str]: List of strings after splitting by separator(s).
+        
     Raises:
-        TypeError: If sep is not a string, list of strings, or tuple of strings
+        TypeError: If sep is not a string, list of strings, or tuple of strings.
+        
+    Example:
+        >>> split_exclude_ANSI("\x1b[31mHello\x1b[0m World", " ")
+        ['\x1b[31mHello\x1b[0m', 'World']
     """
     if not (isinstance(sep, str) or all(isinstance(s, str) for s in sep)):
         raise TypeError(
@@ -484,17 +509,18 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
     ansi_start = -1
 
     while i < len(text):
-        # Check if we're in an ANSI escape sequence
+        # Check if entering an ANSI escape sequence
         if text[i] == '\x1b' and i + 1 < len(text) and text[i + 1] == '[':
             in_ansi = True
             ansi_start = i
 
-        # Check if we're at the end of an ANSI sequence
+        # Check if at the end of an ANSI sequence
         if in_ansi and i > ansi_start + 1 and text[i] > "@" and text[i] < "~":
             in_ansi = False
 
         # Only check for separators if we're not in an ANSI sequence
         if not in_ansi:
+            # Special case: split into individual characters
             if separators == [""]:
                 i += 1
             # Check if current position matches any separator
@@ -511,9 +537,9 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
     # Add the last segment
     result.append(text[start:])
 
-    while result[-1] == "":
-        del result[
-            -1]  #in case null strings showed up at the end by some separator mess (causes trouble)
+    # Remove empty strings at the end that might have been caused by trailing separators
+    while result and result[-1] == "":
+        del result[-1]
 
     return result
 
@@ -522,17 +548,17 @@ def max(*args):
     """
     Returns the largest item in an iterable or the largest of multiple arguments.
 
-    Similar to built-in max() but reimplemented to avoid using built-in functions.
-
+    Reimplementation of the built-in max() so that I can use max() without using built-in or pasting a giant for loop every time
+    
     Args:
         *args: Either a single iterable or multiple arguments to compare.
-
+        
     Returns:
         The largest item.
-
+        
     Raises:
         TypeError: If no arguments are provided.
-
+        
     Example:
         >>> max(1, 2, 3)
         3
@@ -560,18 +586,18 @@ def max(*args):
 def min(*args):
     """
     Returns the smallest item in an iterable or the smallest of multiple arguments.
-
-    Similar to built-in min() but reimplemented to avoid using built-in functions.
+    
+    Reimplementation of the built-in min() so that I can use min() without using built-in or pasting a giant for loop every time
 
     Args:
         *args: Either a single iterable or multiple arguments to compare.
-
+        
     Returns:
         The smallest item.
-
+        
     Raises:
         TypeError: If no arguments are provided.
-
+        
     Example:
         >>> min(1, 2, 3)
         1
@@ -600,7 +626,7 @@ def all(*args):
     """
     Returns True if all elements of the iterable are true (or if iterable is empty).
 
-    Similar to built-in all() but reimplemented to avoid using built-in functions.
+    Reimplementation of the built-in all() so that I can use all() without using built-in or pasting a giant for loop every time
 
     Args:
         *args: Either a single iterable or multiple arguments to check.
@@ -634,16 +660,16 @@ def all(*args):
 def any(*args):
     """
     Returns True if any element of the iterable is true.
-
-    Similar to built-in any() but reimplemented to avoid using built-in functions.
+    
+    Reimplementation of the built-in any() so that I can use any() without using built-in or pasting a giant for loop every time
     If the iterable is empty, returns False.
-
+    
     Args:
         *args: Either a single iterable or multiple arguments to check.
-
+        
     Returns:
         bool: True if any element is true, False otherwise.
-
+        
     Example:
         >>> any([False, False, True])
         True
