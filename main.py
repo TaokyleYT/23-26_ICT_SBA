@@ -2,8 +2,12 @@ import os  # Import module for terminal size detection and file operations
 import helpers  # Import custom helper functions that avoid using built-in functions
 import tkinter as tk  # Import tkinter for GUI implementation
 from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
-import matplotlib.pyplot as plt  # Import matplotlib for data visualization
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
+try:
+    import matplotlib.pyplot as plt  # Import matplotlib for data visualization
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
+except (ImportError, ModuleNotFoundError):
+    print(f"\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
+    plt = None
 import argparse  # For command-line argument parsing
 
 
@@ -209,6 +213,22 @@ def count_words(text):
     return word_count  # Return the word counts
 
 
+def search_word(text, target_word):
+    """Search for a target word in the text and return its positions."""
+    if not text or not target_word:
+        return []
+    
+    words = text.split()
+    target_word = target_word.lower()
+    positions = []
+    
+    for idx, word in enumerate(words):
+        if word.lower() == target_word:
+            positions.append(idx)
+    
+    return positions
+
+
 def sort_alphabetically(word_count):
     """
     Sort words alphabetically using quick_sort from helpers.
@@ -347,6 +367,8 @@ class WordAnalysisApp:
         # Create tabs for various functionalities
         self.create_analyze_tab()  # Tab for analyzing single file
         self.create_compare_tab()  # Tab for comparing two files
+        self.create_search_tab()
+        self.create_replace_tab()
         self.create_config_tab()  # Tab for configuring settings
 
         # Variables to store file paths and analysis results
@@ -561,6 +583,127 @@ class WordAnalysisApp:
         # Canvas to draw the comparison graph
         self.compare_canvas = tk.Canvas(graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+    def create_search_tab(self):
+        """Create the Search tab for word searching."""
+        search_tab = ttk.Frame(self.notebook)
+        self.notebook.add(search_tab, text="Search Word")
+
+        # File selection
+        file_frame = ttk.Frame(search_tab)
+        file_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Label(file_frame, text="Select File:").pack(side=tk.LEFT, padx=5)
+        self.search_file_entry = ttk.Entry(file_frame, width=50)
+        self.search_file_entry.pack(side=tk.LEFT,
+                                    padx=5,
+                                    fill=tk.X,
+                                    expand=True)
+
+        browse_btn = ttk.Button(file_frame,
+                                text="Browse",
+                                command=self.browse_search_file)
+        browse_btn.pack(side=tk.LEFT, padx=5)
+
+        # Search frame
+        search_frame = ttk.Frame(search_tab)
+        search_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Label(search_frame, text="Search for word:").pack(side=tk.LEFT,
+                                                              padx=5)
+        self.search_entry = ttk.Entry(search_frame, width=30)
+        self.search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+        search_btn = ttk.Button(search_frame,
+                                text="Search",
+                                command=self.search_word)
+        search_btn.pack(side=tk.LEFT, padx=5)
+
+        # Results frame
+        results_frame = ttk.LabelFrame(search_tab, text="Search Results")
+        results_frame.pack(fill=tk.BOTH, expand=True, pady=10, padx=10)
+
+        self.search_results = tk.Text(results_frame, wrap=tk.WORD)
+        self.search_results.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+    def create_replace_tab(self):
+        """Create the Replace tab for word replacement."""
+        replace_tab = ttk.Frame(self.notebook)
+        self.notebook.add(replace_tab, text="Replace Word")
+
+        # File selection
+        file_frame = ttk.Frame(replace_tab)
+        file_frame.pack(fill=tk.X, pady=10)
+
+        ttk.Label(file_frame, text="Select File:").pack(side=tk.LEFT, padx=5)
+        self.replace_file_entry = ttk.Entry(file_frame, width=50)
+        self.replace_file_entry.pack(side=tk.LEFT,
+                                     padx=5,
+                                     fill=tk.X,
+                                     expand=True)
+
+        browse_btn = ttk.Button(file_frame,
+                                text="Browse",
+                                command=self.browse_replace_file)
+        browse_btn.pack(side=tk.LEFT, padx=5)
+
+        # Replace frame
+        replace_frame = ttk.Frame(replace_tab)
+        replace_frame.pack(fill=tk.X, pady=10)
+
+        # Word to replace
+        word_frame = ttk.Frame(replace_frame)
+        word_frame.pack(fill=tk.X, pady=5)
+
+        ttk.Label(word_frame, text="Word to replace:").pack(side=tk.LEFT,
+                                                            padx=5)
+        self.word_entry = ttk.Entry(word_frame, width=30)
+        self.word_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+        # Replacement word
+        replacement_frame = ttk.Frame(replace_frame)
+        replacement_frame.pack(fill=tk.X, pady=5)
+
+        ttk.Label(replacement_frame,
+                  text="Replacement word:").pack(side=tk.LEFT, padx=5)
+        self.replacement_entry = ttk.Entry(replacement_frame, width=30)
+        self.replacement_entry.pack(side=tk.LEFT,
+                                    padx=5,
+                                    fill=tk.X,
+                                    expand=True)
+
+        replace_btn = ttk.Button(replace_frame,
+                                 text="Replace",
+                                 command=self.replace_word)
+        replace_btn.pack(pady=5)
+
+        # Text display frames
+        text_frame = ttk.Frame(replace_tab)
+        text_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+
+        # Original text
+        original_frame = ttk.LabelFrame(text_frame,
+                                        text="Original Text (Cleaned)")
+        original_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+
+        self.original_text = tk.Text(original_frame, wrap=tk.WORD)
+        self.original_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Modified text
+        modified_frame = ttk.LabelFrame(text_frame, text="Modified Text")
+        modified_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+
+        self.modified_text = tk.Text(modified_frame, wrap=tk.WORD)
+        self.modified_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Save button
+        save_frame = ttk.Frame(replace_tab)
+        save_frame.pack(fill=tk.X, pady=10)
+
+        save_btn = ttk.Button(save_frame,
+                              text="Save Modified Text",
+                              command=self.save_modified_text)
+        save_btn.pack()
 
     def create_config_tab(self):
         """
@@ -739,6 +882,25 @@ class WordAnalysisApp:
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):  # Open dialog for file selection
             self.compare_file_entry2.delete(0, tk.END)  # Clear entry
             self.compare_file_entry2.insert(0, file_path)  # Insert selected path
+            
+    def browse_search_file(self):
+        """Browse for a file to search."""
+        if file_path := filedialog.askopenfilename(
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):
+            self.search_file_entry.delete(0, tk.END)
+            self.search_file_entry.insert(0, file_path)
+
+    def browse_replace_file(self):
+        """Browse for a file to perform word replacement."""
+        if file_path := filedialog.askopenfilename(
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):
+            self.replace_file_entry.delete(0, tk.END)
+            self.replace_file_entry.insert(0, file_path)
+
+            if content := read_file(file_path):
+                clean_content = clean_text(content)
+                self.original_text.delete(1.0, tk.END)
+                self.original_text.insert(tk.END, clean_content)
 
     def analyze_file(self):
         """
@@ -803,6 +965,9 @@ class WordAnalysisApp:
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
+            
+        if plt is None:
+            return
 
         # Get the top words by frequency
         freq_sorted = sort_by_frequency(word_count)  # Sort word counts
@@ -930,6 +1095,9 @@ class WordAnalysisApp:
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
+            
+        if plt is None:
+            return
 
         # Get top words from both files
         freq_sorted1 = sort_by_frequency(word_count1)  # Sort word counts from first file
@@ -987,6 +1155,98 @@ class WordAnalysisApp:
         canvas = FigureCanvasTkAgg(fig, master=canvas_widget)  # Create canvas for matplotlib figure
         canvas.draw()  # Draw the figure
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # Pack canvas into the Tkinter widget
+        
+    def search_word(self):
+        """Search for a word in the selected file."""
+        file_path = self.search_file_entry.get()
+        target_word = self.search_entry.get()
+
+        if not file_path:
+            messagebox.showerror("Error", "Please select a file first.")
+            return
+
+        if not target_word:
+            messagebox.showerror("Error", "Please enter a word to search for.")
+            return
+
+        content = read_file(file_path)
+        if content is None:
+            messagebox.showerror("Error", f"Could not read file: {file_path}")
+            return
+
+        clean_content = clean_text(content)
+        positions = search_word(clean_content, target_word)
+
+        self.search_results.delete(1.0, tk.END)
+
+        if positions:
+            self.search_results.insert(
+                tk.END,
+                f"The word '{target_word}' appears {len(positions)} times at positions: {positions}\n\n"
+            )
+
+            # Show each occurrence in context
+            words = clean_content.split()
+            for pos in positions:
+                # Get a window of words around the occurrence
+                start = helpers.max(0, pos - 3)
+                end = helpers.min(len(words), pos + 4)
+                context = " ".join(words[start:pos]) +\
+                          " \x1b[43m"+ words[pos] + "\x1b[m " +\
+                          " ".join(words[pos+1:end])
+
+                if pos > 3:
+                    context = f"... {context}"
+                if pos + 4 < len(words):
+                    context += " ..."
+
+                self.search_results.insert(tk.END,  f"Position {pos}: {context}\n")
+        else:
+            self.search_results.insert(tk.END, f"The word '{target_word}' was not found in the file.")
+
+    def replace_word(self):
+        """Replace occurrences of a word in the selected file."""
+        file_path = self.replace_file_entry.get()
+        target_word = self.word_entry.get()
+        replacement_word = self.replacement_entry.get()
+
+        if not file_path:
+            messagebox.showerror("Error", "Please select a file first.")
+            return
+
+        if not target_word:
+            messagebox.showerror("Error", "Please enter a word to replace.")
+            return
+
+        content = read_file(file_path)
+        if content is None:
+            messagebox.showerror("Error", f"Could not read file: {file_path}")
+            return
+
+        modified_content = clean_text(content).replace(target_word, replacement_word)
+
+        # Display modified content
+        self.modified_text.delete(1.0, tk.END)
+        self.modified_text.insert(tk.END, modified_content)
+        
+    def save_modified_text(self):
+        """Save the modified text to a new file."""
+        if not self.modified_text.get(1.0, tk.END).strip():
+            messagebox.showerror("Error", "No modified text to save.")
+            return
+
+        if file_path := filedialog.asksaveasfilename(
+                defaultextension=".txt",
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+        ):
+            try:
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(self.modified_text.get(1.0, tk.END))
+                messagebox.showinfo("Success",
+                                    f"Modified text saved to '{file_path}'")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error saving file: {str(e)}")
+
         
     def save_config(self):
         """
@@ -1227,21 +1487,7 @@ def configure():
         # Save updated configuration to persistent storage
         config.save()
         
-        
-def search_word(text, target_word):
-    """Search for a target word in the text and return its positions."""
-    if not text or not target_word:
-        return []
     
-    words = text.split()
-    target_word = target_word.lower()
-    positions = []
-    
-    for i, word in enumerate(words):
-        if word.lower() == target_word:
-            positions.append(i)
-    
-    return positions
 
 def replace_word(text, target_word, replacement_word):
     """Replace a target word with a replacement word and return the modified text."""
@@ -1490,12 +1736,13 @@ def mainCLI():
 \nMenu:\n\
 1. Analyze a single file\n\
 2. Compare two files for plagiarism\n\
-3. Count and Replace words in a file\n\
-4. Configure settings\n\
-5. Exit\n")
+3. Search for a word in a file\n\
+4. Replace a word in a file\n\
+5. Configure settings\n\
+6. Exit\n")
 
         # Prompt user for choice and capture input
-        choice = input("\nEnter your choice (1-4): ", single_letter=True).strip()
+        choice = input("\nEnter your choice (1-6): ", single_letter=True).strip()
 
         # Handle each choice using if-elif statements
         if choice == '1':
@@ -1508,18 +1755,57 @@ def mainCLI():
             compare_files(file_path1, file_path2)  # Call compare function on selected files
 
         elif choice == '3':
-            file_path = input("Enter the path to the text file: ").strip()  # Path for file
-            count_and_replace()
-        
+            file_path = input("Enter the path to the text file: ").strip()
+            content = read_file(file_path)
+
+            if content is not None:
+                target_word = input("Enter the word to search for: ").strip()
+                if positions := search_word(clean_text(content), target_word):
+                    print(
+                        f"The word '{target_word}' appears {len(positions)} times at positions: {positions}"
+                    )
+                else:
+                    print(
+                        f"The word '{target_word}' was not found in the file.")
+
         elif choice == '4':
+            file_path = input("Enter the path to the text file: ").strip()
+            content = read_file(file_path)
+
+            if content is not None:
+                target_word = input("Enter the word to replace: ").strip()
+                replacement_word = input("Enter the replacement word: ").strip()
+
+                clean_content = clean_text(content)
+                modified_content = clean_content.replace(target_word, replacement_word)
+
+                print("\nOriginal text (cleaned):")
+                print(f"{clean_content[:100]}..." if len(clean_content) >
+                      100 else clean_content + 
+                      f"\nModified text:\n{modified_content[:100]}{"..." if len(modified_content) > 100 else modified_content}"
+                     )
+
+                save_option = input("\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).strip().lower()
+                if save_option == 'y':
+                    new_file_path = input(
+                        "Enter the path for the new file: ").strip()
+                    try:
+                        with open(new_file_path, 'w', encoding='utf-8') as file:
+                            file.write(modified_content)
+                        print(f"Modified text saved to '{new_file_path}'")
+                    except Exception as e:
+                        print(f"Error saving file: {str(e)}")
+
+        
+        elif choice == '5':
             configure()  # Call configuration function
 
-        elif choice == '5':
+        elif choice == '6':
             print("Thank you for using WAPDS!")  # Goodbye message
             break  # Exit the loop
 
         else:
-            print(f"Invalid choice {repr(choice)}. Please enter a number between 1 and 4.")  # Input error handling
+            print(f"Invalid choice {repr(choice)}. Please enter a number between 1 and 6.")  # Input error handling
 
 if __name__ == "__main__":
     # Parse command line arguments to determine whether to run GUI or CLI version of the application
