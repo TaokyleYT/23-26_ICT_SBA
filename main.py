@@ -1226,6 +1226,88 @@ def configure():
 
         # Save updated configuration to persistent storage
         config.save()
+        
+        
+def search_word(text, target_word):
+    """Search for a target word in the text and return its positions."""
+    if not text or not target_word:
+        return []
+    
+    words = text.split()
+    target_word = target_word.lower()
+    positions = []
+    
+    for i, word in enumerate(words):
+        if word.lower() == target_word:
+            positions.append(i)
+    
+    return positions
+
+def replace_word(text, target_word, replacement_word):
+    """Replace a target word with a replacement word and return the modified text."""
+    if not text or not target_word:
+        return text
+    
+    words = text.split()
+    target_word = target_word.lower()
+    
+    for i, word in enumerate(words):
+        if word.lower() == target_word:
+            words[i] = replacement_word
+    
+    return ' '.join(words)
+        
+        
+def count_and_replace(file_path):
+    """
+    Count and replace specific word in a text file for CLI mode.
+    
+    This function reads the specified file, cleans its content,
+    counts words, determines total and unique word counts,
+    and then displays results using display_results().
+
+    Args:
+        file_path (str): The path to the file to analyze
+
+    Returns:
+        tuple: A tuple containing word count data and cleaned content,
+               or None if an error occurred.
+    """
+    file_path = input("Enter the path to the text file: ").strip()
+    content = read_file(file_path)
+            
+    if content is not None:
+        target_word = input("Enter the word to search for: ").strip()
+        clean_content = clean_text(content)
+        positions = search_word(clean_content, target_word)
+        
+        if positions:
+            print(f"The word '{target_word}' appears {len(positions)} times at positions: {positions}")
+        else:
+            print(f"The word '{target_word}' was not found in the file.")
+                
+        target_word = input("Enter the word to replace: ").strip()
+        replacement_word = input("Enter the replacement word: ").strip()
+        
+        clean_content = clean_text(content)
+        modified_content = replace_word(clean_content, target_word, replacement_word)
+        
+        print("\nOriginal text (cleaned):")
+        print(clean_content[:100] + "..." if len(clean_content) > 100 else clean_content)
+                
+        print("\nModified text:")
+        print(modified_content[:100] + "..." if len(modified_content) > 100 else modified_content)
+                
+        save_option = input("\nDo you want to save the modified text to a new file? (y/n): ").strip().lower()
+        if save_option == 'y':
+            new_file_path = input("Enter the path for the new file: ").strip()
+            try:
+                with open(new_file_path, 'w', encoding='utf-8') as file:
+                    file.write(modified_content)
+                print(f"Modified text saved to '{new_file_path}'")
+            except Exception as e:
+                print(f"Error saving file: {str(e)}")
+    
 
 def display_results(file_path, word_count, total_words, unique_words, show_nums=10, warp=os.get_terminal_size().columns):
     """
@@ -1344,10 +1426,6 @@ def analyze_file(file_path):
 
     Args:
         file_path (str): The path to the file to analyze
-
-    Returns:
-        tuple: A tuple containing word count data and cleaned content,
-               or None if an error occurred.
     """
     # Read and process the file content
     content = read_file(file_path)  # Attempt to read the file content
@@ -1412,15 +1490,16 @@ def mainCLI():
 \nMenu:\n\
 1. Analyze a single file\n\
 2. Compare two files for plagiarism\n\
-3. Configure settings\n\
-4. Exit\n")
+3. Count and Replace words in a file\n\
+4. Configure settings\n\
+5. Exit\n")
 
         # Prompt user for choice and capture input
         choice = input("\nEnter your choice (1-4): ", single_letter=True).strip()
 
         # Handle each choice using if-elif statements
         if choice == '1':
-            file_path = input("Enter the path to the text file: ").strip()  # Capture path for analysis
+            file_path = input("Enter the path to the text file: ").strip()  # Path for file
             analyze_file(file_path)  # Call the analyze function for the selected file
 
         elif choice == '2':
@@ -1429,9 +1508,13 @@ def mainCLI():
             compare_files(file_path1, file_path2)  # Call compare function on selected files
 
         elif choice == '3':
+            file_path = input("Enter the path to the text file: ").strip()  # Path for file
+            count_and_replace()
+        
+        elif choice == '4':
             configure()  # Call configuration function
 
-        elif choice == '4':
+        elif choice == '5':
             print("Thank you for using WAPDS!")  # Goodbye message
             break  # Exit the loop
 
@@ -1440,7 +1523,7 @@ def mainCLI():
 
 if __name__ == "__main__":
     # Parse command line arguments to determine whether to run GUI or CLI version of the application
-    some_text = "{width}x{height}"  # Template for GUI window dimension formatting
+    some_text = "{width}x{height}"  # Still dont know how to put curly brackets in f string
     parser = argparse.ArgumentParser(description="Word Analysis and Plagiarism Detection System (WAPDS)")  # Setup argument parser
     parser.add_argument(
         "run_type",
@@ -1457,8 +1540,9 @@ if __name__ == "__main__":
     # Start the appropriate interface based on the argument provided
     if args.run_type == "GUI":
         try:
-            # Set GUI window size 
-            GUI_window_size_check = args.GUI_window_size.strip().split("x")  # Split input into width and height
+            # Set GUI window size
+            GUI_window_size = args.GUI_window_size.strip()
+            GUI_window_size_check = GUI_window_size.split("x")  # Split input into width and height
             GUI_window_size_check = [int(dimension) for dimension in GUI_window_size_check]  # Convert dimensions into integers
             if len(GUI_window_size_check) != 2:  # Check for two dimensions
                 raise ValueError  # Raise an error if not valid
@@ -1467,12 +1551,15 @@ if __name__ == "__main__":
                     raise ValueError
         except ValueError:
             # If parsing fails, inform the user of the formatting error
-            parser.error(f'Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}')
-        config.window_size = args.GUI_window_size.strip()  # Set the new window size in the config
+            if GUI_window_size == config.window_size:
+                config.reset_to_defaults() #corrupted config
+            else:
+                parser.error(f'Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}')
+        config.window_size = GUI_window_size  # Set the new window size in the config
         config.save()  # Save the new configurations
         mainGUI()  # Launch GUI application
     elif args.run_type == "CLI":
-        # Import animated print and input functions for better user experience in CLI mode
+        # make print and input animated, looks fancy, yet creates inconvenience lol
         from helpers import animated_print as print, animated_input as input
         mainCLI()  # Launch CLI application
     else:
