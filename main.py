@@ -1,6 +1,7 @@
 import os  # Import module for terminal size detection and file operations
 import helpers  # Import custom helper functions that avoid using built-in functions
 import tkinter as tk  # Import tkinter for GUI implementation
+import re  # Import regex module for pattern matching
 from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
 try:
     import matplotlib.pyplot as plt  # Import matplotlib for data visualization
@@ -213,20 +214,55 @@ def count_words(text):
     return word_count  # Return the word counts
 
 
-def search_word(text, target_word):
-    """Search for a target word in the text and return its positions."""
+
+def search_word_position(text, target_word, regex=False):
+    """
+    Search for a target word or pattern in the text and return its positions.
+    
+    Args:
+        text (str): The text to search within (original text with punctuation)
+        target_word (str): The word or pattern to search for
+        regex (bool): Whether to treat target_word as a regular expression
+        
+    Returns:
+        list: A list of tuples (position, matched_text) where the target appears
+              (empty list if word not found or inputs are invalid)
+              
+    This function finds all occurrences of the target word or pattern in the original text,
+    ignoring case but preserving the original formatting in the results.
+    """
+    # Check for empty inputs
     if not text or not target_word:
         return []
     
-    words = text.split()
-    target_word = target_word.lower()
-    positions = []
+    results = []  # Initialize list to store results
     
-    for idx, word in enumerate(words):
-        if word.lower() == target_word:
-            positions.append(idx)
+    if regex:
+        try:
+            # Use regex pattern to find matches
+            pattern = re.compile(target_word, re.IGNORECASE)
+            words = text.split()
+            
+            # Find all matches with their positions
+            for idx, word in enumerate(words):
+                if pattern.search(word):
+                    results.append((idx, word))
+        except re.error:
+            # Handle invalid regex pattern
+            return []
+    else:
+        # Standard word search (case-insensitive)
+        words = text.split()
+        target_word = target_word.lower()
+        
+        # Find all exact matches with their positions
+        for idx, word in enumerate(words):
+            # Remove punctuation for comparison but keep original word
+            clean_word = ''.join(c.lower() for c in word if c.isalnum())
+            if clean_word == target_word:
+                results.append((idx, word))
     
-    return positions
+    return results  # Return all found positions with matched text
 
 
 def sort_alphabetically(word_count):
@@ -609,10 +645,16 @@ class WordAnalysisApp:
         search_frame = ttk.Frame(search_tab)
         search_frame.pack(fill=tk.X, pady=10)
 
-        ttk.Label(search_frame, text="Search for word:").pack(side=tk.LEFT,
-                                                              padx=5)
+        ttk.Label(search_frame, text="Search for:").pack(side=tk.LEFT, padx=5)
         self.search_entry = ttk.Entry(search_frame, width=30)
         self.search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+        # Add regex checkbox
+        self.regex_var = tk.BooleanVar(value=False)
+        regex_check = ttk.Checkbutton(search_frame, 
+                                    text="Use Regex", 
+                                    variable=self.regex_var)
+        regex_check.pack(side=tk.LEFT, padx=5)
 
         search_btn = ttk.Button(search_frame,
                                 text="Search",
@@ -625,6 +667,7 @@ class WordAnalysisApp:
 
         self.search_results = tk.Text(results_frame, wrap=tk.WORD)
         self.search_results.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.search_results.config(state=tk.DISABLED)  # Make the text read-only
 
     def create_replace_tab(self):
         """Create the Replace tab for word replacement."""
@@ -638,9 +681,9 @@ class WordAnalysisApp:
         ttk.Label(file_frame, text="Select File:").pack(side=tk.LEFT, padx=5)
         self.replace_file_entry = ttk.Entry(file_frame, width=50)
         self.replace_file_entry.pack(side=tk.LEFT,
-                                     padx=5,
-                                     fill=tk.X,
-                                     expand=True)
+                                    padx=5,
+                                    fill=tk.X,
+                                    expand=True)
 
         browse_btn = ttk.Button(file_frame,
                                 text="Browse",
@@ -655,17 +698,23 @@ class WordAnalysisApp:
         word_frame = ttk.Frame(replace_frame)
         word_frame.pack(fill=tk.X, pady=5)
 
-        ttk.Label(word_frame, text="Word to replace:").pack(side=tk.LEFT,
-                                                            padx=5)
+        ttk.Label(word_frame, text="Text to replace:").pack(side=tk.LEFT, padx=5)
         self.word_entry = ttk.Entry(word_frame, width=30)
         self.word_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+        # Add regex checkbox
+        self.replace_regex_var = tk.BooleanVar(value=False)
+        regex_check = ttk.Checkbutton(word_frame, 
+                                    text="Use Regex", 
+                                    variable=self.replace_regex_var)
+        regex_check.pack(side=tk.LEFT, padx=5)
 
         # Replacement word
         replacement_frame = ttk.Frame(replace_frame)
         replacement_frame.pack(fill=tk.X, pady=5)
 
         ttk.Label(replacement_frame,
-                  text="Replacement word:").pack(side=tk.LEFT, padx=5)
+                text="Replacement text:").pack(side=tk.LEFT, padx=5)
         self.replacement_entry = ttk.Entry(replacement_frame, width=30)
         self.replacement_entry.pack(side=tk.LEFT,
                                     padx=5,
@@ -673,8 +722,8 @@ class WordAnalysisApp:
                                     expand=True)
 
         replace_btn = ttk.Button(replace_frame,
-                                 text="Replace",
-                                 command=self.replace_word)
+                                text="Replace",
+                                command=self.replace_word)
         replace_btn.pack(pady=5)
 
         # Text display frames
@@ -682,12 +731,12 @@ class WordAnalysisApp:
         text_frame.pack(fill=tk.BOTH, expand=True, pady=10)
 
         # Original text
-        original_frame = ttk.LabelFrame(text_frame,
-                                        text="Original Text (Cleaned)")
+        original_frame = ttk.LabelFrame(text_frame, text="Original Text")
         original_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
 
         self.original_text = tk.Text(original_frame, wrap=tk.WORD)
         self.original_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.original_text.config(state=tk.DISABLED)  # Make the text read-only
 
         # Modified text
         modified_frame = ttk.LabelFrame(text_frame, text="Modified Text")
@@ -701,9 +750,10 @@ class WordAnalysisApp:
         save_frame.pack(fill=tk.X, pady=10)
 
         save_btn = ttk.Button(save_frame,
-                              text="Save Modified Text",
-                              command=self.save_modified_text)
+                            text="Save Modified Text",
+                            command=self.save_modified_text)
         save_btn.pack()
+
 
     def create_config_tab(self):
         """
@@ -897,10 +947,6 @@ class WordAnalysisApp:
             self.replace_file_entry.delete(0, tk.END)
             self.replace_file_entry.insert(0, file_path)
 
-            if content := read_file(file_path):
-                clean_content = clean_text(content)
-                self.original_text.delete(1.0, tk.END)
-                self.original_text.insert(tk.END, clean_content)
 
     def analyze_file(self):
         """
@@ -1157,65 +1203,116 @@ class WordAnalysisApp:
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # Pack canvas into the Tkinter widget
         
     def search_word(self):
-        """Search for a word in the selected file."""
-        file_path = self.search_file_entry.get()
-        target_word = self.search_entry.get()
+        """
+        Search for a word or pattern in the selected file and highlight occurrences.
+        
+        This method:
+        1. Gets the file path and target word from input fields
+        2. Reads the file content (preserving original formatting)
+        3. Finds all occurrences of the target word or pattern
+        4. Displays the results with highlighted context
+        
+        The search supports both exact word matching and regular expressions,
+        with results showing the original text with punctuation preserved.
+        """
+        file_path = self.search_file_entry.get()  # Get file path from entry
+        target_word = self.search_entry.get()  # Get search word/pattern from entry
+        
+        # Check if regex checkbox is selected
+        regex = self.regex_var.get()
 
+        # Validate inputs
         if not file_path:
             messagebox.showerror("Error", "Please select a file first.")
             return
 
         if not target_word:
-            messagebox.showerror("Error", "Please enter a word to search for.")
+            messagebox.showerror("Error", "Please enter a word or pattern to search for.")
             return
 
+        # Read file
         content = read_file(file_path)
         if content is None:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
             return
 
-        clean_content = clean_text(content)
-        positions = search_word(clean_content, target_word)
+        # Find word positions in original text
+        positions = search_word_position(content, target_word, regex)
 
+        # Clear previous results
+        self.search_results.config(state=tk.NORMAL)  # Make the text updatable
         self.search_results.delete(1.0, tk.END)
 
         if positions:
+            # Display summary of occurrences
+            match_text = "pattern" if regex else "word"
             self.search_results.insert(
                 tk.END,
-                f"The word '{target_word}' appears {len(positions)} times at positions: {positions}\n\n"
+                f"The {match_text} '{target_word}' appears {len(positions)} times\n\n"
             )
 
+            # Configure tag for highlighting the target word
+            self.search_results.tag_configure("highlight", background="yellow", foreground="black")
+
             # Show each occurrence in context
-            words = clean_content.split()
-            for pos in positions:
+            words = content.split()
+            for pos, matched_word in positions:
                 # Get a window of words around the occurrence
-                start = helpers.max(0, pos - 3)
-                end = helpers.min(len(words), pos + 4)
-                context = " ".join(words[start:pos]) +\
-                          " \x1b[43m"+ words[pos] + "\x1b[m " +\
-                          " ".join(words[pos+1:end])
+                start = max(0, pos - 3)
+                end = min(len(words), pos + 4)
 
-                if pos > 3:
-                    context = f"... {context}"
-                if pos + 4 < len(words):
-                    context += " ..."
+                # Create context with ellipses if needed
+                prefix = "... " if pos > 3 else ""
+                suffix = " ..." if pos + 4 < len(words) else ""
 
-                self.search_results.insert(tk.END,  f"Position {pos}: {context}\n")
+                # Insert position number
+                self.search_results.insert(tk.END, f"Position {pos}: {prefix}")
+
+                # Insert words before target with normal formatting
+                if start < pos:
+                    self.search_results.insert(tk.END, " ".join(words[start:pos]) + " ")
+
+                # Insert target word with highlighting
+                self.search_results.insert(tk.END, matched_word, "highlight")
+
+                # Insert words after target with normal formatting
+                if pos + 1 < end:
+                    self.search_results.insert(tk.END, " " + " ".join(words[pos+1:end]))
+
+                # Add suffix and newline
+                self.search_results.insert(tk.END, f"{suffix}\n")
         else:
-            self.search_results.insert(tk.END, f"The word '{target_word}' was not found in the file.")
+            match_text = "pattern" if regex else "word"
+            self.search_results.insert(tk.END, f"The {match_text} '{target_word}' was not found in the file.")
+        self.search_results.config(state=tk.DISABLED)  # Make the text read-only
 
     def replace_word(self):
-        """Replace occurrences of a word in the selected file."""
+        """
+        Replace occurrences of a word or pattern in the selected file.
+
+        This method:
+        1. Gets the file path, target word/pattern, and replacement word
+        2. Reads the file content (preserving original formatting)
+        3. Replaces all occurrences of the target
+        4. Displays both original and modified text with highlighting
+
+        The replacement preserves the original text formatting including
+        newlines, punctuation and capitalization where appropriate, and 
+        highlights the modified parts in the result.
+        """
         file_path = self.replace_file_entry.get()
         target_word = self.word_entry.get()
         replacement_word = self.replacement_entry.get()
 
+        # Check if regex checkbox is selected
+        regex = self.replace_regex_var.get()
+
         if not file_path:
             messagebox.showerror("Error", "Please select a file first.")
             return
 
         if not target_word:
-            messagebox.showerror("Error", "Please enter a word to replace.")
+            messagebox.showerror("Error", "Please enter a word or pattern to replace.")
             return
 
         content = read_file(file_path)
@@ -1223,12 +1320,114 @@ class WordAnalysisApp:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
             return
 
-        modified_content = clean_text(content).replace(target_word, replacement_word)
+        # Display original text
+        self.original_text.config(state=tk.NORMAL)  # Make the text updatable
+        self.original_text.delete(1.0, tk.END)
+        self.original_text.insert(tk.END, content)
+        self.original_text.config(state=tk.DISABLED)  # Make the text read-only
 
-        # Display modified content
+        # Configure tag for highlighting the replacements
+        self.modified_text.tag_configure("highlight", background="yellow", foreground="black")
         self.modified_text.delete(1.0, tk.END)
-        self.modified_text.insert(tk.END, modified_content)
-        
+
+        # Perform replacement
+        if regex:
+            try:
+                # For regex, we need to track replacements to highlight them
+                matches = list(re.finditer(target_word, content, flags=re.IGNORECASE))
+                
+                if matches:
+                    last_end = 0
+                    for match in matches:
+                        # Insert text before the match
+                        self.modified_text.insert(tk.END, content[last_end:match.start()])
+                        # Insert replacement with highlighting
+                        self.modified_text.insert(tk.END, replacement_word, "highlight")
+                        last_end = match.end()
+                    
+                    # Insert remaining text after the last match
+                    self.modified_text.insert(tk.END, content[last_end:])
+                else:
+                    # No matches found, just insert the original content
+                    self.modified_text.insert(tk.END, content)
+            except re.error:
+                messagebox.showerror("Error", "Invalid regular expression pattern.")
+                return
+        else:
+            # Split content by lines to preserve newlines
+            lines = content.split('\n')
+            
+            for i, line in enumerate(lines):
+                if not line.strip():  # Preserve empty lines
+                    if i > 0:  # Don't add newline before the first line
+                        self.modified_text.insert(tk.END, '\n')
+                    continue
+                    
+                # Process each line separately
+                words = line.split()
+                
+                if not words:  # Empty line with whitespace
+                    if i > 0:
+                        self.modified_text.insert(tk.END, '\n')
+                    continue
+                    
+                # Find all occurrences of the target word in this line
+                positions = []
+                for idx, word in enumerate(words):
+                    # Check if this word matches our target (ignoring case and punctuation)
+                    clean_word = ''.join(c.lower() for c in word if c.isalnum())
+                    if clean_word == target_word.lower():
+                        positions.append(idx)
+                
+                # Add a newline before this line if it's not the first line
+                if i > 0:
+                    self.modified_text.insert(tk.END, '\n')
+                    
+                if positions:
+                    # Process the line with replacements
+                    current_pos = 0
+                    for pos in positions:
+                        # Add text up to this position
+                        if pos > current_pos:
+                            self.modified_text.insert(tk.END, " ".join(words[current_pos:pos]) + " ")
+                        
+                        # Get the original word
+                        original_word = words[pos]
+                        
+                        # Extract leading and trailing punctuation
+                        leading_punct = ""
+                        trailing_punct = ""
+                        
+                        # Extract leading punctuation
+                        i = 0
+                        while i < len(original_word) and not original_word[i].isalnum():
+                            leading_punct += original_word[i]
+                            i += 1
+                        
+                        # Extract trailing punctuation
+                        i = len(original_word) - 1
+                        while i >= 0 and not original_word[i].isalnum():
+                            trailing_punct = original_word[i] + trailing_punct
+                            i -= 1
+                        
+                        # Insert the replacement with highlighting
+                        self.modified_text.insert(tk.END, leading_punct + replacement_word + trailing_punct, "highlight")
+                        
+                        # Add a space if this isn't the last word
+                        if pos < len(words) - 1:
+                            self.modified_text.insert(tk.END, " ")
+                        
+                        current_pos = pos + 1
+                    
+                    # Add any remaining text in the line
+                    if current_pos < len(words):
+                        self.modified_text.insert(tk.END, " ".join(words[current_pos:]))
+                else:
+                    # No replacements in this line, keep it as is
+                    self.modified_text.insert(tk.END, line)
+
+
+
     def save_modified_text(self):
         """Save the modified text to a new file."""
         if not self.modified_text.get(1.0, tk.END).strip():
@@ -1488,72 +1687,143 @@ def configure():
         config.save()
         
     
-
-def replace_word(text, target_word, replacement_word):
-    """Replace a target word with a replacement word and return the modified text."""
-    if not text or not target_word:
-        return text
     
-    words = text.split()
-    target_word = target_word.lower()
-    
-    for i, word in enumerate(words):
-        if word.lower() == target_word:
-            words[i] = replacement_word
-    
-    return ' '.join(words)
-        
-        
-def count_and_replace(file_path):
+def search_word(file_path, target_word):
     """
-    Count and replace specific word in a text file for CLI mode.
+    Search for a word in a file and display its positions.
     
-    This function reads the specified file, cleans its content,
-    counts words, determines total and unique word counts,
-    and then displays results using display_results().
-
     Args:
-        file_path (str): The path to the file to analyze
-
-    Returns:
-        tuple: A tuple containing word count data and cleaned content,
-               or None if an error occurred.
+        file_path (str): Path to the file to search
+        target_word (str): Word to search for
+        
+    This function:
+    1. Reads and cleans the file content
+    2. Finds all occurrences of the target word
+    3. Displays the results with highlighted context
+    
+    The function handles file reading errors and provides feedback
+    about the search operation.
     """
-    file_path = input("Enter the path to the text file: ").strip()
     content = read_file(file_path)
-            
+
     if content is not None:
-        target_word = input("Enter the word to search for: ").strip()
-        clean_content = clean_text(content)
-        positions = search_word(clean_content, target_word)
-        
+        positions = search_word_position(clean_text(content), target_word)
         if positions:
-            print(f"The word '{target_word}' appears {len(positions)} times at positions: {positions}")
-        else:
-            print(f"The word '{target_word}' was not found in the file.")
-                
-        target_word = input("Enter the word to replace: ").strip()
-        replacement_word = input("Enter the replacement word: ").strip()
+            print(f"The word '{target_word}' appears {len(positions)} times at positions: {", ".join(str(pos[0]) for pos in positions)}")
+            return
+    print(f"The word '{target_word}' was not found in the file.")
+
+
+def replace_word(file_path, target_word, replacement_word):
+    """
+    Replace occurrences of a target word with a replacement word in a file.
+    
+    Args:
+        file_path (str): Path to the file to modify
+        target_word (str): Word to be replaced
+        replacement_word (str): Word to replace the target word with
         
-        clean_content = clean_text(content)
-        modified_content = replace_word(clean_content, target_word, replacement_word)
+    This function:
+    1. Reads the file content preserving original formatting
+    2. Replaces all occurrences of the target word
+    3. Displays a preview of the original and modified text
+    4. Offers to save the modified text to a new file
+    
+    The function handles file reading errors and provides feedback
+    about the replacement operation.
+    """
+    content = read_file(file_path)
+
+    if content is not None:
+        # Split by words while preserving newlines and spacing
+        lines = content.split('\n')
+        modified_lines = []
         
-        print("\nOriginal text (cleaned):")
-        print(clean_content[:100] + "..." if len(clean_content) > 100 else clean_content)
+        for line in lines:
+            if not line.strip():  # Preserve empty lines
+                modified_lines.append('')
+                continue
                 
-        print("\nModified text:")
-        print(modified_content[:100] + "..." if len(modified_content) > 100 else modified_content)
+            words = line.split()
+            modified_line = ""
+            current_pos = 0
+            
+            # Find all occurrences of the target word in this line
+            positions = []
+            for idx, word in enumerate(words):
+                # Check if this word matches our target (ignoring case and punctuation)
+                clean_word = ''.join(c.lower() for c in word if c.isalnum())
+                if clean_word == target_word.lower():
+                    positions.append(idx)
+            
+            if positions:
+                # Process the line with replacements
+                current_pos = 0
+                for pos in positions:
+                    # Add text up to this position
+                    modified_line += " ".join(words[current_pos:pos]) + (" " if current_pos < pos else "")
+                    
+                    # Get the original word
+                    original_word = words[pos]
+                    
+                    # Extract leading and trailing punctuation
+                    leading_punct = ""
+                    trailing_punct = ""
+                    
+                    # Extract leading punctuation
+                    i = 0
+                    while i < len(original_word) and not original_word[i].isalnum():
+                        leading_punct += original_word[i]
+                        i += 1
+                    
+                    # Extract trailing punctuation
+                    i = len(original_word) - 1
+                    while i >= 0 and not original_word[i].isalnum():
+                        trailing_punct = original_word[i] + trailing_punct
+                        i -= 1
+                    
+                    # Insert the replacement with punctuation preserved
+                    modified_line += leading_punct + replacement_word + trailing_punct
+                    
+                    # Add a space if this isn't the last word
+                    if pos < len(words) - 1:
+                        modified_line += " "
+                    
+                    current_pos = pos + 1
                 
-        save_option = input("\nDo you want to save the modified text to a new file? (y/n): ").strip().lower()
+                # Add any remaining text in the line
+                if current_pos < len(words):
+                    modified_line += " ".join(words[current_pos:])
+            else:
+                # No replacements in this line, keep it as is
+                modified_line = line
+                
+            modified_lines.append(modified_line)
+        
+        # Join all lines back together with newlines preserved
+        modified_content = '\n'.join(modified_lines)
+
+        print(f"\n\
+Original text\n\
+{(repr(content[:100]))+'...' if len(content) > 100 else content}\n\
+\n\
+Modified text:\n\
+{repr(modified_content[:100])}{'...' if len(modified_content) > 100 else modified_content}"
+              )
+
+        save_option = input("\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).strip().lower()
         if save_option == 'y':
-            new_file_path = input("Enter the path for the new file: ").strip()
+            new_file_path = input(
+                "Enter the path for the new file: ").strip()
             try:
                 with open(new_file_path, 'w', encoding='utf-8') as file:
                     file.write(modified_content)
                 print(f"Modified text saved to '{new_file_path}'")
             except Exception as e:
                 print(f"Error saving file: {str(e)}")
-    
+
+
+
 
 def display_results(file_path, word_count, total_words, unique_words, show_nums=10, warp=os.get_terminal_size().columns):
     """
@@ -1686,6 +1956,11 @@ def analyze_file(file_path):
 
     # Display analysis results for the analyzed file
     display_results(file_path, word_count, total_words, unique_words, config.single_file_display_line)  # Show results
+    
+def save_window_size(event):
+    global dynamic_window_size
+    dynamic_window_size = f"{event.width}x{event.height}"
+
 
 def GUI_exit(root):
     """
@@ -1699,6 +1974,9 @@ def GUI_exit(root):
     """
     # Ask user for confirmation to quit
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        if dynamic_window_size is not None:
+            config.window_size = dynamic_window_size
+            config.save()
         messagebox.showwarning("Thank you, app closing...", message="Thank you for using WAPDS")  # Thanking message
         root.destroy()  # Destroy the root window to close the application
         exit()  # Exit the script completely
@@ -1710,11 +1988,14 @@ def mainGUI():
     This function initializes the tkinter window, creates an instance of the application,
     and sets up a dialog confirmation when the user attempts to close the window.
     """
+    global dynamic_window_size
     root = tk.Tk()  # Create main tkinter window
     app = WordAnalysisApp(root, config.window_size)  # Instantiate main Application class
+    dynamic_window_size = None
 
     # Configure window close behavior to confirm exit
     root.protocol("WM_DELETE_WINDOW", lambda: GUI_exit(root))  # Set exit protocol to use custom exit function
+    root.bind("<Configure>", save_window_size) 
 
     # Begin the main event loop to run the application
     root.mainloop()
@@ -1756,46 +2037,14 @@ def mainCLI():
 
         elif choice == '3':
             file_path = input("Enter the path to the text file: ").strip()
-            content = read_file(file_path)
-
-            if content is not None:
-                target_word = input("Enter the word to search for: ").strip()
-                if positions := search_word(clean_text(content), target_word):
-                    print(
-                        f"The word '{target_word}' appears {len(positions)} times at positions: {positions}"
-                    )
-                else:
-                    print(
-                        f"The word '{target_word}' was not found in the file.")
+            target_word = input("Enter the word to search for: ").strip()
+            search_word(file_path, target_word)
 
         elif choice == '4':
             file_path = input("Enter the path to the text file: ").strip()
-            content = read_file(file_path)
-
-            if content is not None:
-                target_word = input("Enter the word to replace: ").strip()
-                replacement_word = input("Enter the replacement word: ").strip()
-
-                clean_content = clean_text(content)
-                modified_content = clean_content.replace(target_word, replacement_word)
-
-                print("\nOriginal text (cleaned):")
-                print(f"{clean_content[:100]}..." if len(clean_content) >
-                      100 else clean_content + 
-                      f"\nModified text:\n{modified_content[:100]}{"..." if len(modified_content) > 100 else modified_content}"
-                     )
-
-                save_option = input("\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).strip().lower()
-                if save_option == 'y':
-                    new_file_path = input(
-                        "Enter the path for the new file: ").strip()
-                    try:
-                        with open(new_file_path, 'w', encoding='utf-8') as file:
-                            file.write(modified_content)
-                        print(f"Modified text saved to '{new_file_path}'")
-                    except Exception as e:
-                        print(f"Error saving file: {str(e)}")
-
+            target_word = input("Enter the word to replace: ").strip()
+            replacement_word = input("Enter the replacement word: ").strip()
+            replace_word(file_path, target_word, replacement_word)
         
         elif choice == '5':
             configure()  # Call configuration function

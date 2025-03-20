@@ -126,6 +126,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                 if len(txt_lst[-1]) + len(word) > term_size.columns - 1:
                     index += i  # Update index for next processing
                     break  # Break word addition
+                txt_lst[-1] += word
             else:
                 break  # Exit while loop if all words processed
     
