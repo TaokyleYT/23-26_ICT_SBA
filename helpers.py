@@ -75,8 +75,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
     if len(txt) == 0:
         print(end=end)  # Print the "end" string (newline or other)
         return  # Exit function to avoid additional processing
-    
-    print()  # Print an initial newline for spacing between inputs
+
 
     # Process and validate the input text
     if all(
@@ -167,7 +166,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
     time.sleep(delay)  # Additional delay to complete character output
     # Reset cursor position for any following outputs
     print("\x1b[" + str(line_offset * len(txt_lst)) + "D",
-          end='',
+          end='\n' if truncated else '',
           flush=True)
 
     # Recursively handle any truncated text for complete output

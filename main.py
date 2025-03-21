@@ -1609,8 +1609,14 @@ def configure():
 
     while True:
         # Display the current configurable settings and menu options
+        unsaved = False
+        for unsaved_var in list(locals()):
+            if unsaved_var in ("config_option", "unsaved", "unsaved_var"):
+                continue
+            if eval(unsaved_var) is not None:
+                unsaved = True
         print(
-            [f"Change settings{'' if helpers.all((unsaved_var == "config_option" or eval(unsaved_var) is None) for unsaved_var in locals()) else '(unsaved)'}:",
+            [f"Change settings{'(unsaved)' if unsaved else ''}:",
             [],
             [*"CLI settings:"],
             ["\x1b[1;4;97mA\x1b[m", *f"nalyse file: show first {config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})'} sorted words appeared"],
