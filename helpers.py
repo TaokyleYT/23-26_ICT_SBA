@@ -242,7 +242,7 @@ def animated_input(prompt: str = "",
                 with open("input_log.txt", "a") as f:
                     f.write(f"KeyboardInterrupt with {result}\n")
             raise KeyboardInterrupt  # Raise KeyboardInterrupt if Ctrl+C is pressed
-        print(result, end='')  # Print the character immediately
+        print(result)  # Print the character immediately
         # Restore terminal state
         if sys.platform == "win32":  # Windows restoration
             kernel.SetConsoleMode(kernel.GetStdHandle(-10), dword)
