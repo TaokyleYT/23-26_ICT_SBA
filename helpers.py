@@ -469,6 +469,8 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
         TypeError: If `sep` is not a string, a list of strings, or a tuple of strings.
         
     Example:
+        >>> split_exclude_ANSI("\x1b[31mHello\x1b[0m World", "")
+        ['\x1b[31m', 'Hello, '\x1b[0m', 'World']
         >>> split_exclude_ANSI("\x1b[31mHello\x1b[0m World", " ")
         ['\x1b[31mHello\x1b[0m', 'World']
     """
