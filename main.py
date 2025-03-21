@@ -36,8 +36,10 @@ class config:
     """
 
     # Default values for CLI and GUI settings
-    CLI_DEFAULTS = [10, 5]  # [single_file_display_line, compare_file_display_line]
-    GUI_DEFAULTS = ["1000x700", 10, (5, 4), 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10]  # [window_size, graph_max_words, graph_figsize, analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize]
+    CLI_DEFAULTS = [10, 5]
+                 # [single_file_display_line, compare_file_display_line]
+    GUI_DEFAULTS = ["1000x700", 10, (5, 4), 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10]
+                 #  [window_size, graph_max_words, graph_figsize, analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize]
 
     try:
         # Attempt to load configuration from file
@@ -132,7 +134,7 @@ def read_file(file_path):
     and other exceptions. It also warns if the file is empty.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r') as file:
             content = file.read()  # Read the entire file content
         if not content.strip():  # Check if the file is empty
             print(f"\x1b[33mWarning: File '{file_path}' is empty.\x1b[m")
@@ -195,13 +197,13 @@ def count_words(text):
     if not text:  # If text is empty, return empty structure
         return ([], [])
 
-    # Initialize result structure as a tuple of two lists
+    # Initialize result structure as a tuple of two lists because can't use dictionary
     word_count = ([], [])  # ([words], [frequencies])
     words = text.split(" ")  # Split text into individual words
 
     # Count frequency of each word using a for loop
-    for n in range(len(words)):
-        word = words[n]
+    for n in range(len(words)): #will use enumerate later on, which is faster than range(len()) and then thing[idx]
+        word = words[n] #because enumerate is O(N), range(len()) O(N) + O(N) = O(2N) > O(N)
         if word in word_count[0]:  # Check if word already exists in our list
             # If word already exists, increment its count
             word_index = helpers.linear_search(word_count[0], word)
@@ -244,7 +246,8 @@ def search_word_position(text, target_word, regex=False):
             words = text.split()
             
             # Find all matches with their positions
-            for idx, word in enumerate(words):
+            for idx in range(len(words)):
+                word = words[idx]
                 if pattern.search(word):
                     results.append((idx, word))
         except re.error:
@@ -284,8 +287,8 @@ def sort_alphabetically(word_count):
 
     # Create list of (word, frequency) pairs
     result = []
-    for n in range(len(sorted_words)):
-        word = sorted_words[n]
+    for n in range(len(sorted_words)): #will use enumerate later on (actually used already), which is faster than range(len()) and then thing[idx]
+        word = words[n] #because enumerate is O(N), range(len()) O(N) + O(N) = O(2N) > O(N)
         # Find the index of the word in the original list to get its frequency
         result.append(
             (word, word_count[1][helpers.linear_search(word_count[0], word)]))
@@ -363,7 +366,7 @@ def calculate_similarity(word_count1, word_count2):
 
 class WordAnalysisApp:
     """
-    GUI application for word analysis and plagiarism detection.
+    GUI application for WAPDS.
 
     This class implements a tkinter-based graphical user interface for:
     - Analyzing individual text files (word count, sorting, frequency graphs)
@@ -1439,7 +1442,7 @@ class WordAnalysisApp:
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
         ):
             try:
-                with open(file_path, 'w', encoding='utf-8') as file:
+                with open(file_path, 'w') as file:
                     file.write(self.modified_text.get(1.0, tk.END))
                 messagebox.showinfo("Success",
                                     f"Modified text saved to '{file_path}'")
@@ -1546,13 +1549,13 @@ def configure_test_input(prompt: str, type, was: str, error: str = ""):
         temp_unsaved = input(f"{prompt} (was {was}): ")
 
         # Handling for different types of input
-        if type == int:
+        if type is int:
             temp_unsaved = int(temp_unsaved)
             if temp_unsaved > 0:  # Validate that input is a positive integer
                 return temp_unsaved
             else:
                 raise ValueError  # Trigger exception for invalid input
-        elif type == float:
+        elif type is float:
             temp_unsaved = float(temp_unsaved)
             if temp_unsaved > 0:  # Validate that input is a positive float
                 return temp_unsaved
@@ -1607,7 +1610,7 @@ def configure():
     while True:
         # Display the current configurable settings and menu options
         print(
-            [f"Change settings{'' if unsaved_single_file_display_line is None and unsaved_compare_file_display_line is None else ' (unsaved)'}:",
+            [f"Change settings{'' if helpers.all((unsaved_var == "config_option" or eval(unsaved_var) is None) for unsaved_var in locals()) else '(unsaved)'}:",
             [],
             [*"CLI settings:"],
             ["\x1b[1;4;97mA\x1b[m", *f"nalyse file: show first {config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})'} sorted words appeared"],
@@ -1804,14 +1807,14 @@ def replace_word(file_path, target_word, replacement_word):
         modified_content = '\n'.join(modified_lines)
 
         print(f"\n\
-Original text\n\
-{(repr(content[:100]))+'...' if len(content) > 100 else content}\n\
+Original text:\n\
+{(content[:100])+'...' if len(content) > 100 else content}\n\
 \n\
 Modified text:\n\
-{repr(modified_content[:100])}{'...' if len(modified_content) > 100 else modified_content}"
+{modified_content[:100]+'...' if len(modified_content) > 100 else modified_content}"
               )
 
-        save_option = input("\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).strip().lower()
+        save_option = input("\n\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).strip().lower()
         if save_option == 'y':
             new_file_path = input(
                 "Enter the path for the new file: ").strip()
@@ -1977,9 +1980,9 @@ def GUI_exit(root):
         if dynamic_window_size is not None:
             config.window_size = dynamic_window_size
             config.save()
-        messagebox.showwarning("Thank you, app closing...", message="Thank you for using WAPDS")  # Thanking message
+        messagebox.showwarning("Thank you, app closing...", message="Thank you for using WAPDS")  # Thank you message :)
         root.destroy()  # Destroy the root window to close the application
-        exit()  # Exit the script completely
+        exit()  # Close the terminal / exit the program too
 
 def mainGUI():
     """
