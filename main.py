@@ -390,10 +390,35 @@ class WordAnalysisApp:
     """
 
     # Define theme colors
-    LIGHT_THEME = ['#f0f0f0', '#000000', '#ffffff', '#000000', '#e0e0e0', '#4a6984', '#ffffff', '#ffffff', '#f0f0f0', '#f0f0f0', '#f0f0f0']
-    DARK_THEME =  ['#2d2d2d', '#ffffff', '#3d3d3d', '#ffffff', '#444444', '#007acc', '#ffffff', '#3d3d3d', '#2d2d2d', '#2d2d2d', '#2d2d2d']
-    #theme colors:[bg, fg, text_bg, text_fg, button_bg, highlight_bg, highlight_fg, canvas_bg, frame_bg, labelframe_bg, tab_bg]
-    
+    LIGHT_THEME = [
+        '#f0f0f0',  # bg
+        '#000000',  # fg
+        '#ffffff',  # text_bg
+        '#000000',  # text_fg
+        '#e0e0e0',  # button_bg
+        '#4a6984',  # highlight_bg
+        '#ffffff',  # highlight_fg
+        '#ffffff',  # canvas_bg
+        '#f0f0f0',  # frame_bg
+        '#f0f0f0',  # labelframe_bg
+        '#f0f0f0'   # tab_bg
+    ]
+
+    DARK_THEME = [
+        '#1e1e1e',  # bg - darker background
+        '#ffffff',  # fg - white text
+        '#2d2d2d',  # text_bg - slightly lighter than bg for text areas
+        '#ffffff',  # text_fg - white text
+        '#3d3d3d',  # button_bg - medium gray for buttons
+        '#0078d7',  # highlight_bg - blue highlight
+        '#ffffff',  # highlight_fg - white text on highlight
+        '#2d2d2d',  # canvas_bg - same as text_bg for consistency
+        '#1e1e1e',  # frame_bg - same as bg
+        '#1e1e1e',  # labelframe_bg - same as bg
+        '#2d2d2d'   # tab_bg - slightly lighter for tabs
+    ]
+
+
 
     def __init__(self, root, size):
         """
@@ -406,9 +431,37 @@ class WordAnalysisApp:
         This constructor sets up the main window, creates the tabbed interface,
         and initializes all UI components and variables.
         """
+        
+        def save_window_size(event):
+            self.window_size = f"{event.width}x{event.height}"
+        
+        def exit_GUI():
+            """
+            Exit the GUI application with a confirmation dialog.
+
+            Args:
+                root: The main window of the tkinter application.
+
+            This function prompts the user with a message box asking for confirmation
+            before quitting the application and thanking them for using it.
+            """
+            # Ask user for confirmation to quit
+            if messagebox.askokcancel("Quit", "Do you want to quit?"):
+                if self.window_size is not None:
+                    config.window_size = self.window_size
+                    config.save()
+                messagebox.showwarning("Thank you, app closing...", message="Thank you for using WAPDS")  # Thank you message :)
+                root.destroy()  # Destroy the root window to close the application
+                exit()  # Close the terminal / exit the program too
+        
+    
         self.root = root  # Set root window
         self.root.title("Word Analysis and Plagiarism Detection")  # Set window title
+        self.window_size = None
         self.root.geometry(size)  # Set window size defined by the user
+        # Configure window close behavior to confirm exit
+        root.protocol("WM_DELETE_WINDOW", exit_GUI)  # Set exit protocol to use custom exit function
+        root.bind("<Configure>", save_window_size) 
 
         # Create the main notebook (tabbed interface)
         self.notebook = ttk.Notebook(root)
@@ -447,55 +500,100 @@ class WordAnalysisApp:
         
         # Apply the current theme
         self.apply_theme()
-        print(self.notebook.tabs())
 
     def apply_theme(self):
         """Apply the current theme to all UI elements."""
         theme = self.DARK_THEME if config.dark_mode else self.LIGHT_THEME
         
-        # Configure ttk styles
+        # Configure the ttk styles properly
+        self.style.theme_use('default')  # Reset to default theme first
+        
+        # Configure styles for ttk widgets
         self.style.configure("TFrame", background=theme[8])
-        self.style.configure("TNotebook", background=theme[10])
+        self.style.configure("TLabelframe", background=theme[9])
+        self.style.configure("TLabelframe.Label", background=theme[9], foreground=theme[1])
+        
+        # Configure Notebook and Tab styles
+        self.style.configure("TNotebook", background=theme[0])
+        self.style.map("TNotebook.Tab", 
+                    background=[("selected", theme[5]), ("!selected", theme[10])],
+                    foreground=[("selected", theme[6]), ("!selected", theme[1])])
+        
+        # Configure Button style
+        self.style.configure("TButton", 
+                            background=theme[4], 
+                            foreground=theme[1])
+        self.style.map("TButton",
+                    background=[("active", theme[5])],
+                    foreground=[("active", theme[6])])
+        
+        # Configure Entry style
+        self.style.configure("TEntry", 
+                            fieldbackground=theme[2], 
+                            foreground=theme[3],
+                            insertcolor=theme[1])  # Cursor color
+        
+        # Configure Checkbutton style
+        self.style.configure("TCheckbutton", 
+                            background=theme[8], 
+                    foreground=theme[1],
+                    selectcolor=theme[2])
+        self.style.map("TCheckbutton",
+                    background=[("active", theme[8])],
+                    foreground=[("active", theme[1])])
+        
+        # Configure Label style
+        self.style.configure("TLabel", 
+                            background=theme[8], 
+                            foreground=theme[1])
         
         # Configure root and main frames
         self.root.configure(background=theme[0])
-        if hasattr(self, 'theme_frame'):
-            self.theme_frame.configure(style="TFrame")
         
-        # Update all text widgets if they exist
-        for widget_name in dir(self):
-            widget = getattr(self, widget_name)
-            print(widget)
-            if isinstance(widget, tk.Text):
-                widget.configure(
-                    background=theme[2],
-                    foreground=theme[3],
-                    insertbackground=theme[1]  # Cursor color
-                )
-            elif isinstance(widget, tk.Listbox):
-                widget.configure(
-                    background=theme[2],
-                    foreground=theme[3],
-                    selectbackground=theme[5],
-                    selectforeground=theme[6]
-                )
-            elif isinstance(widget, tk.Canvas):
-                widget.configure(background=theme[7])
-            elif isinstance(widget, tk.Entry):
-                widget.configure(background=theme[2], foreground=theme[3])
-            elif isinstance(widget, tk.Checkbutton):
-                widget.configure(background=theme[8], foreground=theme[1])
-            elif isinstance(widget, tk.Frame):
-                widget.configure(background=theme[8])
-            elif isinstance(widget, tk.Label):
-                widget.configure(background=theme[0], foreground=theme[1])
-            elif isinstance(widget, tk.Button):
-                widget.configure(background=theme[4])
-            elif isinstance(widget, ttk.Notebook):
-                widget.configure(style="TNotebook")
-            elif isinstance(widget, tk.LabelFrame):
-                widget.configure(background=theme[9], foreground=theme[1])
+        # Update all widgets recursively
+        self._update_widget_colors(self.root, theme)
+        
+        # If matplotlib is available, update the graph style
+        if plt is not None:
+            plt.style.use('dark_background' if config.dark_mode else 'default')
+            
+            # Redraw graphs if they exist
+            if hasattr(self, 'word_count1') and self.word_count1:
+                self.create_frequency_graph(self.word_count1, self.graph_canvas1)
                 
+            if hasattr(self, 'word_count1') and hasattr(self, 'word_count2') and self.word_count1 and self.word_count2:
+                self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_canvas)
+
+    def _update_widget_colors(self, widget, theme):
+        """Recursively update colors for all widgets."""
+        widget_class = widget.__class__.__name__
+        
+        # Handle standard tkinter widgets (not ttk)
+        if widget_class == "Text":
+            widget.configure(
+                background=theme[2],
+                foreground=theme[3],
+                insertbackground=theme[1],  # Cursor color
+                selectbackground=theme[5],
+                selectforeground=theme[6]
+            )
+        elif widget_class == "Listbox":
+            widget.configure(
+                background=theme[2],
+                foreground=theme[3],
+                selectbackground=theme[5],
+                selectforeground=theme[6]
+            )
+        elif widget_class == "Canvas":
+            widget.configure(background=theme[7])
+        elif widget_class == "Label":
+            widget.configure(background=theme[8], foreground=theme[1])
+        elif widget_class == "LabelFrame":
+            widget.configure(background=theme[9], foreground=theme[1])
+        
+        # Recursively update all children
+        for child in widget.winfo_children():
+            self._update_widget_colors(child, theme)
 
     def toggle_theme(self):
         """Toggle between light and dark themes."""
@@ -1510,7 +1608,7 @@ class WordAnalysisApp:
                             i -= 1
                         
                         # Insert the replacement with highlighting
-                        self.original_text.insert(tk.END, leading_punct + original_word + trailing_punct, "highlight")
+                        self.original_text.insert(tk.END, original_word, "highlight")
                         self.modified_text.insert(tk.END, leading_punct + replacement_word + trailing_punct, "highlight")
                         
                         # Add a space if this isn't the last word
@@ -2067,29 +2165,6 @@ def analyze_file(file_path):
     # Display analysis results for the analyzed file
     display_results(file_path, word_count, total_words, unique_words, config.single_file_display_line)  # Show results
     
-def save_window_size(event):
-    global dynamic_window_size
-    dynamic_window_size = f"{event.width}x{event.height}"
-
-
-def GUI_exit(root):
-    """
-    Exit the GUI application with a confirmation dialog.
-
-    Args:
-        root: The main window of the tkinter application.
-
-    This function prompts the user with a message box asking for confirmation
-    before quitting the application and thanking them for using it.
-    """
-    # Ask user for confirmation to quit
-    if messagebox.askokcancel("Quit", "Do you want to quit?"):
-        if dynamic_window_size is not None:
-            config.window_size = dynamic_window_size
-            config.save()
-        messagebox.showwarning("Thank you, app closing...", message="Thank you for using WAPDS")  # Thank you message :)
-        root.destroy()  # Destroy the root window to close the application
-        exit()  # Close the terminal / exit the program too
 
 def mainGUI():
     """
@@ -2098,16 +2173,10 @@ def mainGUI():
     This function initializes the tkinter window, creates an instance of the application,
     and sets up a dialog confirmation when the user attempts to close the window.
     """
-    global dynamic_window_size
     root = tk.Tk()  # Create main tkinter window
-    app = WordAnalysisApp(root, config.window_size)  # Instantiate main Application class
-    dynamic_window_size = None
+    app = WordAnalysisApp(root, config.window_size)  # Instantiate GUI
 
-    # Configure window close behavior to confirm exit
-    root.protocol("WM_DELETE_WINDOW", lambda: GUI_exit(root))  # Set exit protocol to use custom exit function
-    root.bind("<Configure>", save_window_size) 
-
-    # Begin the main event loop to run the application
+    # Begin the main event loop
     root.mainloop()
 
 def mainCLI():
