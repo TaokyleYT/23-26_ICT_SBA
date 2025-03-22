@@ -8,7 +8,7 @@ try:
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
 except (ImportError, ModuleNotFoundError):
     print(f"\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
-    plt = None
+    plt = None  # Set plt to None so we can check if matplotlib is available later
 import argparse  # For command-line argument parsing
 
 
@@ -59,7 +59,7 @@ class config:
             graph_bar_color_compare2 = str(config_data[9])  # Second file comparison bar color
             graph_title_fontsize = int(config_data[10])  # Font size for graph titles
             graph_label_fontsize = int(config_data[11])  # Font size for graph labels
-            dark_mode = bool(int(config_data[12]))
+            dark_mode = bool(int(config_data[12]))  # Dark mode setting (stored as 0/1)
 
     except:
         # Use default settings if the configuration file doesn't exist or is corrupted
@@ -138,17 +138,31 @@ def read_file(file_path):
     This function handles file reading with error checking for file not found
     and other exceptions. It also warns if the file is empty.
     """
+    # Get list of text files in current directory for suggestions if file not found
+    txt_files = [file for file in os.listdir() if os.path.isfile(file) and file.endswith(".txt")]
+    
+    # Check if file exists
+    if not os.path.exists(file_path):
+        print(f"\x1b[31mError: File '{file_path}' not found.\x1b[m")
+        # Suggest similar filename if available
+        if file_path+".txt" in txt_files:
+            print(f"Did you mean '{file_path}.txt'?")
+        return None
+        
+    # Check if path is a file (not a directory)
+    if not os.path.isfile(file_path):
+        print(f"\x1b[31mError: '{file_path}' is not a file.\x1b[m")
+        return None
+        
     try:
+        # Attempt to read the file
         with open(file_path, 'r') as file:
             content = file.read()  # Read the entire file content
+        
+        # Check if file is empty
         if not content.strip():  # Check if the file is empty
             print(f"\x1b[33mWarning: File '{file_path}' is empty.\x1b[m")
         return content  # Return file content
-
-    except FileNotFoundError:  # File not found error handling
-        print(f"\x1b[31mError: File '{file_path}' not found.\x1b[m")
-        return None  # Return None for error
-
     except Exception as e:  # Handle other exceptions
         print(f"\x1b[31mError reading file '{file_path}': {str(e)}\x1b[m")
         return None  # Return None for error
@@ -174,6 +188,7 @@ def clean_text(text):
         return ""
 
     # Replace any character that isn't a letter, digit, or space with a space
+    # This preserves word boundaries while removing punctuation
     cleaned_text = "".join((char if 'a' <= char <= 'z' or '0' <= char <= '9'
                             or char == ' ' else ' ') for char in text.lower())
 
@@ -322,10 +337,10 @@ def sort_by_frequency(word_count):
     # Using indices to maintain the original items
     items_to_sort = []
     for i, item in enumerate(word_items):
-        items_to_sort.append(((item[1], item[0]), i))
+        items_to_sort.append(((item[1], item[0]), i))  # Sort by count first, then word
 
     # Sort the indices
-    sorted_indices = helpers.quick_sort(items_to_sort, ascending=False)
+    sorted_indices = helpers.quick_sort(items_to_sort, ascending=False)  # Sort in descending order
 
     # Reconstruct the result using the sorted indices
     result = []
@@ -366,6 +381,7 @@ def calculate_similarity(word_count1, word_count2):
             all_words.append(word)
 
     # Calculate similarity percentage
+    # Similarity is the ratio of common words to total unique words
     return (common_words / len(all_words)) * 100  # Return similarity rate
 
 
@@ -391,17 +407,17 @@ class WordAnalysisApp:
 
     # Define theme colors
     LIGHT_THEME = [
-        '#f0f0f0',  # bg
-        '#000000',  # fg
-        '#ffffff',  # text_bg
-        '#000000',  # text_fg
-        '#e0e0e0',  # button_bg
-        '#4a6984',  # highlight_bg
-        '#ffffff',  # highlight_fg
-        '#ffffff',  # canvas_bg
-        '#f0f0f0',  # frame_bg
-        '#f0f0f0',  # labelframe_bg
-        '#f0f0f0'   # tab_bg
+        '#f0f0f0',  # bg - light gray background
+        '#000000',  # fg - black text
+        '#ffffff',  # text_bg - white text background
+        '#000000',  # text_fg - black text
+        '#e0e0e0',  # button_bg - light gray button background
+        '#4a6984',  # highlight_bg - blue highlight background
+        '#ffffff',  # highlight_fg - white highlight text
+        '#ffffff',  # canvas_bg - white canvas background
+        '#f0f0f0',  # frame_bg - light gray frame background
+        '#f0f0f0',  # labelframe_bg - light gray labelframe background
+        '#f0f0f0'   # tab_bg - light gray tab background
     ]
 
     DARK_THEME = [
@@ -433,20 +449,19 @@ class WordAnalysisApp:
         """
         
         def save_window_size(event):
+            """Save the current window size when the window is resized."""
             self.window_size = f"{event.width}x{event.height}"
         
         def exit_GUI():
             """
             Exit the GUI application with a confirmation dialog.
 
-            Args:
-                root: The main window of the tkinter application.
-
             This function prompts the user with a message box asking for confirmation
             before quitting the application and thanking them for using it.
             """
             # Ask user for confirmation to quit
             if messagebox.askokcancel("Quit", "Do you want to quit?"):
+                # Save window size before exiting
                 if self.window_size is not None:
                     config.window_size = self.window_size
                     config.save()
@@ -457,11 +472,11 @@ class WordAnalysisApp:
     
         self.root = root  # Set root window
         self.root.title("Word Analysis and Plagiarism Detection")  # Set window title
-        self.window_size = None
+        self.window_size = None  # Initialize window size tracking variable
         self.root.geometry(size)  # Set window size defined by the user
         # Configure window close behavior to confirm exit
         root.protocol("WM_DELETE_WINDOW", exit_GUI)  # Set exit protocol to use custom exit function
-        root.bind("<Configure>", save_window_size) 
+        root.bind("<Configure>", save_window_size)  # Bind window resize event to save size
 
         # Create the main notebook (tabbed interface)
         self.notebook = ttk.Notebook(root)
@@ -482,6 +497,7 @@ class WordAnalysisApp:
         self.theme_frame = ttk.Frame(root)
         self.theme_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
         
+        # Create dark mode toggle checkbox
         self.theme_var = tk.BooleanVar(value=config.dark_mode)
         self.theme_toggle = ttk.Checkbutton(
             self.theme_frame, 
@@ -494,15 +510,20 @@ class WordAnalysisApp:
         # Create tabs for various functionalities
         self.create_analyze_tab()  # Tab for analyzing single file
         self.create_compare_tab()  # Tab for comparing two files
-        self.create_search_tab()
-        self.create_replace_tab()
-        self.create_config_tab()  # Tab for configuring settings
+        self.create_search_tab()   # Tab for searching words in a file
+        self.create_replace_tab()  # Tab for replacing words in a file
+        self.create_config_tab()   # Tab for configuring settings
         
         # Apply the current theme
         self.apply_theme()
 
     def apply_theme(self):
-        """Apply the current theme to all UI elements."""
+        """
+        Apply the current theme to all UI elements.
+        
+        This method configures all widgets with the appropriate colors and styles
+        based on whether dark mode is enabled or not.
+        """
         theme = self.DARK_THEME if config.dark_mode else self.LIGHT_THEME
         
         # Configure the ttk styles properly
@@ -565,7 +586,16 @@ class WordAnalysisApp:
                 self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_canvas)
 
     def _update_widget_colors(self, widget, theme):
-        """Recursively update colors for all widgets."""
+        """
+        Recursively update colors for all widgets.
+        
+        Args:
+            widget: The widget to update
+            theme: The theme colors to apply
+            
+        This helper method traverses the widget hierarchy and applies
+        appropriate theme colors to each widget based on its type.
+        """
         widget_class = widget.__class__.__name__
         
         # Handle standard tkinter widgets (not ttk)
@@ -596,7 +626,12 @@ class WordAnalysisApp:
             self._update_widget_colors(child, theme)
 
     def toggle_theme(self):
-        """Toggle between light and dark themes."""
+        """
+        Toggle between light and dark themes.
+        
+        This method updates the config setting, saves it, and applies
+        the new theme to all UI elements.
+        """
         config.dark_mode = self.theme_var.get()
         config.save()
         self.apply_theme()
@@ -1411,7 +1446,7 @@ class WordAnalysisApp:
         # Check if regex checkbox is selected
         regex = self.regex_var.get()
 
-        # Validate inputs
+        # Validate inputs - ensure both file path and search term are provided
         if not file_path:
             messagebox.showerror("Error", "Please select a file first.")
             return
@@ -1420,61 +1455,64 @@ class WordAnalysisApp:
             messagebox.showerror("Error", "Please enter a word or pattern to search for.")
             return
 
-        # Read file
+        # Read file content
         content = read_file(file_path)
         if content is None:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
             return
 
-        # Find word positions in original text
+        # Find word positions in original text using the search helper function
         positions = search_word_position(content, target_word, regex)
 
-        # Clear previous results
+        # Clear previous results and prepare text widget for new content
         self.search_results.config(state=tk.NORMAL)  # Make the text updatable
         self.search_results.delete(1.0, tk.END)
 
         if positions:
-            # Display summary of occurrences
+            # Display summary of occurrences at the top of results
             match_text = "pattern" if regex else "word"
             self.search_results.insert(
                 tk.END,
                 f"The {match_text} '{target_word}' appears {len(positions)} times\n\n"
             )
 
-            # Configure tag for highlighting the target word
+            # Configure tag for highlighting the target word with yellow background
             self.search_results.tag_configure("highlight", background="yellow", foreground="black")
 
-            # Show each occurrence in context
+            # Show each occurrence in context with surrounding words
             words = content.split()
             for pos, matched_word in positions:
-                # Get a window of words around the occurrence
-                start = max(0, pos - 3)
-                end = min(len(words), pos + 4)
+                # Get a window of words around the occurrence (3 words before, 3 words after)
+                start = max(0, pos - 3)  # Ensure we don't go below index 0
+                end = min(len(words), pos + 4)  # Ensure we don't exceed array bounds
 
-                # Create context with ellipses if needed
-                prefix = "... " if pos > 3 else ""
-                suffix = " ..." if pos + 4 < len(words) else ""
+                # Create context with ellipses if needed to show this is a snippet
+                prefix = "... " if pos > 3 else ""  # Add ellipsis if we're not at the beginning
+                suffix = " ..." if pos + 4 < len(words) else ""  # Add ellipsis if we're not at the end
 
-                # Insert position number
+                # Insert position number and prefix
                 self.search_results.insert(tk.END, f"Position {pos}: {prefix}")
 
                 # Insert words before target with normal formatting
                 if start < pos:
                     self.search_results.insert(tk.END, " ".join(words[start:pos]) + " ")
 
-                # Insert target word with highlighting
+                # Insert target word with highlighting (yellow background)
                 self.search_results.insert(tk.END, matched_word, "highlight")
 
                 # Insert words after target with normal formatting
                 if pos + 1 < end:
                     self.search_results.insert(tk.END, " " + " ".join(words[pos+1:end]))
 
-                # Add suffix and newline
+                # Add suffix and newline for readability
                 self.search_results.insert(tk.END, f"{suffix}\n")
         else:
+            # No matches found - inform the user
             match_text = "pattern" if regex else "word"
             self.search_results.insert(tk.END, f"The {match_text} '{target_word}' was not found in the file.")
-        self.search_results.config(state=tk.DISABLED)  # Make the text read-only
+        
+        # Make the text read-only again to prevent user edits
+        self.search_results.config(state=tk.DISABLED)
 
     def replace_word(self):
         """
@@ -1490,13 +1528,15 @@ class WordAnalysisApp:
         newlines, punctuation and capitalization where appropriate, and 
         highlights the modified parts in the result.
         """
-        file_path = self.replace_file_entry.get()
-        target_word = self.word_entry.get()
-        replacement_word = self.replacement_entry.get()
+        # Get input values from UI fields
+        file_path = self.replace_file_entry.get()  # Path to the file
+        target_word = self.word_entry.get()  # Word/pattern to replace
+        replacement_word = self.replacement_entry.get()  # Replacement text
 
-        # Check if regex checkbox is selected
+        # Check if regex checkbox is selected for pattern matching
         regex = self.replace_regex_var.get()
 
+        # Validate inputs - ensure file path and target word are provided
         if not file_path:
             messagebox.showerror("Error", "Please select a file first.")
             return
@@ -1505,61 +1545,74 @@ class WordAnalysisApp:
             messagebox.showerror("Error", "Please enter a word or pattern to replace.")
             return
 
+        # Read file content using the helper function
         content = read_file(file_path)
         if content is None:
             messagebox.showerror("Error", f"Could not read file: {file_path}")
             return
 
-        
+        # Prepare text widgets for displaying content
         self.original_text.config(state=tk.NORMAL)  # Make the original text updatable
         
-        # Configure tag for highlighting the replacements
+        # Configure tags for highlighting the replacements in both text widgets
         self.modified_text.tag_configure("highlight", background="yellow", foreground="black")
         self.original_text.tag_configure("highlight", background="yellow", foreground="black")
+        
+        # Clear both text widgets
         self.modified_text.delete(1.0, tk.END)
         self.original_text.delete(1.0, tk.END)
 
-        # Perform replacement
+        # Perform replacement based on whether regex is enabled
         if regex:
             try:
-                # For regex, we need to track replacements to highlight them
+                # For regex pattern matching, use re.finditer to find all matches
                 matches = list(re.finditer(target_word, content, flags=re.IGNORECASE))
                 
                 if matches:
+                    # Track position of last match to continue from
                     last_end = 0
                     for match in matches:
-                        # Insert text before the match
+                        # Insert text before the match (unchanged)
                         self.original_text.insert(tk.END, content[last_end:match.start()])
                         self.modified_text.insert(tk.END, content[last_end:match.start()])
-                        # Insert replacement with highlighting
+                        
+                        # Insert original text with highlighting in original view
                         self.original_text.insert(tk.END, content[match.start():match.end()], "highlight")
+                        # Insert replacement with highlighting in modified view
                         self.modified_text.insert(tk.END, replacement_word, "highlight")
+                        
+                        # Update position tracker
                         last_end = match.end()
                     
                     # Insert remaining text after the last match
                     self.original_text.insert(tk.END, content[last_end:])
                     self.modified_text.insert(tk.END, content[last_end:])
                 else:
-                    # No matches found, just insert the original content
+                    # No matches found, just display the original content in both views
                     self.original_text.insert(tk.END, content)
                     self.modified_text.insert(tk.END, content)
             except re.error:
+                # Handle invalid regex pattern error
                 messagebox.showerror("Error", "Invalid regular expression pattern.")
                 return
         else:
+            # For exact word matching, process line by line to preserve formatting
             # Split content by lines to preserve newlines
             lines = content.split('\n')
             
+            # Process each line separately
             for i, line in enumerate(lines):
+                # Handle empty lines
                 if not line.strip():  # Preserve empty lines
                     if i > 0:  # Don't add newline before the first line
                         self.original_text.insert(tk.END, '\n')
                         self.modified_text.insert(tk.END, '\n')
                     continue
                     
-                # Process each line separately
+                # Split line into words for processing
                 words = line.split()
                 
+                # Handle lines with only whitespace
                 if not words:  # Empty line with whitespace
                     if i > 0:
                         self.original_text.insert(tk.END, '\n')
@@ -1583,7 +1636,7 @@ class WordAnalysisApp:
                     # Process the line with replacements
                     current_pos = 0
                     for pos in positions:
-                        # Add text up to this position
+                        # Add text up to this position (unchanged)
                         if pos > current_pos:
                             self.original_text.insert(tk.END, " ".join(words[current_pos:pos]) + " ")
                             self.modified_text.insert(tk.END, " ".join(words[current_pos:pos]) + " ")
@@ -1591,24 +1644,25 @@ class WordAnalysisApp:
                         # Get the original word
                         original_word = words[pos]
                         
-                        # Extract leading and trailing punctuation
+                        # Extract leading and trailing punctuation to preserve in replacement
                         leading_punct = ""
                         trailing_punct = ""
                         
-                        # Extract leading punctuation
+                        # Extract leading punctuation (characters at start that aren't alphanumeric)
                         i = 0
                         while i < len(original_word) and not original_word[i].isalnum():
                             leading_punct += original_word[i]
                             i += 1
                         
-                        # Extract trailing punctuation
+                        # Extract trailing punctuation (characters at end that aren't alphanumeric)
                         i = len(original_word) - 1
                         while i >= 0 and not original_word[i].isalnum():
                             trailing_punct = original_word[i] + trailing_punct
                             i -= 1
                         
-                        # Insert the replacement with highlighting
+                        # Insert the original and replacement with highlighting
                         self.original_text.insert(tk.END, original_word, "highlight")
+                        # Preserve punctuation in the replacement
                         self.modified_text.insert(tk.END, leading_punct + replacement_word + trailing_punct, "highlight")
                         
                         # Add a space if this isn't the last word
@@ -1616,6 +1670,7 @@ class WordAnalysisApp:
                             self.original_text.insert(tk.END, " ")
                             self.modified_text.insert(tk.END, " ")
                         
+                        # Update position tracker
                         current_pos = pos + 1
                     
                     # Add any remaining text in the line
@@ -1626,29 +1681,45 @@ class WordAnalysisApp:
                     # No replacements in this line, keep it as is
                     self.original_text.insert(tk.END, line)
                     self.modified_text.insert(tk.END, line)
-        self.original_text.config(state=tk.DISABLED)  # Make the original text read-only
-
-
+        
+        # Make the original text read-only to prevent user edits
+        self.original_text.config(state=tk.DISABLED)
 
     def save_modified_text(self):
-        """Save the modified text to a new file."""
+        """
+        Save the modified text to a new file.
+        
+        This method:
+        1. Checks if there is modified text to save
+        2. Opens a file dialog for the user to choose save location
+        3. Writes the modified text to the selected file
+        4. Provides feedback on success or failure
+        
+        The method handles potential errors during the save operation
+        and notifies the user accordingly.
+        """
+        # Check if there is any modified text to save
         if not self.modified_text.get(1.0, tk.END).strip():
             messagebox.showerror("Error", "No modified text to save.")
             return
 
+        # Open file dialog to get save location
         if file_path := filedialog.asksaveasfilename(
                 defaultextension=".txt",
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
         ):
             try:
+                # Write the modified text to the selected file
                 with open(file_path, 'w') as file:
                     file.write(self.modified_text.get(1.0, tk.END))
+                # Show success message with the saved file path
                 messagebox.showinfo("Success",
                                     f"Modified text saved to '{file_path}'")
             except Exception as e:
+                # Handle any errors during file saving
                 messagebox.showerror("Error", f"Error saving file: {str(e)}")
 
-        
+
     def save_config(self):
         """
         Save the configuration settings to the config file.
@@ -1826,7 +1897,7 @@ def configure():
             [*"Graph: ", "\x1b[1;4;97mM\x1b[m", *f"ax word: show first {config.graph_max_words if unsaved_graph_max_words is None else f'{unsaved_graph_max_words} (was {config.graph_max_words})'} sorted words appeared"],
             [*"Graph figure size: set the figure ", "\x1b[1;4;97mH\x1b[m", *f"eight to {config.graph_figsize[1] if unsaved_graph_figsize_h is None else f'{unsaved_graph_figsize_h} (was {config.graph_figsize[1]})'}"],
             [*"Graph figure size: set the figure ", "\x1b[1;4;97mW\x1b[m", *f"idth to {config.graph_figsize[0] if unsaved_graph_figsize_w is None else f'{unsaved_graph_figsize_w} (was {config.graph_figsize[0]})'}"],
-            [*"Graph bar: set color of ", "\x1b[1;4;97mS\x1b[m", *f"ingle bar (analyse file) to {config.graph_bar_color_single if unsaved_graph_bar_color_single is None else f'{unsaved_graph_bar_color_single} (was {config.graph_bar_color_single})'}"],
+            [*"Graph bar: set color of s", "\x1b[1;4;97mI\x1b[m", *f"ngle bar (analyse file) to {config.graph_bar_color_single if unsaved_graph_bar_color_single is None else f'{unsaved_graph_bar_color_single} (was {config.graph_bar_color_single})'}"],
             [*"Graph bar: set color of File", "\x1b[1;4;97m1\x1b[m", *f"'s bar (compare file) to {config.graph_bar_color_compare1 if unsaved_graph_bar_color_compare1 is None else f'{unsaved_graph_bar_color_compare1} (was {config.graph_bar_color_compare1})'}"],
             [*"Graph bar: set color of File", "\x1b[1;4;97m2\x1b[m", *f"'s bar (compare file) to {config.graph_bar_color_compare2 if unsaved_graph_bar_color_compare2 is None else f'{unsaved_graph_bar_color_compare2} (was {config.graph_bar_color_compare2})'}"],
             [*"Graph ", "\x1b[1;4;97mT\x1b[m", *f"itle: set font size to {config.graph_title_fontsize if unsaved_graph_title_fontsize is None else f'{unsaved_graph_title_fontsize} (was {config.graph_title_fontsize})'}"],
@@ -1850,7 +1921,7 @@ def configure():
             unsaved_graph_figsize_h = configure_test_input("Enter height of the figure", float, str(config.graph_figsize[1]))
         elif config_option == "W":
             unsaved_graph_figsize_w = configure_test_input("Enter width of the figure", float, str(config.graph_figsize[0]))
-        elif config_option == "S":
+        elif config_option == "I":
             unsaved_graph_bar_color_single = configure_test_input("Enter color of the bar in Analyze File mode", str, str(config.graph_bar_color_single))
         elif config_option == "1":
             unsaved_graph_bar_color_compare1 = configure_test_input("Enter color of File1's bar in Compare Files mode", str, str(config.graph_bar_color_compare1))
@@ -1893,7 +1964,7 @@ def configure():
 
         # Save updated configuration to persistent storage
         config.save()
-        
+        print("Saved!")
     
     
 def search_word(file_path, target_word):
@@ -2204,32 +2275,35 @@ def mainCLI():
         # Prompt user for choice and capture input
         choice = input("\nEnter your choice (1-6): ", single_letter=True).strip()
 
-        # Handle each choice using if-elif statements
-        if choice == '1':
-            file_path = input("Enter the path to the text file: ").strip()  # Path for file
-            analyze_file(file_path)  # Call the analyze function for the selected file
+        # Handle each choice
+        if choice in "1234":
+            txt_files = [file for file in os.listdir() if os.path.isfile(file) and file.endswith(".txt")]
+            print("Text files in current directory:\n" + "\n".join(txt_files))
+            if choice == '1':
+                file_path = input("Enter the path to the text file: ").strip()  # Path for file
+                analyze_file(file_path)  # Call the analyze function for the selected file
 
-        elif choice == '2':
-            file_path1 = input("Enter the path to the first text file: ").strip()  # Path for first file
-            file_path2 = input("Enter the path to the second text file: ").strip()  # Path for second file
-            compare_files(file_path1, file_path2)  # Call compare function on selected files
+            elif choice == '2':
+                file_path1 = input("Enter the path to the first text file: ").strip()  # Path for first file
+                file_path2 = input("Enter the path to the second text file: ").strip()  # Path for second file
+                compare_files(file_path1, file_path2)  # Call compare function on selected files
 
-        elif choice == '3':
-            file_path = input("Enter the path to the text file: ").strip()
-            target_word = input("Enter the word to search for: ").strip()
-            search_word(file_path, target_word)
+            elif choice == '3':
+                file_path = input("Enter the path to the text file: ").strip()
+                target_word = input("Enter the word to search for: ").strip()
+                search_word(file_path, target_word)
 
-        elif choice == '4':
-            file_path = input("Enter the path to the text file: ").strip()
-            target_word = input("Enter the word to replace: ").strip()
-            replacement_word = input("Enter the replacement word: ").strip()
-            replace_word(file_path, target_word, replacement_word)
+            elif choice == '4':
+                file_path = input("Enter the path to the text file: ").strip()
+                target_word = input("Enter the word to replace: ").strip()
+                replacement_word = input("Enter the replacement word: ").strip()
+                replace_word(file_path, target_word, replacement_word)
         
         elif choice == '5':
             configure()  # Call configuration function
 
         elif choice == '6':
-            print("Thank you for using WAPDS!")  # Goodbye message
+            print("Thank you for using WAPDS!")
             break  # Exit the loop
 
         else:
