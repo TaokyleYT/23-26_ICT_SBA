@@ -4,17 +4,23 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import os
+from os.path import exists
+if os.name == 'nt':
+    data_dir = __file__.rsplit("\\", 1)[0] + "\\nltk_data"
+else:
+    data_dir = __file__.rsplit("/", 1)[0] + "/nltk_data"
+nltk.data.path.append(data_dir)
 
 def update():
-    nltk.download('punkt')
-    nltk.download('punkt_tab')
-    nltk.download('stopwords')
-    nltk.download('wordnet')
-    nltk.download("wordnet_ic")
-    nltk.download("omw-1.4")
-    nltk.download("lin_thesaurus")
-    nltk.download("framenet_v17")
-    nltk.download("universal_treebanks_v20")
+    if not exists(data_dir + "/tokenizers"):
+        nltk.download('punkt', data_dir)
+        nltk.download('punkt_tab', data_dir)
+    if not exists(data_dir + "/corpora"):
+        nltk.download('stopwords', data_dir)
+        nltk.download('wordnet', data_dir)
+    if not exists(data_dir + "/taggers"):
+        nltk.download('averaged_perceptron_tagger', data_dir)
 
 
 def preprocess_text(text):
@@ -85,7 +91,7 @@ def detect_plagiarism(query_text, reference_texts, threshold=0.8):
     return plagiarism_results
 
 if __name__ == "__main__":
-    #update()
+    update()
     # Read example document from file
     with open("test.txt", "r") as file:
         example_document = file.read()
@@ -105,7 +111,7 @@ if __name__ == "__main__":
         if results:
             print("Plagiarized content detected:")
             for result in results:
-                print("Similarity Score:", result['similarity_score'])
+                print(f"Similarity Score: {(result['similarity_score']*100):.2f}%")
                 print()
         else:
             print("No plagiarism detected.")
