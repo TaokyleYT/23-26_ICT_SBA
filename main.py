@@ -3,6 +3,7 @@ import helpers  # Import custom helper functions that avoid using built-in funct
 import tkinter as tk  # Import tkinter for GUI implementation
 import re  # Import regex module for pattern matching
 from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
+from nltk_plagiarism import get_similarity_score # For advance stuff
 try:
     import matplotlib.pyplot as plt  # Import matplotlib for data visualization
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
@@ -744,6 +745,32 @@ class WordAnalysisApp:
         The tab is organized into sections for file selection, statistics,
         comparison results, and visualization.
         """
+        
+        def update_file_labels():
+            """
+            Update file labels based on whether NLTK is enabled.
+            
+            When NLTK is enabled:
+            - File 1 becomes "File"
+            - File 2 becomes "Reference Files"
+            Otherwise, they remain as "File 1" and "File 2"
+            """
+            if self.compare_nltk.get():
+                self.file1_label.config(text="File:")
+                self.file2_label.config(text="Reference Files:")
+                self.file1_stats_frame.config(text="File Statistics")
+                self.file2_stats_frame.config(text="Reference Files Statistics")
+                # Change browse behavior for file 2 to allow multiple files
+                browse_btn2.config(command=self.browse_compare_file2_nltk)
+            else:
+                self.file1_label.config(text="File 1:")
+                self.file2_label.config(text="File 2:")
+                self.file1_stats_frame.config(text="File 1 Statistics")
+                self.file2_stats_frame.config(text="File 2 Statistics")
+                # Change browse behavior back to single file
+                browse_btn2.config(command=self.browse_compare_file2)
+            
+        
         compare_tab = ttk.Frame(self.notebook)  # Create compare tab frame
         self.notebook.add(compare_tab, text="Compare Files")  # Add to notebook
 
@@ -755,41 +782,54 @@ class WordAnalysisApp:
         file1_frame = ttk.Frame(files_frame)
         file1_frame.pack(fill=tk.X, pady=5)
 
-        ttk.Label(file1_frame, text="File 1:").pack(side=tk.LEFT, padx=5)  # Label for File 1 selection
+        self.file1_label = ttk.Label(file1_frame, text="File 1:")
+        self.file1_label.pack(side=tk.LEFT, padx=5)  # Label for File 1 selection
         self.compare_file_entry1 = ttk.Entry(file1_frame, width=50)  # Entry for File 1 path
         self.compare_file_entry1.pack(side=tk.LEFT,
-                                      padx=5,
-                                      fill=tk.X,
-                                      expand=True)
+                                    padx=5,
+                                    fill=tk.X,
+                                    expand=True)
 
         # Button to browse for File 1
         browse_btn1 = ttk.Button(file1_frame,
-                                 text="Browse",
-                                 command=self.browse_compare_file1)
+                                text="Browse",
+                                command=self.browse_compare_file1)
         browse_btn1.pack(side=tk.LEFT, padx=5)
 
         # File 2 selection
         file2_frame = ttk.Frame(files_frame)
         file2_frame.pack(fill=tk.X, pady=5)
 
-        ttk.Label(file2_frame, text="File 2:").pack(side=tk.LEFT, padx=5)  # Label for File 2 selection
+        self.file2_label = ttk.Label(file2_frame, text="File 2:")
+        self.file2_label.pack(side=tk.LEFT, padx=5)  # Label for File 2 selection
         self.compare_file_entry2 = ttk.Entry(file2_frame, width=50)  # Entry for File 2 path
         self.compare_file_entry2.pack(side=tk.LEFT,
-                                      padx=5,
-                                      fill=tk.X,
-                                      expand=True)
+                                    padx=5,
+                                    fill=tk.X,
+                                    expand=True)
 
         # Button to browse for File 2
         browse_btn2 = ttk.Button(file2_frame,
-                                 text="Browse",
-                                 command=self.browse_compare_file2)
+                                text="Browse",
+                                command=self.browse_compare_file2)
         browse_btn2.pack(side=tk.LEFT, padx=5)
+        
+        # More buttons
+        buttons_frame = ttk.Frame(files_frame)
+        buttons_frame.pack(fill=tk.X, pady=5)
 
         # Button to perform comparison
-        compare_btn = ttk.Button(files_frame,
-                                 text="Compare Files",
-                                 command=self.compare_files)
-        compare_btn.pack(pady=10)
+        compare_btn = ttk.Button(buttons_frame,
+                                text="Compare Files",
+                                command=self.compare_files)
+        compare_btn.pack(side=tk.TOP, pady=10)
+        # Add NLTK checkbox
+        self.compare_nltk = tk.BooleanVar(value=False)
+        use_nltk = ttk.Checkbutton(buttons_frame, 
+                                    text="Use NLTK for more accurate plagiarism detection", 
+                                    variable=self.compare_nltk,
+                                    command=update_file_labels)
+        use_nltk.pack(side=tk.RIGHT, padx=5)
 
         # Results section for displaying statistics and comparison results
         results_frame = ttk.Frame(compare_tab)
@@ -803,22 +843,22 @@ class WordAnalysisApp:
         lists_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         # File 1 stats display
-        file1_stats_frame = ttk.LabelFrame(lists_frame, text="File 1 Statistics")
-        file1_stats_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        self.file1_stats_frame = ttk.LabelFrame(lists_frame, text="File 1 Statistics")
+        self.file1_stats_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
 
         # Text area for displaying statistics of File 1
-        self.file1_stats_text = tk.Text(file1_stats_frame,
+        self.file1_stats_text = tk.Text(self.file1_stats_frame,
                                         height=5,
                                         width=40,
                                         wrap=tk.WORD)  
         self.file1_stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # File 2 stats display
-        file2_stats_frame = ttk.LabelFrame(lists_frame, text="File 2 Statistics")
-        file2_stats_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        self.file2_stats_frame = ttk.LabelFrame(lists_frame, text="File 2 Statistics")
+        self.file2_stats_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
 
         # Text area for displaying statistics of File 2
-        self.file2_stats_text = tk.Text(file2_stats_frame,
+        self.file2_stats_text = tk.Text(self.file2_stats_frame,
                                         height=5,
                                         width=40,
                                         wrap=tk.WORD)
@@ -830,8 +870,8 @@ class WordAnalysisApp:
 
         # Text area for displaying similarity results
         self.comparison_text = tk.Text(comparison_frame,
-                                       height=6,
-                                       wrap=tk.WORD)
+                                    height=6,
+                                    wrap=tk.WORD)
         self.comparison_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Right side - comparison graph display
@@ -845,7 +885,8 @@ class WordAnalysisApp:
         # Canvas to draw the comparison graph
         self.compare_canvas = tk.Canvas(graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
+
+            
     def create_search_tab(self):
         """Create the Search tab for word searching."""
         search_tab = ttk.Frame(self.notebook)
@@ -1158,6 +1199,18 @@ class WordAnalysisApp:
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):  # Open dialog for file selection
             self.compare_file_entry2.delete(0, tk.END)  # Clear entry
             self.compare_file_entry2.insert(0, file_path)  # Insert selected path
+    
+    def browse_compare_file2_nltk(self):
+        """
+        Open a file dialog to browse for the a set of reference files to compare.
+        Updates the file path entry field with the selected path.
+        """
+        if file_path := filedialog.askopenfilenames(
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):  # Open dialog for file selection
+            self.compare_file_entry2.delete(0, tk.END)  # Clear entry
+            for file in file_path[:-1]:
+                self.compare_file_entry2.insert(tk.END, file.replace(",", ",\\")+', ')  # Insert selected path
+            self.compare_file_entry2.insert(tk.END, file_path[-1].replace(",", ",\\"))
             
     def browse_search_file(self):
         """Browse for a file to search."""
@@ -1296,62 +1349,182 @@ class WordAnalysisApp:
             messagebox.showerror("Error", "Please select both files.")  # Show error if missing
             return  # Exit method on error
 
-        # Read and process both files
+        # Read and process the first file
         content1 = read_file(file_path1)  # Read first file content
-        content2 = read_file(file_path2)  # Read second file content
-
-        if content1 is None or content2 is None:  # Check if readings were successful
-            messagebox.showerror("Error", "Could not read one or both files.")  # Show error message
+        if content1 is None:  # Check if reading was successful
+            messagebox.showerror("Error", f"Could not read file: {file_path1}")  # Show error message
             return  # Exit method on error
 
-        clean_content1 = clean_text(content1)  # Clean content of the first file
-        clean_content2 = clean_text(content2)  # Clean content of the second file
-        
-        word_count1 = count_words(clean_content1)  # Count words in the first cleaned text
-        word_count2 = count_words(clean_content2)  # Count words in the second cleaned text
-        
-        total_words1 = len(clean_content1.split(" "))  # Count total words in the first text
-        total_words2 = len(clean_content2.split(" "))  # Count total words in the second text
-        
-        unique_words1 = len(word_count1[0])  # Count unique words in the first text
-        unique_words2 = len(word_count2[0])  # Count unique words in the second text
+        # Process differently based on whether NLTK is enabled
+        if self.compare_nltk.get():
+            # Handle NLTK-based comparison with multiple reference files
+            file_paths = []
+            for file in file_path2.split(", "):
+                if file:
+                    file_paths.append(file.replace(",\\", ","))
+            
+            # Read all reference files
+            reference_contents = []
+            reference_file_names = []
+            for path in file_paths:
+                content = read_file(path)
+                if content is None:
+                    messagebox.showerror("Error", f"Could not read file: {path}")
+                    return
+                reference_contents.append(content)
+                reference_file_names.append(os.path.basename(path))
+            
+            # Display statistics for file 1
+            clean_content1 = clean_text(content1)
+            word_count1 = count_words(clean_content1)
+            total_words1 = len(clean_content1.split(" "))
+            unique_words1 = len(word_count1[0])
+            
+            self.file1_stats_text.delete(1.0, tk.END)
+            self.file1_stats_text.insert(tk.END, f"File: {os.path.basename(file_path1)}\n")
+            self.file1_stats_text.insert(tk.END, f"Total words: {total_words1}\n")
+            self.file1_stats_text.insert(tk.END, f"Unique words: {unique_words1}\n")
+            
+            # Display statistics for reference files
+            self.file2_stats_text.delete(1.0, tk.END)
+            self.file2_stats_text.insert(tk.END, f"Reference Files: {len(file_paths)}\n")
+            
+            total_words2 = 0
+            unique_words_set = set()
+            
+            # Process each reference file
+            reference_word_counts = []
+            for i, content in enumerate(reference_contents):
+                clean_content = clean_text(content)
+                word_count = count_words(clean_content)
+                reference_word_counts.append(word_count)
+                
+                words = clean_content.split(" ")
+                total_words2 += len(words)
+                unique_words_set.update(word_count[0])
+                
+                self.file2_stats_text.insert(tk.END, f"File {i+1}: {reference_file_names[i]}\n")
+            
+            self.file2_stats_text.insert(tk.END, f"Total words across all files: {total_words2}\n")
+            self.file2_stats_text.insert(tk.END, f"Unique words across all files: {len(unique_words_set)}\n")
+            
+            # Use NLTK for plagiarism detection
+            plagiarism_results = get_similarity_score(content1, reference_contents)
+            
+            # Display results
+            self.comparison_text.delete(1.0, tk.END)
+            
+            # Prepare similarity scores for all reference files
+            similarity_scores = [0] * len(reference_contents)
+            
+            if plagiarism_results:
+                # Found plagiarism
+                max_similarity = max(result['similarity_score'] for result in plagiarism_results)
+                similarity = max_similarity * 100  # Convert to percentage
+                
+                self.comparison_text.insert(tk.END, f"Similarity percentage: {similarity:.2f}%\n\n")
+                
+                # List all matches
+                self.comparison_text.insert(tk.END, "Matches found in:\n")
+                for i, result in enumerate(plagiarism_results):
+                    score = result['similarity_score'] * 100
+                    # Find which reference file this match corresponds to
+                    match_index = reference_contents.index(result['reference_text'])
+                    file_name = reference_file_names[match_index]
+                    similarity_scores[match_index] = score  # Store score for this reference file
+                    
+                    self.comparison_text.insert(tk.END, f"Match {i+1}: {file_name} - {score:.2f}% similarity\n")
+            else:
+                # No plagiarism detected
+                similarity = 0
+                self.comparison_text.insert(tk.END, "No significant similarity detected\n\n")
+                self.comparison_text.insert(tk.END, "Similarity percentage: 0.00%\n")
+            
+            # Determine plagiarism level based on similarity percentage
+            if similarity > 80:
+                level = "HIGH - These texts are very similar"
+                self.comparison_text.tag_configure("color", foreground="red")
+            elif similarity > 50:
+                level = "MEDIUM - These texts have significant overlap"
+                self.comparison_text.tag_configure("color", foreground="orange")
+            elif similarity > 20:
+                level = "LOW - These texts have some common elements"
+                self.comparison_text.tag_configure("color", foreground="yellow")
+            else:
+                level = "MINIMAL - These texts are mostly different"
+                self.comparison_text.tag_configure("color", foreground="green")
 
-        # Display statistics for file 1
-        self.file1_stats_text.delete(1.0, tk.END)  # Clear previous statistics 
-        self.file1_stats_text.insert(tk.END, f"File: {os.path.basename(file_path1)}\n")  # Display file name
-        self.file1_stats_text.insert(tk.END, f"Total words: {total_words1}\n")  # Display total words
-        self.file1_stats_text.insert(tk.END, f"Unique words: {unique_words1}\n")  # Display unique words
-
-        # Display statistics for file 2
-        self.file2_stats_text.delete(1.0, tk.END)  # Clear previous statistics 
-        self.file2_stats_text.insert(tk.END, f"File: {os.path.basename(file_path2)}\n")  # Display file name
-        self.file2_stats_text.insert(tk.END, f"Total words: {total_words2}\n")  # Display total words
-        self.file2_stats_text.insert(tk.END, f"Unique words: {unique_words2}\n")  # Display unique words
-
-        # Calculate and display similarity
-        similarity = calculate_similarity(word_count1, word_count2)  # Calculate similarity percentage
-
-        self.comparison_text.delete(1.0, tk.END)  # Clear previous comparison results
-        self.comparison_text.insert(tk.END, f"Similarity percentage: {similarity:.2f}%\n\n")  # Display similarity percentage
-
-        # Determine plagiarism level based on similarity percentage
-        if similarity > 80:
-            level = "HIGH - These texts are very similar"
-            self.comparison_text.tag_configure("color", foreground="red")
-        elif similarity > 50:
-            level = "MEDIUM - These texts have significant overlap"
-            self.comparison_text.tag_configure("color", foreground="orange")
-        elif similarity > 20:
-            level = "LOW - These texts have some common elements"
-            self.comparison_text.tag_configure("color", foreground="yellow")
+            self.comparison_text.insert(tk.END, f"\nPlagiarism Level: {level}", "color")
+            
+            # Create a specialized NLTK-based comparison graph for all reference files
+            if reference_word_counts:
+                self.create_nltk_comparison_graph(
+                    word_count1, 
+                    reference_word_counts,
+                    os.path.basename(file_path1), 
+                    reference_file_names,
+                    similarity_scores, 
+                    self.compare_canvas
+                )
+            
         else:
-            level = "MINIMAL - These texts are mostly different"
-            self.comparison_text.tag_configure("color", foreground="green")
+            # Standard comparison between two files
+            content2 = read_file(file_path2)  # Read second file content
+            if content2 is None:  # Check if reading was successful
+                messagebox.showerror("Error", f"Could not read file: {file_path2}")  # Show error message
+                return  # Exit method on error
 
-        self.comparison_text.insert(tk.END, f"Plagiarism Level: {level}", "color")  # Display plagiarism level
-        
-        # Create comparison graph
-        self.create_comparison_graph(word_count1, word_count2, self.compare_canvas)  # Draw graph for comparisons
+            clean_content1 = clean_text(content1)  # Clean content of the first file
+            clean_content2 = clean_text(content2)  # Clean content of the second file
+            
+            word_count1 = count_words(clean_content1)  # Count words in the first cleaned text
+            word_count2 = count_words(clean_content2)  # Count words in the second cleaned text
+            
+            total_words1 = len(clean_content1.split(" "))  # Count total words in the first text
+            total_words2 = len(clean_content2.split(" "))  # Count total words in the second text
+            
+            unique_words1 = len(word_count1[0])  # Count unique words in the first text
+            unique_words2 = len(word_count2[0])  # Count unique words in the second text
+
+            # Display statistics for file 1
+            self.file1_stats_text.delete(1.0, tk.END)  # Clear previous statistics 
+            self.file1_stats_text.insert(tk.END, f"File: {os.path.basename(file_path1)}\n")  # Display file name
+            self.file1_stats_text.insert(tk.END, f"Total words: {total_words1}\n")  # Display total words
+            self.file1_stats_text.insert(tk.END, f"Unique words: {unique_words1}\n")  # Display unique words
+
+            # Display statistics for file 2
+            self.file2_stats_text.delete(1.0, tk.END)  # Clear previous statistics 
+            self.file2_stats_text.insert(tk.END, f"File: {os.path.basename(file_path2)}\n")  # Display file name
+            self.file2_stats_text.insert(tk.END, f"Total words: {total_words2}\n")  # Display total words
+            self.file2_stats_text.insert(tk.END, f"Unique words: {unique_words2}\n")  # Display unique words
+
+            # Calculate similarity using standard method
+            similarity = calculate_similarity(word_count1, word_count2)  # Calculate similarity percentage
+
+            self.comparison_text.delete(1.0, tk.END)  # Clear previous comparison results
+            self.comparison_text.insert(tk.END, f"Similarity percentage: {similarity:.2f}%\n\n")  # Display similarity percentage
+
+            # Determine plagiarism level based on similarity percentage
+            if similarity > 80:
+                level = "HIGH - These texts are very similar"
+                self.comparison_text.tag_configure("color", foreground="red")
+            elif similarity > 50:
+                level = "MEDIUM - These texts have significant overlap"
+                self.comparison_text.tag_configure("color", foreground="orange")
+            elif similarity > 20:
+                level = "LOW - These texts have some common elements"
+                self.comparison_text.tag_configure("color", foreground="yellow")
+            else:
+                level = "MINIMAL - These texts are mostly different"
+                self.comparison_text.tag_configure("color", foreground="green")
+
+            self.comparison_text.insert(tk.END, f"Plagiarism Level: {level}", "color")  # Display plagiarism level
+            
+            # Create comparison graph
+            self.create_comparison_graph(word_count1, word_count2, self.compare_canvas)  # Draw graph for comparisons
+
+
+
 
     def create_comparison_graph(self, word_count1, word_count2, canvas_widget, max_words=config.graph_max_words):
         """
@@ -1426,6 +1599,143 @@ class WordAnalysisApp:
         canvas = FigureCanvasTkAgg(fig, master=canvas_widget)  # Create canvas for matplotlib figure
         canvas.draw()  # Draw the figure
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # Pack canvas into the Tkinter widget
+        
+        
+    def create_nltk_comparison_graph(self, word_count1, reference_word_counts, file1_name, reference_file_names, 
+                                    similarity_scores, canvas_widget, max_words=config.graph_max_words):
+        """
+        Create a specialized comparison graph for NLTK-based plagiarism detection showing all reference files.
+
+        Args:
+            word_count1 (tuple): Word count data for the first file
+            reference_word_counts (list): List of word count data for all reference files
+            file1_name (str): Name of the first file
+            reference_file_names (list): Names of all reference files
+            similarity_scores (list): List of similarity scores for each reference file
+            canvas_widget: Tkinter canvas to display the graph
+            max_words (int): Maximum number of words to display from each file
+        """
+        # Clear previous graph
+        for widget in canvas_widget.winfo_children():
+            widget.destroy()
+            
+        if plt is None:
+            return
+
+        # Get top words from the query file
+        freq_sorted1 = sort_by_frequency(word_count1)
+        top_words1 = {word for word, _ in freq_sorted1[:max_words]}
+
+        # Find common words across all files
+        all_common_words = set()
+        for word_count2 in reference_word_counts:
+            freq_sorted2 = sort_by_frequency(word_count2)
+            top_words2 = {word for word, _ in freq_sorted2[:max_words]}
+            common_words = top_words1.intersection(top_words2)
+            all_common_words.update(common_words)
+        
+        # If no common words found across any files
+        if not all_common_words:
+            fig = plt.figure(figsize=config.graph_figsize)
+            ax = fig.add_subplot(111)
+            ax.text(0.5, 0.5, 'No common words found in top frequency lists', 
+                    ha='center', va='center', fontsize=12)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            plt.tight_layout()
+            
+            # Embed the graph in the canvas
+            canvas = FigureCanvasTkAgg(fig, master=canvas_widget)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+            return
+        
+        # Sort common words by frequency in the first file
+        all_common_words_sorted = sorted(all_common_words, 
+                                        key=lambda word: word_count1[1][helpers.linear_search(word_count1[0], word)] 
+                                        if word in word_count1[0] else 0,
+                                        reverse=True)
+        
+        # Limit to a reasonable number of words to keep the graph readable
+        # For multiple reference files, we need to be more selective
+        max_display_words = max(5, min(10, int(max_words/(len(reference_word_counts) + 1))))
+        display_words = all_common_words_sorted[:max_display_words]
+        
+        # Create a figure with enough height for all reference files
+        fig_height = max(config.graph_figsize[1], 2 + len(reference_word_counts) * 0.5)
+        fig = plt.figure(figsize=(config.graph_figsize[0], fig_height))
+        
+        # Create a grid of subplots - one for each reference file
+        num_plots = len(reference_word_counts)
+        
+        # If there are too many reference files, limit the display
+        if num_plots > 10:
+            # Sort reference files by similarity score and take top 10
+            indices = sorted(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)[:10]
+            reference_word_counts = [reference_word_counts[i] for i in indices]
+            reference_file_names = [reference_file_names[i] for i in indices]
+            similarity_scores = [similarity_scores[i] for i in indices]
+            num_plots = 10
+        
+        # Create subplots
+        for i in range(num_plots):
+            ax = fig.add_subplot(num_plots, 1, i+1)
+            
+            # Get counts for the query file and this reference file
+            counts1 = []
+            counts2 = []
+            
+            for word in display_words:
+                # Get count in the query file
+                if word in word_count1[0]:
+                    idx = helpers.linear_search(word_count1[0], word)
+                    counts1.append(word_count1[1][idx])
+                else:
+                    counts1.append(0)
+                    
+                # Get count in this reference file
+                word_count2 = reference_word_counts[i]
+                if word in word_count2[0]:
+                    idx = helpers.linear_search(word_count2[0], word)
+                    counts2.append(word_count2[1][idx])
+                else:
+                    counts2.append(0)
+            
+            # Create bar chart for common words
+            x = range(len(display_words))
+            width = 0.35
+            
+            ax.bar([j - width/2 for j in x], counts1, width, label=file1_name, color=config.graph_bar_color_compare1)
+            ax.bar([j + width/2 for j in x], counts2, width, 
+                label=f"{reference_file_names[i]} ({similarity_scores[i]:.1f}%)", 
+                color=config.graph_bar_color_compare2)
+            
+            # Add labels and legend
+            if i == 0:  # Only add title to the first subplot
+                ax.set_title('Word Frequency Comparison with Reference Files')
+            
+            # Add y-label only to the middle subplot to save space
+            if i == num_plots // 2:
+                ax.set_ylabel('Frequency')
+            
+            # Add x-labels only to the last subplot
+            if i == num_plots - 1:
+                ax.set_xticks(x)
+                ax.set_xticklabels(display_words, rotation=45, ha='right')
+            else:
+                ax.set_xticks(x)
+                ax.set_xticklabels([])
+            
+            ax.legend(loc='upper right', fontsize='small')
+        
+        plt.tight_layout()
+        
+        # Embed the graph in the canvas
+        canvas = FigureCanvasTkAgg(fig, master=canvas_widget)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+
         
     def search_word(self):
         """
