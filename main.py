@@ -6,7 +6,7 @@ from tkinter import ttk, filedialog, messagebox  # Import specific tkinter compo
 from nltk_plagiarism import get_similarity_score # For advance stuff
 try:
     import matplotlib.pyplot as plt  # Import matplotlib for data visualization
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk  # For embedding matplotlib in tkinter
 except (ImportError, ModuleNotFoundError):
     print(f"\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
     plt = None  # Set plt to None so we can check if matplotlib is available later
@@ -147,7 +147,7 @@ def read_file(file_path):
         print(f"\x1b[31mError: File '{file_path}' not found.\x1b[m")
         # Suggest similar filename if available
         if file_path+".txt" in txt_files:
-            print(f"Did you mean '{file_path}.txt'?")
+            print(f"\x1b[33mDid you mean '{file_path}.txt'?\x1b[m]")
         return None
         
     # Check if path is a file (not a directory)
@@ -341,7 +341,7 @@ def sort_by_frequency(word_count):
         items_to_sort.append(((item[1], item[0]), i))  # Sort by count first, then word
 
     # Sort the indices
-    sorted_indices = helpers.quick_sort(items_to_sort, ascending=False)  # Sort in descending order
+    sorted_indices = helpers.quick_sort(items_to_sort)  # Sort in descending order
 
     # Reconstruct the result using the sorted indices
     result = []
@@ -581,7 +581,7 @@ class WordAnalysisApp:
             
             # Redraw graphs if they exist
             if hasattr(self, 'word_count1') and self.word_count1:
-                self.create_frequency_graph(self.word_count1, self.graph_canvas1)
+                self.create_frequency_graph(self.word_count1, self.analyze_canvas)
                 
             if hasattr(self, 'word_count1') and hasattr(self, 'word_count2') and self.word_count1 and self.word_count2:
                 self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_canvas)
@@ -643,7 +643,7 @@ class WordAnalysisApp:
             
             # Redraw graphs if they exist
             if hasattr(self, 'word_count1') and self.word_count1:
-                self.create_frequency_graph(self.word_count1, self.graph_canvas1)
+                self.create_frequency_graph(self.word_count1, self.analyze_canvas)
                 
             if hasattr(self, 'word_count1') and hasattr(self, 'word_count2') and self.word_count1 and self.word_count2:
                 self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_canvas)
@@ -725,12 +725,12 @@ class WordAnalysisApp:
         right_frame = ttk.Frame(results_frame)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5)
 
-        graph_frame = ttk.LabelFrame(right_frame, text="Word Frequency Graph")
-        graph_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        self.analyze_graph_frame = ttk.LabelFrame(right_frame, text="Word Frequency Graph")
+        self.analyze_graph_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         # Canvas to draw the frequency graph
-        self.graph_canvas1 = tk.Canvas(graph_frame)
-        self.graph_canvas1.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.analyze_canvas = tk.Canvas(self.analyze_graph_frame)
+        self.analyze_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
     def create_compare_tab(self):
         """
@@ -879,11 +879,11 @@ class WordAnalysisApp:
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5)
 
         # Graph comparing word frequencies
-        graph_frame = ttk.LabelFrame(right_frame, text="Word Frequency Comparison")
-        graph_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        self.compare_graph_frame = ttk.LabelFrame(right_frame, text="Word Frequency Comparison")
+        self.compare_graph_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         # Canvas to draw the comparison graph
-        self.compare_canvas = tk.Canvas(graph_frame)
+        self.compare_canvas = tk.Canvas(self.compare_graph_frame)
         self.compare_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
             
@@ -1272,18 +1272,19 @@ class WordAnalysisApp:
             self.alpha_list.insert(tk.END, f"{i + 1}. '{word}': {count} times")  # Insert words and counts
 
         # Create and display the frequency graph
-        self.create_frequency_graph(word_count, self.graph_canvas1)  # Draw graph for the current file
+        self.create_frequency_graph(word_count, self.analyze_canvas, self.analyze_canvas)  # Draw graph for the current file
 
         # Store data for later use
         self.word_count1 = word_count  # Store word count data
         self.clean_content1 = clean_content  # Store cleaned content
 
-    def create_frequency_graph(self, word_count, canvas_widget, max_words=config.graph_max_words):
+    def create_frequency_graph(self, word_count, canvas_frame_widget, canvas_widget, max_words=config.graph_max_words):
         """
         Create a bar graph of word frequencies.
 
         Args:
             word_count (tuple): Word count data
+            canvas_frame_widget: Tkinter frame that holds the canvas
             canvas_widget: Tkinter canvas to display the graph
             max_words (int): Maximum number of words to display in the graph
         """
@@ -1325,11 +1326,22 @@ class WordAnalysisApp:
                     va='center')  # Display count on bar
 
         plt.tight_layout()  # Adjust layout
-
         # Embed the graph in the canvas
         canvas = FigureCanvasTkAgg(fig, master=canvas_widget)  # Create canvas for matplotlib figure
         canvas.draw()  # Draw the figure
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # Pack canvas into the Tkinter widget
+        
+        # Add navigation toolbar for panning, zooming, etc.
+        toolbar = NavigationToolbar2Tk(canvas, canvas_frame_widget)
+        toolbar.update()
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Add vertical scrollbar if needed
+        if len(words) > 10:  # Only add scrollbar if there are many words
+            scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.VERTICAL, command=canvas_widget.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            canvas_widget.configure(yscrollcommand=scrollbar.set)
+
 
     def compare_files(self):
         """
@@ -1419,7 +1431,7 @@ class WordAnalysisApp:
             
             if plagiarism_results:
                 # Found plagiarism
-                max_similarity = max(result['similarity_score'] for result in plagiarism_results)
+                max_similarity = helpers.max(result['similarity_score'] for result in plagiarism_results)
                 similarity = max_similarity * 100  # Convert to percentage
                 
                 self.comparison_text.insert(tk.END, f"Similarity percentage: {similarity:.2f}%\n\n")
@@ -1429,7 +1441,7 @@ class WordAnalysisApp:
                 for i, result in enumerate(plagiarism_results):
                     score = result['similarity_score'] * 100
                     # Find which reference file this match corresponds to
-                    match_index = reference_contents.index(result['reference_text'])
+                    match_index = helpers.linear_search(reference_contents, result['reference_text'])
                     file_name = reference_file_names[match_index]
                     similarity_scores[match_index] = score  # Store score for this reference file
                     
@@ -1464,6 +1476,7 @@ class WordAnalysisApp:
                     os.path.basename(file_path1), 
                     reference_file_names,
                     similarity_scores, 
+                    self.compare_graph_frame, 
                     self.compare_canvas
                 )
             
@@ -1521,18 +1534,19 @@ class WordAnalysisApp:
             self.comparison_text.insert(tk.END, f"Plagiarism Level: {level}", "color")  # Display plagiarism level
             
             # Create comparison graph
-            self.create_comparison_graph(word_count1, word_count2, self.compare_canvas)  # Draw graph for comparisons
+            self.create_comparison_graph(word_count1, word_count2, self.compare_graph_frame, self.compare_canvas)  # Draw graph for comparisons
 
 
 
 
-    def create_comparison_graph(self, word_count1, word_count2, canvas_widget, max_words=config.graph_max_words):
+    def create_comparison_graph(self, word_count1, word_count2, canvas_frame_widget, canvas_widget, max_words=config.graph_max_words):
         """
         Create a comparison graph of word frequencies between two files.
 
         Args:
             word_count1 (tuple): Word count data for the first file
             word_count2 (tuple): Word count data for the second file
+            canvas_frame_widget: Tkinter frame that holds the canvas
             canvas_widget: Tkinter canvas to display the graph
             max_words (int): Maximum number of words to display from each file
         """
@@ -1548,11 +1562,15 @@ class WordAnalysisApp:
         freq_sorted2 = sort_by_frequency(word_count2)  # Sort word counts from second file
 
         # Create sets of top words for both files
-        top_words1 = {word for word, _ in freq_sorted1[:max_words]}  # Extract top words for first file
-        top_words2 = {word for word, _ in freq_sorted2[:max_words]}  # Extract top words for second file
+        combined_top_words = []
+        top_words1 = []
+        for word, _ in freq_sorted1[:max_words]: # Extract top words for first file
+            if not word in top_words1:
+                top_words1.append(word)
+        for word, _ in freq_sorted2[:max_words]: # Extract top words for second file
+            if word in top_words1 and word not in combined_top_words:
+                combined_top_words.append(word)
 
-        # Combine top words into a single list
-        combined_top_words = list(top_words1.union(top_words2))  # Union of both sets
 
         if not combined_top_words:  # If no words to compare
             return  # Exit function
@@ -1594,15 +1612,26 @@ class WordAnalysisApp:
         ax.legend()  # Display legend
 
         plt.tight_layout()  # Adjust layout for better spacing
-
         # Embed the graph in the canvas
         canvas = FigureCanvasTkAgg(fig, master=canvas_widget)  # Create canvas for matplotlib figure
         canvas.draw()  # Draw the figure
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # Pack canvas into the Tkinter widget
         
+        # Add navigation toolbar for panning, zooming, etc.
+        toolbar = NavigationToolbar2Tk(canvas, canvas_frame_widget)
+        toolbar.update()
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Add vertical scrollbar if needed
+        if len(combined_top_words) > 10:  # Only add scrollbar if there are many words
+            scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.VERTICAL, command=canvas_widget.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            canvas_widget.configure(yscrollcommand=scrollbar.set)
+
+        
         
     def create_nltk_comparison_graph(self, word_count1, reference_word_counts, file1_name, reference_file_names, 
-                                    similarity_scores, canvas_widget, max_words=config.graph_max_words):
+                                    similarity_scores, canvas_frame_widget, canvas_widget, max_words=config.graph_max_words):
         """
         Create a specialized comparison graph for NLTK-based plagiarism detection showing all reference files.
 
@@ -1612,6 +1641,7 @@ class WordAnalysisApp:
             file1_name (str): Name of the first file
             reference_file_names (list): Names of all reference files
             similarity_scores (list): List of similarity scores for each reference file
+            canvas_frame_widget: Tkinter frame that holds the canvas
             canvas_widget: Tkinter canvas to display the graph
             max_words (int): Maximum number of words to display from each file
         """
@@ -1624,15 +1654,18 @@ class WordAnalysisApp:
 
         # Get top words from the query file
         freq_sorted1 = sort_by_frequency(word_count1)
-        top_words1 = {word for word, _ in freq_sorted1[:max_words]}
+        top_words1 = []
+        for word, _ in freq_sorted1[:max_words]:
+            if word not in top_words1:
+                top_words1.append(word)
 
         # Find common words across all files
-        all_common_words = set()
+        all_common_words = []
         for word_count2 in reference_word_counts:
             freq_sorted2 = sort_by_frequency(word_count2)
-            top_words2 = {word for word, _ in freq_sorted2[:max_words]}
-            common_words = top_words1.intersection(top_words2)
-            all_common_words.update(common_words)
+            for word, _ in freq_sorted2[:max_words]:
+                if word in top_words1 and not word in all_common_words:
+                    all_common_words.append(word)
         
         # If no common words found across any files
         if not all_common_words:
@@ -1644,25 +1677,28 @@ class WordAnalysisApp:
             ax.set_yticks([])
             plt.tight_layout()
             
+            # Create a frame to hold the canvas
+            frame = ttk.Frame(canvas_widget)
+            frame.pack(fill=tk.BOTH, expand=True)
+            
             # Embed the graph in the canvas
-            canvas = FigureCanvasTkAgg(fig, master=canvas_widget)
+            canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             return
         
         # Sort common words by frequency in the first file
-        all_common_words_sorted = sorted(all_common_words, 
+        all_common_words_sorted = helpers.quick_sort(all_common_words, 
                                         key=lambda word: word_count1[1][helpers.linear_search(word_count1[0], word)] 
                                         if word in word_count1[0] else 0,
                                         reverse=True)
         
         # Limit to a reasonable number of words to keep the graph readable
         # For multiple reference files, we need to be more selective
-        max_display_words = max(5, min(10, int(max_words/(len(reference_word_counts) + 1))))
-        display_words = all_common_words_sorted[:max_display_words]
+        display_words = all_common_words_sorted[:max_words]
         
         # Create a figure with enough height for all reference files
-        fig_height = max(config.graph_figsize[1], 2 + len(reference_word_counts) * 0.5)
+        fig_height = helpers.max(config.graph_figsize[1], 2 + len(reference_word_counts) * 0.5)
         fig = plt.figure(figsize=(config.graph_figsize[0], fig_height))
         
         # Create a grid of subplots - one for each reference file
@@ -1671,7 +1707,7 @@ class WordAnalysisApp:
         # If there are too many reference files, limit the display
         if num_plots > 10:
             # Sort reference files by similarity score and take top 10
-            indices = sorted(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)[:10]
+            indices = helpers.quick_sort(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)[:10]
             reference_word_counts = [reference_word_counts[i] for i in indices]
             reference_file_names = [reference_file_names[i] for i in indices]
             similarity_scores = [similarity_scores[i] for i in indices]
@@ -1729,11 +1765,26 @@ class WordAnalysisApp:
             ax.legend(loc='upper right', fontsize='small')
         
         plt.tight_layout()
-        
         # Embed the graph in the canvas
-        canvas = FigureCanvasTkAgg(fig, master=canvas_widget)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        canvas = FigureCanvasTkAgg(fig, master=canvas_widget)  # Create canvas for matplotlib figure
+        canvas.draw()  # Draw the figure
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # Pack canvas into the Tkinter widget
+        
+        # Add navigation toolbar for panning, zooming, etc.
+        toolbar = NavigationToolbar2Tk(canvas, canvas_frame_widget)
+        toolbar.update()
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Add vertical scrollbar for multiple plots
+        scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.VERTICAL, command=canvas_widget.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas_widget.configure(yscrollcommand=scrollbar.set)
+        
+        # Add horizontal scrollbar if needed
+        if len(display_words) > 10:
+            h_scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.HORIZONTAL, command=canvas_widget.xview)
+            h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+            canvas_widget.configure(xscrollcommand=h_scrollbar.set)
 
 
         
@@ -1793,8 +1844,8 @@ class WordAnalysisApp:
             words = content.split()
             for pos, matched_word in positions:
                 # Get a window of words around the occurrence (3 words before, 3 words after)
-                start = max(0, pos - 3)  # Ensure we don't go below index 0
-                end = min(len(words), pos + 4)  # Ensure we don't exceed array bounds
+                start = helpers.max(0, pos - 3)  # Ensure we don't go below index 0
+                end = helpers.min(len(words), pos + 4)  # Ensure we don't exceed array bounds
 
                 # Create context with ellipses if needed to show this is a snippet
                 prefix = "... " if pos > 3 else ""  # Add ellipsis if we're not at the beginning

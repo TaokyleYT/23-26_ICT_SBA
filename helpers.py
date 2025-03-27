@@ -17,7 +17,8 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                    end: str = "\n",
                    delay: float = 0.02,
                    line_offset: int = 1,
-                   _override: bool = False):
+                   _override: bool = False,
+                   wrap_override: bool = False):
     """
     Prints text with an animation effect, simulating a typewriter-style output.
 
@@ -41,8 +42,12 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
     ↑↲
     ```
 
-    Warning: Multi-line text including ANSI codes may not output as expected, as full
-    support would require significantly more complex implementation.
+    Warning: Multi-line text including ANSI codes may not output as expected, as
+    full support would require significantly more complex implementation.
+    
+    More Warning: line wrapping, despite implemented, seldom fail for whatever reason
+    and I can't seem to fix it without breaking something else.
+    Please use a bigger terminal or a smaller font size to avoid breaking everything that is being outputted
 
     Args:
         txt (str | Iterable[str] | Iterable[Iterable[str]]): 
@@ -56,6 +61,9 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
         _override (bool): 
             An internal parameter for optimization during recursion to override certain type checks. 
             Not intended for direct use.
+        wrap_override (bool):
+            When True, enables line wrapping even when _override is True (default: False).
+            Intended for direct use when you touched the "Not intended for direct use" _override parameter
 
     Raises:
         TypeError: If `end` is not a string, `delay` is not a number, or `txt` is not
@@ -96,38 +104,54 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
 
     # Process each line for wrapping and animation
     for line in txt:
-        if _override:  # Optimization: if already processed
+        if _override and not wrap_override:  # Skip processing if override is active and wrap_override is False
             txt_lst = txt  # Skip additional processing
             break
         if not line:
             txt_lst.append("")  # Handle empty line
             continue  # Continue to next line
         
-        # Split line by spaces while excluding ANSI escape sequences
-        temp = split_exclude_ANSI(line, " ")
-        words: list[str] = [(item if i == len(temp)-1 else item + " ")
-                            for i, item in enumerate(temp)]  # Append space to all but last word
-        index: int = 0  # Initialize index for processing words
+        if _override and wrap_override:
+            # Handle case where line is already a list of characters
+            txt_lst_temp = []  # Temporary list for wrapped characters
+            current_line = []  # Current line being built
+            
+            for char in line:
+                current_line.append(char)
+                if len(current_line) >= term_size.columns - 1:
+                    txt_lst_temp.append(current_line)
+                    current_line = []
+            
+            if current_line:  # Add any remaining characters
+                txt_lst_temp.append(current_line)
+            
+            txt_lst.extend(txt_lst_temp)  # Add wrapped lines to main list
+        else:
+            # Split line by spaces while excluding ANSI escape sequences
+            temp = split_exclude_ANSI(line, " ")
+            words: list[str] = [(item if i == len(temp)-1 else item + " ")
+                                for i, item in enumerate(temp)]  # Append space to all but last word
+            index: int = 0  # Initialize index for processing words
 
-        # Wrap text according to terminal width
-        while index < len(words):
-            if len(words[index]) > term_size.columns - 1:
-                # Break long words that exceed terminal width into chunks
-                for wrapped_line in (
-                        line[i:i + term_size.columns - 1]
-                        for i in range(0, len(line), term_size.columns - 1)):
-                    txt_lst.append(wrapped_line)  # Append wrapped line to list
-                index += 1
-                continue
-            # Add words to line until it exceeds terminal width
-            txt_lst.append("")  # Start new line
-            for i, word in enumerate(words[index:]):
-                if len(txt_lst[-1]) + len(word) > term_size.columns - 1:
-                    index += i  # Update index for next processing
-                    break  # Break word addition
-                txt_lst[-1] += word
-            else:
-                break  # Exit while loop if all words processed
+            # Wrap text according to terminal width
+            while index < len(words):
+                if len(words[index]) > term_size.columns - 1:
+                    # Break long words that exceed terminal width into chunks
+                    for wrapped_line in (
+                            line[i:i + term_size.columns - 1]
+                            for i in range(0, len(line), term_size.columns - 1)):
+                        txt_lst.append(wrapped_line)  # Append wrapped line to list
+                    index += 1
+                    continue
+                # Add words to line until it exceeds terminal width
+                txt_lst.append("")  # Start new line
+                for i, word in enumerate(words[index:]):
+                    if len(txt_lst[-1]) + len(word) > term_size.columns - 1:
+                        index += i  # Update index for next processing
+                        break  # Break word addition
+                    txt_lst[-1] += word
+                else:
+                    break  # Exit while loop if all words processed
     
     if not _override:
         # Split each processed line into characters while preserving ANSI codes
@@ -170,7 +194,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
           flush=True)
 
     # Recursively handle any truncated text for complete output
-    animated_print(truncated, end, delay, line_offset, _override=True)
+    animated_print(truncated, end, delay, line_offset, _override=True, wrap_override=wrap_override)
     return
 
 
@@ -187,7 +211,9 @@ def animated_input(prompt: str = "",
     and ANSI escape sequences in the input are supported.
 
     Warning: Multi-line prompts including ANSI codes may not output as expected
-    due to implementation complexity. Note that the input does not support multi-line input.
+    due to implementation complexity.
+    
+    Note that this input does not support multi-line input, just like the original one
 
     Args:
         prompt (str): 
@@ -362,7 +388,7 @@ def animated_input(prompt: str = "",
     return result  # Return the string input by the user
 
 
-def quick_sort(input_list: Sequence, ascending: bool = True):
+def quick_sort(iterable: Iterable, /, *, key: callable = None, reverse: bool = True):
     """
     Sorts a list using the quick sort algorithm.
     
@@ -370,13 +396,15 @@ def quick_sort(input_list: Sequence, ascending: bool = True):
     the first element as the pivot. It creates new lists rather than sorting in-place.
 
     Args:
-        input_list (Sequence): 
+        Iterable (Iterable): 
             The list or sequence to sort.
-        ascending (bool): 
+        key (callable):
+            A key function to extract a comparison key from each element (default: None).
+        reverse (bool): 
             Sort in ascending order if True, otherwise in descending order (default: True).
         
     Returns:
-        list: A new sorted list containing the same elements as `input_list`.
+        list: A new sorted list.
         
     Time Complexity:
         - Average case: O(n log n)
@@ -386,27 +414,35 @@ def quick_sort(input_list: Sequence, ascending: bool = True):
         O(n) due to the creation of new lists during recursion.
     """
     # Base case: If list has 1 or 0 items, it's already sorted
-    if len(input_list) < 2:
-        return input_list
+    if len(iterable) < 2:
+        return iterable
 
-    pivot = input_list[0]  # Choose the first element as the pivot
+    pivot = iterable[0]  # Choose the first element as the pivot
+    comp_pivot = pivot if key == None else key(pivot)
     less = []  # List to hold elements less than the pivot
     more = []  # List to hold elements greater than or equal to the pivot
 
     # Divide the input list into smaller partitions based on the pivot
-    for item in input_list[1:]:
-        if item < pivot:
-            less.append(item)  # Add to "less" if it's smaller than the pivot
+    for item in iterable[1:]:
+        comp_item = item if key == None else key(item)
+        if not reverse:
+            if comp_item < comp_pivot:
+                less.append(item)  # Add to "less" if it's smaller than the pivot
+            else:
+                more.append(item)  # Add to "more" otherwise
         else:
-            more.append(item)  # Add to "more" otherwise
+            if comp_item > comp_pivot:
+                less.append(item)  # Add to "less" if it's larger than the pivot (cuz reverse)
+            else:
+                more.append(item)  # Add to "more" otherwise
 
     # Recursively sort both partitions and combine them
     # Reverse the result if descending order is requested
     return (list(quick_sort(less)) + [pivot] +
-            list(quick_sort(more)))[::1 if ascending else -1]
+            list(quick_sort(more)))
 
 
-def linear_search(input_list: list,
+def linear_search(iterable: list,
                   value,
                   start=0,
                   stop=9223372036854775807,
@@ -418,7 +454,7 @@ def linear_search(input_list: list,
     Allows specifying a range to search within.
 
     Args:
-        input_list (list): 
+        iterable (list): 
             The list to search in.
         value: 
             The value to search for.
@@ -437,11 +473,11 @@ def linear_search(input_list: list,
         O(n) where n is the number of elements in the specified search range.
     """
     # Ensure `stop` does not exceed the length of the list
-    stop = min(stop, len(input_list))
+    stop = min(stop, len(iterable))
 
     # Check each element from start to stop
     for n in range(start, stop):
-        if input_list[n] == value:  # If element matches the searched value
+        if iterable[n] == value:  # If element matches the searched value
             return n  # Return the index
     return -1  # Return -1 if the value is not found
 
