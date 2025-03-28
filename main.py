@@ -1288,12 +1288,23 @@ class WordAnalysisApp:
             canvas_widget: Tkinter canvas to display the graph
             max_words (int): Maximum number of words to display in the graph
         """
+        
+        if plt is None:
+            return
+        
+        
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
+        plt.close()
             
-        if plt is None:
-            return
+        for widget in canvas_frame_widget.winfo_children():
+            if widget.winfo_id() != canvas_widget.winfo_id():
+                widget.destroy()
+            
+
+        
+        
 
         # Get the top words by frequency
         freq_sorted = sort_by_frequency(word_count)  # Sort word counts
@@ -1402,7 +1413,7 @@ class WordAnalysisApp:
             self.file2_stats_text.insert(tk.END, f"Reference Files: {len(file_paths)}\n")
             
             total_words2 = 0
-            unique_words_set = set()
+            unique_words = []
             
             # Process each reference file
             reference_word_counts = []
@@ -1413,12 +1424,14 @@ class WordAnalysisApp:
                 
                 words = clean_content.split(" ")
                 total_words2 += len(words)
-                unique_words_set.update(word_count[0])
+                for word in word_count[0]:
+                    if word not in unique_words:
+                        unique_words.append(word)
                 
                 self.file2_stats_text.insert(tk.END, f"File {i+1}: {reference_file_names[i]}\n")
             
             self.file2_stats_text.insert(tk.END, f"Total words across all files: {total_words2}\n")
-            self.file2_stats_text.insert(tk.END, f"Unique words across all files: {len(unique_words_set)}\n")
+            self.file2_stats_text.insert(tk.END, f"Unique words across all files: {len(unique_words)}\n")
             
             # Use NLTK for plagiarism detection
             plagiarism_results = get_similarity_score(content1, reference_contents)
@@ -1431,7 +1444,7 @@ class WordAnalysisApp:
             
             if plagiarism_results:
                 # Found plagiarism
-                max_similarity = helpers.max(result['similarity_score'] for result in plagiarism_results)
+                max_similarity = helpers.max(result[1] for result in plagiarism_results)
                 similarity = max_similarity * 100  # Convert to percentage
                 
                 self.comparison_text.insert(tk.END, f"Similarity percentage: {similarity:.2f}%\n\n")
@@ -1439,9 +1452,9 @@ class WordAnalysisApp:
                 # List all matches
                 self.comparison_text.insert(tk.END, "Matches found in:\n")
                 for i, result in enumerate(plagiarism_results):
-                    score = result['similarity_score'] * 100
+                    score = result[1] * 100
                     # Find which reference file this match corresponds to
-                    match_index = helpers.linear_search(reference_contents, result['reference_text'])
+                    match_index = helpers.linear_search(reference_contents, result[0])
                     file_name = reference_file_names[match_index]
                     similarity_scores[match_index] = score  # Store score for this reference file
                     
@@ -1550,13 +1563,20 @@ class WordAnalysisApp:
             canvas_widget: Tkinter canvas to display the graph
             max_words (int): Maximum number of words to display from each file
         """
+        if plt is None:
+            return
+        
+        
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
+        plt.close()
             
-        if plt is None:
-            return
-
+        for widget in canvas_frame_widget.winfo_children():
+            if widget.winfo_id() != canvas_widget.winfo_id():
+                widget.destroy()
+            
+        
         # Get top words from both files
         freq_sorted1 = sort_by_frequency(word_count1)  # Sort word counts from first file
         freq_sorted2 = sort_by_frequency(word_count2)  # Sort word counts from second file
@@ -1645,13 +1665,19 @@ class WordAnalysisApp:
             canvas_widget: Tkinter canvas to display the graph
             max_words (int): Maximum number of words to display from each file
         """
-        # Clear previous graph
-        for widget in canvas_widget.winfo_children():
-            widget.destroy()
-            
         if plt is None:
             return
 
+
+        # Clear previous graph
+        for widget in canvas_widget.winfo_children():
+            widget.destroy()
+        plt.close()
+            
+        for widget in canvas_frame_widget.winfo_children():
+            if widget.winfo_id() != canvas_widget.winfo_id():
+                widget.destroy()
+        
         # Get top words from the query file
         freq_sorted1 = sort_by_frequency(word_count1)
         top_words1 = []

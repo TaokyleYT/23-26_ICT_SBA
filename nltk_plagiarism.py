@@ -22,7 +22,7 @@ def update():
 
 
 def preprocess_text(text):
-    stop_words = set(stopwords.words('english'))
+    stop_words = stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
 
     # Tokenization
@@ -64,7 +64,7 @@ def tfidf_features(texts):
     features = vectorizer.fit_transform(texts)
     return features, vectorizer
 
-def get_similarity_score(query_text, reference_texts, threshold=0.8):
+def get_similarity_score(query_text, reference_texts):
     preprocessed_query = preprocess_text(query_text)
     preprocessed_references = [preprocess_text(text) for text in reference_texts]
 
@@ -80,26 +80,23 @@ def get_similarity_score(query_text, reference_texts, threshold=0.8):
     # Identify plagiarized content
     plagiarism_results = []
     for i, score in enumerate(similarity_scores[0]):
-        if score >= threshold:
-            plagiarism_results.append({
-                'reference_text': reference_texts[i],
-                'similarity_score': score
-            })
-
+        plagiarism_results.append([reference_texts[i], score])
     return plagiarism_results
 
 if __name__ == "__main__":
     update()
     # Read example document from file
-    with open("test.txt", "r") as file:
+    with open("test2_1.txt", "r") as file:
         example_document = file.read()
+        
+    # Define the reference texts
+    reference_texts = []
 
     # Read reference texts from files
-    with open("test2.txt", "r") as file:
-        reference_text1 = file.read()
-
-    # Define the reference texts
-    reference_texts = [reference_text1]
+    files = ["test2_2.txt", "test2_3.txt", "test2_4.txt"]
+    for file in files:
+        with open(file, "r") as f:
+            reference_texts.append(f.read())
 
     try:
         # Test plagiarism detection
@@ -109,7 +106,7 @@ if __name__ == "__main__":
         if results:
             print("Plagiarized content detected:")
             for result in results:
-                print(f"Similarity Score: {(result['similarity_score']*100):.2f}%")
+                print(f"Similarity Score: {(result[1]*100):.2f}%")
                 print()
         else:
             print("No plagiarism detected.")
