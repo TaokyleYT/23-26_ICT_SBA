@@ -1,136 +1,138 @@
-import os  # Import module for terminal size detection and file operations
-import helpers  # Import custom helper functions that avoid using built-in functions
-import tkinter as tk  # Import tkinter for GUI implementation
-import re  # Import regex module for pattern matching
+import os  # Import module for terminal size detection and file operations
+import helpers  # Import custom helper functions that avoid using built-in functions
+import tkinter as tk  # Import tkinter for GUI implementation
+import re  # Import regex module for pattern matching
 # (I heard that GUI use of it is fine probably)
-from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
+from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
 try:
-    from nltk_plagiarism import get_similarity_score # For advance stuff
+    from nltk_plagiarism import get_similarity_score # For advance stuff
 except (ImportError, ModuleNotFoundError):
-    get_similarity_score = None
+    get_similarity_score = None
 try:
-    import matplotlib.pyplot as plt  # Import matplotlib for data visualization
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
-    from matplotlib.backends._backend_tk import NavigationToolbar2Tk  # For embedding toolbar for matplotlib
+    import matplotlib.pyplot as plt  # Import matplotlib for data visualization
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
+    from matplotlib.backends._backend_tk import NavigationToolbar2Tk  # For embedding toolbar for matplotlib
 except (ImportError, ModuleNotFoundError):
-    print("\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
-    plt = None  # Set plt to None so we can check if matplotlib is available later
-import argparse  # For command-line argument parsing
+    print("\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
+    plt = None  # Set plt to None so we can check if matplotlib is available later
+import argparse  # For command-line argument parsing
 
 
 class config:
-    """
-    Configuration management class for WAPDS (Word Analysis and Plagiarism Detection System).
+    """
+    Configuration management class for WAPDS (Word Analysis and Plagiarism Detection System).
 
-    This class handles loading, storing, and saving application settings.
-    It maintains default values and provides methods to reset settings.
+    This class handles loading, storing, and saving application settings.
+    It maintains default values and provides methods to reset settings.
 
-    Attributes:
-        CLI_DEFAULTS (list): Default values for Command Line Interface (CLI) settings
-        GUI_DEFAULTS (list): Default values for Graphical User Interface (GUI) settings
-        single_file_display_line (int): Number of words to display in single file analysis (CLI)
-        compare_file_display_line (int): Number of words to display in file comparison (CLI)
-        window_size (str): Size of the GUI window in "widthxheight" format
-        graph_max_words (int): Maximum number of words to display in graphs
-        graph_figsize (list): Size of matplotlib figures [width, height]
-        analyze_max_words (int): Maximum number of words to display in analysis lists
-        graph_bar_color_single (str): Color for bars in single file analysis
-        graph_bar_color_compare1 (str): Color for bars of first file in comparison
-        graph_bar_color_compare2 (str): Color for bars of second file in comparison
-        graph_title_fontsize (int): Font size for graph titles
-        graph_label_fontsize (int): Font size for graph labels
-        dark_mode (bool): Whether dark mode is enabled
-    """
+    Attributes:
+        CLI_DEFAULTS (list): Default values for Command Line Interface (CLI) settings
+        GUI_DEFAULTS (list): Default values for Graphical User Interface (GUI) settings
+        single_file_display_line (int): Number of words to display in single file analysis (CLI)
+        compare_file_display_line (int): Number of words to display in file comparison (CLI)
+        window_size (str): Size of the GUI window in "widthxheight" format
+        graph_max_words (int): Maximum number of words to display in graphs
+        graph_figsize (list): Size of matplotlib figures [width, height]
+        analyze_max_words (int): Maximum number of words to display in analysis lists
+        graph_bar_color_single (str): Color for bars in single file analysis
+        graph_bar_color_compare1 (str): Color for bars of first file in comparison
+        graph_bar_color_compare2 (str): Color for bars of second file in comparison
+        graph_title_fontsize (int): Font size for graph titles
+        graph_label_fontsize (int): Font size for graph labels
+        dark_mode (bool): Whether dark mode is enabled
+        text_font_size (int): Font size for text labels
+    """
 
-    # Default values for CLI and GUI settings
-    CLI_DEFAULTS = [10, 5]
-                 # [single_file_display_line, compare_file_display_line]
-    GUI_DEFAULTS = ["1000x700", 10, [5, 4], 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10, False, 15]
-                 #  [window_size, graph_max_words, graph_figsize, analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize, dark_mode]
+    # Default values for CLI and GUI settings
+    CLI_DEFAULTS = [10, 5]
+                 # [single_file_display_line, compare_file_display_line]
+    GUI_DEFAULTS = ["1000x700", 10, [5, 4], 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10, False, 15]
+                 #  [window_size, graph_max_words, graph_figsize, analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize, dark_mode, text_font_size]
 
-    try:
-        # Attempt to load configuration from file
-        with open("WAPDS.config", "r") as f:
-            # Read settings from the configuration file, split by semicolon
-            config_data = f.readline().split(";")
-            # Parse settings, converting to appropriate types
-            single_file_display_line = int(config_data[0])  # Line count for single file analysis
-            compare_file_display_line = int(config_data[1])  # Line count for file comparison
-            window_size = str(config_data[2])  # GUI window size
-            graph_max_words = int(config_data[3])  # Max words to display in graphs
-            graph_figsize = [float(config_data[4]), float(config_data[5])]  # Figure size for graphs
-            analyze_max_words = int(config_data[6])  # Max words to show in analysis lists
-            graph_bar_color_single = str(config_data[7])  # Bar color for single analysis
-            graph_bar_color_compare1 = str(config_data[8])  # First file comparison bar color
-            graph_bar_color_compare2 = str(config_data[9])  # Second file comparison bar color
-            graph_title_fontsize = int(config_data[10])  # Font size for graph titles
-            graph_label_fontsize = int(config_data[11])  # Font size for graph labels
-            dark_mode = bool(int(config_data[12]))  # Dark mode setting (stored as 0/1)
-            text_font_size = int(config_data[13])
+    try:
+        # Attempt to load configuration from file
+        with open("WAPDS.config", "r") as f:
+            # Read settings from the configuration file, split by semicolon
+            config_data = f.readline().split(";")
+            # Parse settings, converting to appropriate types
+            single_file_display_line = int(config_data[0])  # Line count for single file analysis
+            compare_file_display_line = int(config_data[1])  # Line count for file comparison
+            window_size = str(config_data[2])  # GUI window size
+            graph_max_words = int(config_data[3])  # Max words to display in graphs
+            graph_figsize = [float(config_data[4]), float(config_data[5])]  # Figure size for graphs
+            analyze_max_words = int(config_data[6])  # Max words to show in analysis lists
+            graph_bar_color_single = str(config_data[7])  # Bar color for single analysis
+            graph_bar_color_compare1 = str(config_data[8])  # First file comparison bar color
+            graph_bar_color_compare2 = str(config_data[9])  # Second file comparison bar color
+            graph_title_fontsize = int(config_data[10])  # Font size for graph titles
+            graph_label_fontsize = int(config_data[11])  # Font size for graph labels
+            dark_mode = bool(int(config_data[12]))  # Dark mode setting (stored as 0/1)
+            text_font_size = int(config_data[13])  # Font size for text labels
 
-    except:
-        # Use default settings if the configuration file doesn't exist or is corrupted
-        single_file_display_line = CLI_DEFAULTS[0]
-        compare_file_display_line = CLI_DEFAULTS[1]
-        window_size = GUI_DEFAULTS[0]
-        graph_max_words = GUI_DEFAULTS[1]
-        graph_figsize = GUI_DEFAULTS[2]
-        analyze_max_words = GUI_DEFAULTS[3]
-        graph_bar_color_single = GUI_DEFAULTS[4]
-        graph_bar_color_compare1 = GUI_DEFAULTS[5]
-        graph_bar_color_compare2 = GUI_DEFAULTS[6]
-        graph_title_fontsize = GUI_DEFAULTS[7]
-        graph_label_fontsize = GUI_DEFAULTS[8]
-        dark_mode = GUI_DEFAULTS[9]
-        text_font_size = GUI_DEFAULTS[10]
+    except:
+        # Use default settings if the configuration file doesn't exist or is corrupted
+        single_file_display_line = CLI_DEFAULTS[0]
+        compare_file_display_line = CLI_DEFAULTS[1]
+        window_size = GUI_DEFAULTS[0]
+        graph_max_words = GUI_DEFAULTS[1]
+        graph_figsize = GUI_DEFAULTS[2]
+        analyze_max_words = GUI_DEFAULTS[3]
+        graph_bar_color_single = GUI_DEFAULTS[4]
+        graph_bar_color_compare1 = GUI_DEFAULTS[5]
+        graph_bar_color_compare2 = GUI_DEFAULTS[6]
+        graph_title_fontsize = GUI_DEFAULTS[7]
+        graph_label_fontsize = GUI_DEFAULTS[8]
+        dark_mode = GUI_DEFAULTS[9]
+        text_font_size = GUI_DEFAULTS[10]
 
-    # Write/update config file with current settings
-    with open("WAPDS.config", "w") as f:
-        f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};"
-                 f"{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};"
-                 f"{analyze_max_words};{graph_bar_color_single};"
-                 f"{graph_bar_color_compare1};{graph_bar_color_compare2};"
-                 f"{graph_title_fontsize};{graph_label_fontsize};{int(dark_mode)};{text_font_size}")
+    # Write/update config file with current settings
+    with open("WAPDS.config", "w") as f:
+        f.write(f"{single_file_display_line};{compare_file_display_line};{window_size};"
+                 f"{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};"
+                 f"{analyze_max_words};{graph_bar_color_single};"
+                 f"{graph_bar_color_compare1};{graph_bar_color_compare2};"
+                 f"{graph_title_fontsize};{graph_label_fontsize};{int(dark_mode)};{text_font_size}")
 
-    @classmethod
-    def reset_to_defaults(cls):
-        """
-        Reset all settings to their default values.
+    @classmethod
+    def reset_to_defaults(cls):
+        """
+        Reset all settings to their default values.
 
-        This method restores all configuration parameters to the predefined default values
-        but does not save them to the configuration file.
-        """
-        # Restore CLI default values
-        cls.single_file_display_line = cls.CLI_DEFAULTS[0]
-        cls.compare_file_display_line = cls.CLI_DEFAULTS[1]
-        # Restore GUI default values
-        cls.window_size = cls.GUI_DEFAULTS[0]
-        cls.graph_max_words = cls.GUI_DEFAULTS[1]
-        cls.graph_figsize = cls.GUI_DEFAULTS[2]
-        cls.analyze_max_words = cls.GUI_DEFAULTS[3]
-        cls.graph_bar_color_single = cls.GUI_DEFAULTS[4]
-        cls.graph_bar_color_compare1 = cls.GUI_DEFAULTS[5]
-        cls.graph_bar_color_compare2 = cls.GUI_DEFAULTS[6]
-        cls.graph_title_fontsize = cls.GUI_DEFAULTS[7]
-        cls.graph_label_fontsize = cls.GUI_DEFAULTS[8]
-        cls.dark_mode = cls.GUI_DEFAULTS[9]
-        cls.text_font_size = cls.GUI_DEFAULTS[10]
+        This method restores all configuration parameters to the predefined default values
+        but does not save them to the configuration file.
+        """
+        # Restore CLI default values
+        cls.single_file_display_line = cls.CLI_DEFAULTS[0]
+        cls.compare_file_display_line = cls.CLI_DEFAULTS[1]
+        # Restore GUI default values
+        cls.window_size = cls.GUI_DEFAULTS[0]
+        cls.graph_max_words = cls.GUI_DEFAULTS[1]
+        cls.graph_figsize = cls.GUI_DEFAULTS[2]
+        cls.analyze_max_words = cls.GUI_DEFAULTS[3]
+        cls.graph_bar_color_single = cls.GUI_DEFAULTS[4]
+        cls.graph_bar_color_compare1 = cls.GUI_DEFAULTS[5]
+        cls.graph_bar_color_compare2 = cls.GUI_DEFAULTS[6]
+        cls.graph_title_fontsize = cls.GUI_DEFAULTS[7]
+        cls.graph_label_fontsize = cls.GUI_DEFAULTS[8]
+        cls.dark_mode = cls.GUI_DEFAULTS[9]
+        cls.text_font_size = cls.GUI_DEFAULTS[10]
 
-    @classmethod
-    def save(cls):
-        """
-        Save current configuration settings to the config file.
+    @classmethod
+    def save(cls):
+        """
+        Save current configuration settings to the config file.
 
-        This method writes all current configuration parameters to the WAPDS.config file
-        in a semicolon-delimited format.
-        """
-        with open("WAPDS.config", "w") as f:
-            f.write(f"{cls.single_file_display_line};{cls.compare_file_display_line};"
-                     f"{cls.window_size};{cls.graph_max_words};"
-                     f"{cls.graph_figsize[0]};{cls.graph_figsize[1]};"
-                     f"{cls.analyze_max_words};{cls.graph_bar_color_single};"
-                     f"{cls.graph_bar_color_compare1};{cls.graph_bar_color_compare2};"
-                     f"{cls.graph_title_fontsize};{cls.graph_label_fontsize};{int(cls.dark_mode)};{cls.text_font_size}")
+        This method writes all current configuration parameters to the WAPDS.config file
+        in a semicolon-delimited format.
+        """
+        with open("WAPDS.config", "w") as f:
+            f.write(f"{cls.single_file_display_line};{cls.compare_file_display_line};"
+                     f"{cls.window_size};{cls.graph_max_words};"
+                     f"{cls.graph_figsize[0]};{cls.graph_figsize[1]};"
+                     f"{cls.analyze_max_words};{cls.graph_bar_color_single};"
+                     f"{cls.graph_bar_color_compare1};{cls.graph_bar_color_compare2};"
+                     f"{cls.graph_title_fontsize};{cls.graph_label_fontsize};{int(cls.dark_mode)};"
+                     f"{cls.text_font_size}")
 
 
 
