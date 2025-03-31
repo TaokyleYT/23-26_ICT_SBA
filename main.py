@@ -162,7 +162,7 @@ def read_file(file_path:str) -> str|None:
         
     try:
         # Attempt to read the file
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding="utf-8") as file:
             content = file.read()  # Read the entire file content
         
         # Check if file is empty
@@ -1378,7 +1378,7 @@ class WordAnalysisApp:
             return  # Exit method on error
         if self.compare_nltk.get() and get_similarity_score is None:
             self.compare_nltk.set(False)
-            print("\x1b[33mWarning: some required modules in nltk_plagiarism module, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m")  #Show error message
+            print("\x1b[33mWarning: some required modules in nltk_plagiarism module is missing, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m")  #Show error message
             messagebox.showerror("Error", "there are some errors trying to use nltk, normal mode is used instead. Please refer to the error message in the terminal")  # Show more error message
 
         # Process differently based on whether NLTK is enabled
