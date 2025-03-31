@@ -1,0 +1,5 @@
+Information technology is the use of computers to store, retrieve,
+transmit, and manipulate data. It is a subset of information and
+communication technology. An information system is a set of components that
+interact to achieve a common goal, such as processing and managing
+information.

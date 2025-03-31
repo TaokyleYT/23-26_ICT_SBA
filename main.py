@@ -2,13 +2,15 @@ import os  # Import module for terminal size detection and file operations
 import helpers  # Import custom helper functions that avoid using built-in functions
 import tkinter as tk  # Import tkinter for GUI implementation
 import re  # Import regex module for pattern matching
+# (I heard that GUI use of it is fine probably)
 from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
 from nltk_plagiarism import get_similarity_score # For advance stuff
 try:
     import matplotlib.pyplot as plt  # Import matplotlib for data visualization
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk  # For embedding matplotlib in tkinter
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
+    from matplotlib.backends._backend_tk import NavigationToolbar2Tk  # For embedding toolbar for matplotlib
 except (ImportError, ModuleNotFoundError):
-    print(f"\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
+    print("\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
     plt = None  # Set plt to None so we can check if matplotlib is available later
 import argparse  # For command-line argument parsing
 
@@ -27,7 +29,7 @@ class config:
         compare_file_display_line (int): Number of words to display in file comparison (CLI)
         window_size (str): Size of the GUI window in "widthxheight" format
         graph_max_words (int): Maximum number of words to display in graphs
-        graph_figsize (tuple): Size of matplotlib figures (width, height)
+        graph_figsize (list): Size of matplotlib figures [width, height]
         analyze_max_words (int): Maximum number of words to display in analysis lists
         graph_bar_color_single (str): Color for bars in single file analysis
         graph_bar_color_compare1 (str): Color for bars of first file in comparison
@@ -40,7 +42,7 @@ class config:
     # Default values for CLI and GUI settings
     CLI_DEFAULTS = [10, 5]
                  # [single_file_display_line, compare_file_display_line]
-    GUI_DEFAULTS = ["1000x700", 10, (5, 4), 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10, False]
+    GUI_DEFAULTS = ["1000x700", 10, [5, 4], 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10, False]
                  #  [window_size, graph_max_words, graph_figsize, analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize, dark_mode]
 
     try:
@@ -53,7 +55,7 @@ class config:
             compare_file_display_line = int(config_data[1])  # Line count for file comparison
             window_size = str(config_data[2])  # GUI window size
             graph_max_words = int(config_data[3])  # Max words to display in graphs
-            graph_figsize = (float(config_data[4]), float(config_data[5]))  # Figure size for graphs
+            graph_figsize = [float(config_data[4]), float(config_data[5])]  # Figure size for graphs
             analyze_max_words = int(config_data[6])  # Max words to show in analysis lists
             graph_bar_color_single = str(config_data[7])  # Bar color for single analysis
             graph_bar_color_compare1 = str(config_data[8])  # First file comparison bar color
@@ -126,7 +128,7 @@ class config:
 
 
 
-def read_file(file_path):
+def read_file(file_path:str) -> str|None:
     """
     Read a text file and return its content as a string.
 
@@ -169,7 +171,7 @@ def read_file(file_path):
         return None  # Return None for error
 
 
-def clean_text(text):
+def clean_text(text:str|None) -> str:
     """
     Remove punctuation and convert text to lowercase.
 
@@ -200,7 +202,7 @@ def clean_text(text):
     return cleaned_text.strip()  # Return cleaned and stripped text
 
 
-def count_words(text):
+def count_words(text:str) -> tuple[list, list]:
     """
     Count the frequency of each word in the text.
 
@@ -238,7 +240,7 @@ def count_words(text):
 
 
 
-def search_word_position(text, target_word, regex=False):
+def search_word_position(text:str, target_word:str, regex:bool = False) -> list[tuple,]:
     """
     Search for a target word or pattern in the text and return its positions.
     
@@ -289,7 +291,7 @@ def search_word_position(text, target_word, regex=False):
     return results  # Return all found positions with matched text
 
 
-def sort_alphabetically(word_count):
+def sort_alphabetically(word_count:tuple[list, list]) -> list[tuple[str, int],]:
     """
     Sort words alphabetically using quick_sort from helpers.
 
@@ -316,7 +318,7 @@ def sort_alphabetically(word_count):
     return result  # Return sorted word frequency pairs
 
 
-def sort_by_frequency(word_count):
+def sort_by_frequency(word_count:tuple[list, list]) -> list[tuple[str, int],]:
     """
     Sort words by frequency (highest to lowest).
 
@@ -351,7 +353,7 @@ def sort_by_frequency(word_count):
     return result  # Return sorted pairs by frequency
 
 
-def calculate_similarity(word_count1, word_count2):
+def calculate_similarity(word_count1:tuple[list, list], word_count2:tuple[list, list]) -> float:
     """
     Calculate the similarity percentage between two texts based on word frequencies.
 
@@ -437,7 +439,7 @@ class WordAnalysisApp:
 
 
 
-    def __init__(self, root, size):
+    def __init__(self, root:tk.Tk, size:str):
         """
         Initialize the application with the tkinter root window.
 
@@ -581,10 +583,10 @@ class WordAnalysisApp:
             
             # Redraw graphs if they exist
             if hasattr(self, 'word_count1') and self.word_count1:
-                self.create_frequency_graph(self.word_count1, self.analyze_canvas)
+                self.create_frequency_graph(self.word_count1, self.analyze_graph_frame, self.analyze_canvas)
                 
             if hasattr(self, 'word_count1') and hasattr(self, 'word_count2') and self.word_count1 and self.word_count2:
-                self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_canvas)
+                self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_graph_frame, self.compare_canvas)
 
     def _update_widget_colors(self, widget, theme):
         """
@@ -643,10 +645,10 @@ class WordAnalysisApp:
             
             # Redraw graphs if they exist
             if hasattr(self, 'word_count1') and self.word_count1:
-                self.create_frequency_graph(self.word_count1, self.analyze_canvas)
+                self.create_frequency_graph(self.word_count1, self.analyze_graph_frame, self.analyze_canvas)
                 
             if hasattr(self, 'word_count1') and hasattr(self, 'word_count2') and self.word_count1 and self.word_count2:
-                self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_canvas)
+                self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_graph_frame, self.compare_canvas)
 
     def create_analyze_tab(self):
         """
@@ -1288,10 +1290,8 @@ class WordAnalysisApp:
             canvas_widget: Tkinter canvas to display the graph
             max_words (int): Maximum number of words to display in the graph
         """
-        
         if plt is None:
             return
-        
         
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
@@ -1302,10 +1302,6 @@ class WordAnalysisApp:
             if widget.winfo_id() != canvas_widget.winfo_id():
                 widget.destroy()
             
-
-        
-        
-
         # Get the top words by frequency
         freq_sorted = sort_by_frequency(word_count)  # Sort word counts
         top_words = freq_sorted[:max_words]  # Limit to max words
@@ -1566,7 +1562,6 @@ class WordAnalysisApp:
         if plt is None:
             return
         
-        
         # Clear previous graph
         for widget in canvas_widget.winfo_children():
             widget.destroy()
@@ -1576,7 +1571,6 @@ class WordAnalysisApp:
             if widget.winfo_id() != canvas_widget.winfo_id():
                 widget.destroy()
             
-        
         # Get top words from both files
         freq_sorted1 = sort_by_frequency(word_count1)  # Sort word counts from first file
         freq_sorted2 = sort_by_frequency(word_count2)  # Sort word counts from second file
@@ -1585,7 +1579,7 @@ class WordAnalysisApp:
         combined_top_words = []
         top_words1 = []
         for word, _ in freq_sorted1[:max_words]: # Extract top words for first file
-            if not word in top_words1:
+            if word not in top_words1:
                 top_words1.append(word)
         for word, _ in freq_sorted2[:max_words]: # Extract top words for second file
             if word in top_words1 and word not in combined_top_words:
@@ -1690,7 +1684,7 @@ class WordAnalysisApp:
         for word_count2 in reference_word_counts:
             freq_sorted2 = sort_by_frequency(word_count2)
             for word, _ in freq_sorted2[:max_words]:
-                if word in top_words1 and not word in all_common_words:
+                if word in top_words1 and word not in all_common_words:
                     all_common_words.append(word)
         
         # If no common words found across any files
@@ -2227,9 +2221,9 @@ def configure_test_input(prompt: str, type, was: str, error: str = ""):
         # Customized error message if provided
         if error:
             print(error, end="")
-        elif type == int:
+        elif type is int:
             print("Please enter a positive integer.", end="")
-        elif type == float:
+        elif type is float:
             print("Please enter a positive float.", end="")
         else:
             print("Please enter a valid string.", end="")  # General error for other types
@@ -2290,7 +2284,7 @@ def configure():
             [*"Graph ", "\x1b[1;4;97mT\x1b[m", *f"itle: set font size to {config.graph_title_fontsize if unsaved_graph_title_fontsize is None else f'{unsaved_graph_title_fontsize} (was {config.graph_title_fontsize})'}"],
             [*"Graph ", "\x1b[1;4;97mL\x1b[m", *f"abel: set font size to {config.graph_label_fontsize if unsaved_graph_label_fontsize is None else f'{unsaved_graph_label_fontsize} (was {config.graph_label_fontsize})'}"],
             ["\x1b[1;4mS\x1b[m", *"ave and exit"],
-            ["\x1b[1;4;97mE\x1b[m", *"xit without saving"]], _override=True)  # Formatting the options menu
+            ["\x1b[1;4;97mE\x1b[m", *"xit without saving"]], _override=True, wrap_override=True)  # Formatting the options menu
         
         # Prompt for configuration option from user
         config_option = input("Enter option: ", single_letter=True).upper().strip()
@@ -2354,7 +2348,7 @@ def configure():
         print("Saved!")
     
     
-def search_word(file_path, target_word):
+def search_word(file_path:str, target_word:str):
     """
     Search for a word in a file and display its positions.
     
@@ -2380,7 +2374,7 @@ def search_word(file_path, target_word):
     print(f"The word '{target_word}' was not found in the file.")
 
 
-def replace_word(file_path, target_word, replacement_word):
+def replace_word(file_path:str, target_word:str, replacement_word:str):
     """
     Replace occurrences of a target word with a replacement word in a file.
     
@@ -2491,7 +2485,7 @@ Modified text:\n\
 
 
 
-def display_results(file_path, word_count, total_words, unique_words, show_nums=10, wrap=os.get_terminal_size().columns):
+def display_results(file_path:str, word_count:tuple[list, list], total_words:int, unique_words:int, show_nums:int = 10, wrap:int = os.get_terminal_size().columns):
     """
     Display analysis results for a single text file in CLI mode.
     
@@ -2537,7 +2531,7 @@ Top {show_nums} Most Frequent Words:\n\
         txt += f"{i + 1}. '{word}': {count} times\n"  # Append formatted string
     print(txt)  # Display the final formatted alphabetical listings
 
-def compare_files(file_path1, file_path2):
+def compare_files(file_path1:str, file_path2:str):
     """
     Compare two text files and calculate their similarity percentage for CLI mode.
     
@@ -2598,7 +2592,7 @@ Similarity percentage: {similarity:.2f}%"
     else:
         print("\x1b[32mPlagiarism Level: MINIMAL - These texts are mostly different\x1b[m")  # Minimal similarity
 
-def analyze_file(file_path):
+def analyze_file(file_path:str):
     """
     Analyze a single text file for CLI mode.
     
@@ -2633,7 +2627,8 @@ def mainGUI():
     """
     root = tk.Tk()  # Create main tkinter window
     app = WordAnalysisApp(root, config.window_size)  # Instantiate GUI
-
+    #app is unused because tkinter take care of all the stuff
+    
     # Begin the main event loop
     root.mainloop()
 
@@ -2714,10 +2709,10 @@ if __name__ == "__main__":
 
     # Start the appropriate interface based on the argument provided
     if args.run_type == "GUI":
+        # Set GUI window size
+        GUI_window_size = args.GUI_window_size.strip()
+        GUI_window_size_check = GUI_window_size.split("x")  # Split input into width and height
         try:
-            # Set GUI window size
-            GUI_window_size = args.GUI_window_size.strip()
-            GUI_window_size_check = GUI_window_size.split("x")  # Split input into width and height
             GUI_window_size_check = [int(dimension) for dimension in GUI_window_size_check]  # Convert dimensions into integers
             if len(GUI_window_size_check) != 2:  # Check for two dimensions
                 raise ValueError  # Raise an error if not valid

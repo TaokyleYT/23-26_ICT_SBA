@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Sequence  # Import Iterable and Sequence types for type hinting
+from typing import Iterable  # Import Iterable types for type hinting
 import time  # For implementing delays in output
 import os  # For accessing and manipulating the file system
 import sys  # For system-specific parameters and functions
@@ -15,10 +15,10 @@ else:
 
 def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                    end: str = "\n",
-                   delay: float = 0.02,
+                   delay: float = 0.01,
                    line_offset: int = 1,
                    _override: bool = False,
-                   wrap_override: bool = False):
+                   wrap_override: bool = False) -> None:
     """
     Prints text with an animation effect, simulating a typewriter-style output.
 
@@ -55,7 +55,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
         end (str): 
             A string to print after the entire text has been animated (default: newline).
         delay (float): 
-            The time in seconds between each character print (default: 0.02s).
+            The time in seconds between each character print (default: 0.01s).
         line_offset (int): 
             The number of lines to offset the text vertically for animation (default: 1).
         _override (bool): 
@@ -202,7 +202,7 @@ def animated_input(prompt: str = "",
                    delay: float = 0.01,
                    line_offset: int = 1,
                    single_letter: bool = False,
-                   _log: bool = False):
+                   _log: bool = False) -> str:
     """
     Animated version of input() that displays a prompt with animation effects.
 
@@ -388,7 +388,7 @@ def animated_input(prompt: str = "",
     return result  # Return the string input by the user
 
 
-def quick_sort(iterable: Iterable, /, *, key: callable = None, reverse: bool = True):
+def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = True) -> list:
     """
     Sorts a list using the quick sort algorithm.
     
@@ -424,7 +424,7 @@ def quick_sort(iterable: Iterable, /, *, key: callable = None, reverse: bool = T
 
     # Divide the input list into smaller partitions based on the pivot
     for item in iterable[1:]:
-        comp_item = item if key == None else key(item)
+        comp_item = item if key is None else key(item)
         if not reverse:
             if comp_item < comp_pivot:
                 less.append(item)  # Add to "less" if it's smaller than the pivot
@@ -512,7 +512,7 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
     # Check the type of `sep` to ensure it is valid
     if not (isinstance(sep, str) or all(isinstance(s, str) for s in sep)):
         raise TypeError(
-            f"sep should be either string or an iterable that contains only strings"
+            "sep should be either string or an iterable that contains only strings"
         )
 
     # Handle case where text is empty
