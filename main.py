@@ -2736,7 +2736,7 @@ if __name__ == "__main__":
 
     # Start the appropriate interface based on the argument provided
     if args.run_type == "GUI":
-        if plt is None:#if matplotlib is missing
+        if plt is None:  # if matplotlib is missing
             print("\x1b[33mWarning: matplotlib is not found, or is corrupted. Please (re)install matplotlib by running `python -m pip install matplotlib` in the terminal\x1b[m")
         # Set GUI window size
         GUI_window_size = args.GUI_window_size.strip()
