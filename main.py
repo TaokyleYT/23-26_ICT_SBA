@@ -4,7 +4,10 @@ import tkinter as tk  # Import tkinter for GUI implementation
 import re  # Import regex module for pattern matching
 # (I heard that GUI use of it is fine probably)
 from tkinter import ttk, filedialog, messagebox  # Import specific tkinter components
-from nltk_plagiarism import get_similarity_score # For advance stuff
+try:
+    from nltk_plagiarism import get_similarity_score # For advance stuff
+except (ImportError, ModuleNotFoundError):
+    get_similarity_score = None
 try:
     import matplotlib.pyplot as plt  # Import matplotlib for data visualization
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
@@ -1373,6 +1376,10 @@ class WordAnalysisApp:
         if content1 is None:  # Check if reading was successful
             messagebox.showerror("Error", f"Could not read file: {file_path1}")  # Show error message
             return  # Exit method on error
+        if self.compare_nltk.get() and get_similarity_score is None:
+            self.compare_nltk.set(False)
+            print("\x1b[33mWarning: some required modules in nltk_plagiarism module, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m")  #Show error message
+            messagebox.showerror("Error", "there are some errors trying to use nltk, normal mode is used instead. Please refer to the error message in the terminal")  # Show more error message
 
         # Process differently based on whether NLTK is enabled
         if self.compare_nltk.get():
