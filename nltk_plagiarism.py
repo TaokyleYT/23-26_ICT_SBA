@@ -6,6 +6,8 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 from os.path import exists
+
+# Set data directory for NLTK data
 if os.name == 'nt':
     data_dir = __file__.rsplit("\\", 1)[0] + "\\nltk_data"
 else:
@@ -13,6 +15,12 @@ else:
 nltk.data.path.append(data_dir)
 
 def update():
+    """
+    Update NLTK data if necessary.
+    
+    This function checks if the NLTK data directory exists and downloads the required
+    data if it doesn't.
+    """
     if not exists(data_dir + "/tokenizers"):
         nltk.download('punkt', data_dir)
         nltk.download('punkt_tab', data_dir)
@@ -22,6 +30,15 @@ def update():
 
 
 def preprocess_text(text:str) -> str:
+    """
+    Preprocess a text by tokenizing, removing punctuation and stop words, and lemmatizing.
+    
+    Args:
+        text (str): The text to preprocess.
+    
+    Returns:
+        str: The preprocessed text.
+    """
     stop_words = stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
 
@@ -42,6 +59,16 @@ def preprocess_text(text:str) -> str:
 
 
 def calculate_similarity(query_features, reference_features):
+    """
+    Calculate the cosine similarity between two sets of features.
+    
+    Args:
+        query_features (scipy.sparse.csr_matrix): The features of the query text.
+        reference_features (scipy.sparse.csr_matrix): The features of the reference texts.
+    
+    Returns:
+        list: A list of similarity scores, one for each reference text.
+    """
     # Check dimensions and transpose if necessary
     if query_features.shape[1] != reference_features.shape[1]:
         reference_features = reference_features.T
@@ -55,16 +82,44 @@ def calculate_similarity(query_features, reference_features):
 
 
 def bow_features(texts:str) -> tuple:
+    """
+    Extract bag-of-words features from a list of texts.
+    
+    Args:
+        texts (list): A list of texts.
+    
+    Returns:
+        tuple: A tuple containing the features and the vectorizer.
+    """
     vectorizer = CountVectorizer()
     features = vectorizer.fit_transform(texts)
     return features, vectorizer
 
 def tfidf_features(texts:str) -> tuple:
+    """
+    Extract TF-IDF features from a list of texts.
+    
+    Args:
+        texts (list): A list of texts.
+    
+    Returns:
+        tuple: A tuple containing the features and the vectorizer.
+    """
     vectorizer = TfidfVectorizer()
     features = vectorizer.fit_transform(texts)
     return features, vectorizer
 
 def get_similarity_score(query_text, reference_texts):
+    """
+    Calculate the cosine similarity between a query text and one or more reference texts.
+    
+    Args:
+        query_text (str): The query text.
+        reference_texts (list): A list of reference texts.
+    
+    Returns:
+        list: A list of tuples, where each tuple contains the reference text and its corresponding similarity score.
+    """
     preprocessed_query = preprocess_text(query_text)
     preprocessed_references = [preprocess_text(text) for text in reference_texts]
 
