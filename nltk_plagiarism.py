@@ -21,7 +21,7 @@ def update():
         nltk.download('wordnet', data_dir)
 
 
-def preprocess_text(text):
+def preprocess_text(text:str) -> str:
     stop_words = stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
 
@@ -54,12 +54,12 @@ def calculate_similarity(query_features, reference_features):
     return similarity
 
 
-def bow_features(texts):
+def bow_features(texts:str) -> tuple:
     vectorizer = CountVectorizer()
     features = vectorizer.fit_transform(texts)
     return features, vectorizer
 
-def tfidf_features(texts):
+def tfidf_features(texts:str) -> tuple:
     vectorizer = TfidfVectorizer()
     features = vectorizer.fit_transform(texts)
     return features, vectorizer

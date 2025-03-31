@@ -45,7 +45,7 @@ class config:
     # Default values for CLI and GUI settings
     CLI_DEFAULTS = [10, 5]
                  # [single_file_display_line, compare_file_display_line]
-    GUI_DEFAULTS = ["1000x700", 10, [5, 4], 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10, False]
+    GUI_DEFAULTS = ["1000x700", 10, [5, 4], 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10, False, 15]
                  #  [window_size, graph_max_words, graph_figsize, analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize, dark_mode]
 
     try:
@@ -66,6 +66,7 @@ class config:
             graph_title_fontsize = int(config_data[10])  # Font size for graph titles
             graph_label_fontsize = int(config_data[11])  # Font size for graph labels
             dark_mode = bool(int(config_data[12]))  # Dark mode setting (stored as 0/1)
+            text_font_size = int(config_data[13])
 
     except:
         # Use default settings if the configuration file doesn't exist or is corrupted
@@ -81,6 +82,7 @@ class config:
         graph_title_fontsize = GUI_DEFAULTS[7]
         graph_label_fontsize = GUI_DEFAULTS[8]
         dark_mode = GUI_DEFAULTS[9]
+        text_font_size = GUI_DEFAULTS[10]
 
     # Write/update config file with current settings
     with open("WAPDS.config", "w") as f:
@@ -88,7 +90,7 @@ class config:
                  f"{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};"
                  f"{analyze_max_words};{graph_bar_color_single};"
                  f"{graph_bar_color_compare1};{graph_bar_color_compare2};"
-                 f"{graph_title_fontsize};{graph_label_fontsize};{int(dark_mode)}")
+                 f"{graph_title_fontsize};{graph_label_fontsize};{int(dark_mode)};{text_font_size}")
 
     @classmethod
     def reset_to_defaults(cls):
@@ -112,6 +114,7 @@ class config:
         cls.graph_title_fontsize = cls.GUI_DEFAULTS[7]
         cls.graph_label_fontsize = cls.GUI_DEFAULTS[8]
         cls.dark_mode = cls.GUI_DEFAULTS[9]
+        cls.text_font_size = cls.GUI_DEFAULTS[10]
 
     @classmethod
     def save(cls):
@@ -127,7 +130,7 @@ class config:
                      f"{cls.graph_figsize[0]};{cls.graph_figsize[1]};"
                      f"{cls.analyze_max_words};{cls.graph_bar_color_single};"
                      f"{cls.graph_bar_color_compare1};{cls.graph_bar_color_compare2};"
-                     f"{cls.graph_title_fontsize};{cls.graph_label_fontsize};{int(cls.dark_mode)}")
+                     f"{cls.graph_title_fontsize};{cls.graph_label_fontsize};{int(cls.dark_mode)};{cls.text_font_size}")
 
 
 
@@ -152,7 +155,7 @@ def read_file(file_path:str) -> str|None:
         print(f"\x1b[31mError: File '{file_path}' not found.\x1b[m")
         # Suggest similar filename if available
         if file_path+".txt" in txt_files:
-            print(f"\x1b[33mDid you mean '{file_path}.txt'?\x1b[m]")
+            print(f"\x1b[33mDid you mean '{file_path}.txt'?\x1b[m")
         return None
         
     # Check if path is a file (not a directory)
@@ -1124,6 +1127,12 @@ class WordAnalysisApp:
         self.label_font_var = tk.StringVar(value=str(config.graph_label_fontsize))  # Bind entry with current value
         self.label_font_entry = ttk.Entry(font_frame, width=5, textvariable=self.label_font_var)
         self.label_font_entry.pack(side=tk.LEFT, padx=5)
+
+        # Label and entry for text font size
+        ttk.Label(font_frame, text="Text font size:").pack(side=tk.LEFT, padx=5)
+        self.text_font_size_var = tk.StringVar(value=str(config.text_font_size))  # Bind entry with current value
+        self.text_font_entry = ttk.Entry(font_frame, width=5, textvariable=self.text_font_size_var)
+        self.text_font_entry.pack(side=tk.LEFT, padx=5)
 
         # Frame for color settings
         colors_frame = ttk.Frame(graph_settings_frame)  
@@ -2147,7 +2156,8 @@ class WordAnalysisApp:
             config.graph_bar_color_single = self.bar_color_single_var.get()  # Update single color
             config.graph_bar_color_compare1 = self.bar_color_compare1_var.get()  # Update compare file 1 color
             config.graph_bar_color_compare2 = self.bar_color_compare2_var.get()  # Update compare file 2 color
-
+            config.text_font_size = self.text_font_size_var.get()
+            self.style.configure("TLabel", font=("Arial", config.text_font_size)) #set font size
             config.save()  # Save to config file
 
             messagebox.showinfo("Configuration", "Settings saved successfully!")  # Notify successful save
@@ -2172,6 +2182,8 @@ class WordAnalysisApp:
         self.bar_color_single_var.set(str(config.graph_bar_color_single))  # Restore single bar color
         self.bar_color_compare1_var.set(str(config.graph_bar_color_compare1))  # Restore color for first compare file
         self.bar_color_compare2_var.set(str(config.graph_bar_color_compare2))  # Restore color for second compare file
+        self.text_font_size_var.set(str(config.text_font_size))  # Restore color for second compare file
+        self.style.configure("TLabel", font=("Arial", config.text_font_size)) #restore font size
 
     def reset_default_config(self):
         """
@@ -2264,6 +2276,7 @@ def configure():
     unsaved_graph_bar_color_compare2 = None
     unsaved_graph_title_fontsize = None
     unsaved_graph_label_fontsize = None
+    unsaved_text_font_size = None
 
     while True:
         # Display the current configurable settings and menu options
@@ -2274,7 +2287,8 @@ def configure():
             if eval(unsaved_var) is not None:
                 unsaved = True
         print(
-            [f"Change settings{'(unsaved)' if unsaved else ''}:",
+            [[],
+            [*f"Change settings{'(unsaved)' if unsaved else ''}:"],
             [],
             [*"CLI settings:"],
             ["\x1b[1;4;97mA\x1b[m", *f"nalyse file: show first {config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})'} sorted words appeared"],
@@ -2290,6 +2304,7 @@ def configure():
             [*"Graph bar: set color of File", "\x1b[1;4;97m2\x1b[m", *f"'s bar (compare file) to {config.graph_bar_color_compare2 if unsaved_graph_bar_color_compare2 is None else f'{unsaved_graph_bar_color_compare2} (was {config.graph_bar_color_compare2})'}"],
             [*"Graph ", "\x1b[1;4;97mT\x1b[m", *f"itle: set font size to {config.graph_title_fontsize if unsaved_graph_title_fontsize is None else f'{unsaved_graph_title_fontsize} (was {config.graph_title_fontsize})'}"],
             [*"Graph ", "\x1b[1;4;97mL\x1b[m", *f"abel: set font size to {config.graph_label_fontsize if unsaved_graph_label_fontsize is None else f'{unsaved_graph_label_fontsize} (was {config.graph_label_fontsize})'}"],
+             [*"Text: set ", "\x1b[1;4;97mF\x1b[m", *f"ont size to {config.text_font_size if unsaved_text_font_size is None else f'{unsaved_text_font_size} (was {config.text_font_size})'}"],
             ["\x1b[1;4mS\x1b[m", *"ave and exit"],
             ["\x1b[1;4;97mE\x1b[m", *"xit without saving"]], _override=True, wrap_override=True)  # Formatting the options menu
         
@@ -2319,6 +2334,8 @@ def configure():
             unsaved_graph_title_fontsize = configure_test_input("Enter font size of the figure's title", float, str(config.graph_title_fontsize))
         elif config_option == "L":
             unsaved_graph_label_fontsize = configure_test_input("Enter font size of the figure's labels", float, str(config.graph_label_fontsize))
+        elif config_option == "F":
+            unsaved_text_font_size = configure_test_input("Enter font size of the text labels", int, str(config.graph_label_fontsize))
         elif config_option in "ES":  # If user selects Exit or Save, break the loop
             break
         else:
@@ -2349,6 +2366,8 @@ def configure():
             config.graph_title_fontsize = unsaved_graph_title_fontsize
         if unsaved_graph_label_fontsize is not None:
             config.graph_label_fontsize = unsaved_graph_label_fontsize
+        if unsaved_text_font_size is not None:
+            config.text_font_size = unsaved_text_font_size
 
         # Save updated configuration to persistent storage
         config.save()
