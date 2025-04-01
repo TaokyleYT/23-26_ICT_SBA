@@ -360,7 +360,7 @@ def sort_by_frequency(word_count:tuple[list, list]) -> list[tuple[str, int],]:
     return result  # Return sorted pairs by frequency
 
 
-def calculate_similarity(word_count1:tuple[list, list], word_count2:tuple[list, list]) -> float:
+def calculate_similarity(word_count1:tuple[list, list], word_count2:tuple[list, list]) -> tuple[float, float]:
     """
     Calculate the similarity percentage between two texts based on word frequencies.
 
@@ -369,30 +369,33 @@ def calculate_similarity(word_count1:tuple[list, list], word_count2:tuple[list, 
         word_count2 (tuple): Word count data for the second text
 
     Returns:
-        float: Similarity percentage (0-100)
+        tuple of 2 floats: Similarity percentage (0-100) of text1 and text2 respectively
 
-    This function calculates similarity by finding the ratio of common words
-    to the total number of unique words across both texts.
+    This function calculates similarity by finding the ratio of common word frequencies
+    to total word frequencies across both texts.
     """
-    # Get all unique words from both texts
-    all_words = []  # List of all words
-    common_words = 0  # Count of common words
+    # Initialize counters
+    common_freq = 0  # Frequency of common words (minimum of both texts)
+    count1_freq = 0  # Total frequency of text 1
+    count2_freq = 0  # Total frequency of text 2
 
-    # Add all words from first text to all_words list
-    for word in word_count1[0]:
-        if word not in all_words:
-            if word in word_count2[0]: #if it is a common word between 2 text
-                common_words += 1  # Increment count of common matched words
-            all_words.append(word)  # Append word to all_words
+    # Calculate total frequency and find common words
+    for idx1, word1 in enumerate(word_count1[0]):
+        freq1 = word_count1[1][idx1]
+        count1_freq += freq1
+        # Check if word exists in second text
+        idx2 = helpers.linear_search(word_count2[0], word1)
+        if idx2 != -1:
+            # Add minimum frequency to common count
+            common_freq += helpers.min(freq1, word_count2[1][idx2])
 
-    # Count common words and add unique words from the second text
-    for word in word_count2[0]:
-        if word not in all_words:
-            all_words.append(word)
+    for freq2 in word_count2[1]:
+        count2_freq += freq2
 
     # Calculate similarity percentage
-    # Similarity is the ratio of common words to total unique words
-    return (common_words / len(all_words)) * 100  # Return similarity rate
+    # Formula: (total common frequency) / (total frequency) * 100%
+    return ((common_freq / count1_freq) * 100 if count1_freq > 0 else 0, 
+            (common_freq / count2_freq) * 100 if count2_freq > 0 else 0,)
 
 
 class WordAnalysisApp:
@@ -835,7 +838,7 @@ class WordAnalysisApp:
         # Add NLTK checkbox
         self.compare_nltk = tk.BooleanVar(value=False)
         use_nltk = ttk.Checkbutton(buttons_frame, 
-                                    text="Use NLTK for more accurate plagiarism detection", 
+                                    text="Use cosine similarity", 
                                     variable=self.compare_nltk,
                                     command=update_file_labels)
         use_nltk.pack(side=tk.RIGHT, padx=5)
@@ -1389,7 +1392,7 @@ class WordAnalysisApp:
         if self.compare_nltk.get() and get_similarity_score is None:
             self.compare_nltk.set(False)
             print("\x1b[33mWarning: some required modules in nltk_plagiarism module is missing, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m")  #Show error message
-            messagebox.showerror("Error", "there are some errors trying to use nltk, normal mode is used instead. Please refer to the error message in the terminal")  # Show more error message
+            messagebox.showerror("Error", "there are some errors trying to use cosine similarity (nltk), jaccard(?) similarity is used instead. Please refer to the error message in the terminal")  # Show more error message
 
         # Process differently based on whether NLTK is enabled
         if self.compare_nltk.get():
@@ -1541,9 +1544,10 @@ class WordAnalysisApp:
             similarity = calculate_similarity(word_count1, word_count2)  # Calculate similarity percentage
 
             self.comparison_text.delete(1.0, tk.END)  # Clear previous comparison results
-            self.comparison_text.insert(tk.END, f"Similarity percentage: {similarity:.2f}%\n\n")  # Display similarity percentage
+            self.comparison_text.insert(tk.END, f"Similarity percentage of\ntext 1: {similarity[0]:.2f}%\ntext 2: {similarity[1]:.2f}\n\n")  # Display similarity percentage
 
             # Determine plagiarism level based on similarity percentage
+            similarity = helpers.max(similarity)
             if similarity > 80:
                 level = "HIGH - These texts are very similar"
                 self.comparison_text.tag_configure("color", foreground="red")
@@ -2605,11 +2609,14 @@ def compare_files(file_path1:str, file_path2:str):
     print(
         f"\n{'=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\
 Comparison between '{file_path1}' and '{file_path2}':\n\
-{'=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\
-Similarity percentage: {similarity:.2f}%"
+{'=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\n\
+Similarity percentage of\n\
+text 1: {similarity[0]:.2f}%\n\
+text 2: {similarity[1]:.2f}%"
     )
 
     # Determine and display the plagiarism level using the similarity percentage
+    similarity = helpers.max(similarity)
     if similarity > 80:
         print("\x1b[31mPlagiarism Level: HIGH - These texts are very similar\x1b[m")  # High similarity
     elif similarity > 50:
