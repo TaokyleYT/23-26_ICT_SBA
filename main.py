@@ -371,8 +371,7 @@ def calculate_similarity(word_count1:tuple[list, list], word_count2:tuple[list, 
     Returns:
         tuple of 2 floats: Similarity percentage (0-100) of text1 and text2 respectively
 
-    This function calculates similarity by finding the ratio of common word frequencies
-    to total word frequencies across both texts.
+    This function calculates the jaccard(?) similarity of both texts by equation given by teacher
     """
     # Initialize counters
     common_freq = 0  # Frequency of common words (minimum of both texts)
