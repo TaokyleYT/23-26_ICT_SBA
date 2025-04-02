@@ -325,18 +325,26 @@ def sort_alphabetically(word_count:tuple[list, list]) -> list[tuple[str, int],]:
     This function sorts the words in alphabetical order and returns a list of
     (word, frequency) pairs maintaining the original frequency information.
     """
-    words = word_count[0]  # Extract words from word_count
-    # Sort words alphabetically using a helper function
-    sorted_words = helpers.quick_sort(words)
+    # Create a list of (word, count) tuples
+    word_items = []  
+    for idx in range(len(word_count[0])):
+        word_items.append((word_count[0][idx], word_count[1][idx]))
 
-    # Create list of (word, frequency) pairs
+    # Create a list that can be sorted using the quick_sort function
+    # Using indices to maintain the original items
+    items_to_sort = []
+    for i, item in enumerate(word_items):
+        items_to_sort.append((item, i))
+
+    # Sort the indices
+    sorted_indices = helpers.quick_sort(items_to_sort)  # Sort in ascending order
+
+    # Reconstruct the result using the sorted indices
     result = []
-    for n in range(len(sorted_words)): #will use enumerate later on (actually used already), which is faster than range(len()) and then thing[idx]
-        word = words[n] #because enumerate is O(N), range(len()) O(N) + O(N) = O(2N) > O(N)
-        # Find the index of the word in the original list to get its frequency
-        result.append(
-            (word, word_count[1][helpers.linear_search(word_count[0], word)]))
-    return result  # Return sorted word frequency pairs
+    for _, idx in sorted_indices:
+        result.append(word_items[idx])
+
+    return result  # Return alphabetically sorted pairs
 
 
 def sort_by_frequency(word_count:tuple[list, list]) -> list[tuple[str, int],]:
@@ -364,7 +372,7 @@ def sort_by_frequency(word_count:tuple[list, list]) -> list[tuple[str, int],]:
         items_to_sort.append(((item[1], item[0]), i))  # Sort by count first, then word
 
     # Sort the indices
-    sorted_indices = helpers.quick_sort(items_to_sort)  # Sort in descending order
+    sorted_indices = helpers.quick_sort(items_to_sort, reverse=True)  # Sort in descending order
 
     # Reconstruct the result using the sorted indices
     result = []
@@ -1751,8 +1759,7 @@ class WordAnalysisApp:
         # Sort common words by frequency in the first file
         all_common_words_sorted = helpers.quick_sort(all_common_words, 
                                         key=lambda word: word_count1[1][helpers.linear_search(word_count1[0], word)] 
-                                        if word in word_count1[0] else 0,
-                                        reverse=True)
+                                        if word in word_count1[0] else 0)
         
         # Limit to a reasonable number of words to keep the graph readable
         # For multiple reference files, we need to be more selective
@@ -1768,7 +1775,7 @@ class WordAnalysisApp:
         # If there are too many reference files, limit the display
         if num_plots > 10:
             # Sort reference files by similarity score and take top 10
-            indices = helpers.quick_sort(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)[:10]
+            indices = helpers.quick_sort(range(len(similarity_scores)), key=lambda i: similarity_scores[i])[:10]
             reference_word_counts = [reference_word_counts[i] for i in indices]
             reference_file_names = [reference_file_names[i] for i in indices]
             similarity_scores = [similarity_scores[i] for i in indices]

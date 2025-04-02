@@ -388,7 +388,7 @@ def animated_input(prompt: str = "",
     return result  # Return the string input by the user
 
 
-def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = True) -> list:
+def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = False) -> list:
     """
     Sorts a list using the quick sort algorithm.
     
@@ -401,7 +401,7 @@ def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = True) -> li
         key (callable):
             A key function to extract a comparison key from each element (default: None).
         reverse (bool): 
-            Sort in ascending order if True, otherwise in descending order (default: True).
+            Sort in descending order if True, otherwise in ascending order (default: False).
         
     Returns:
         list: A new sorted list.
@@ -438,8 +438,8 @@ def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = True) -> li
 
     # Recursively sort both partitions and combine them
     # Reverse the result if descending order is requested
-    return (list(quick_sort(less)) + [pivot] +
-            list(quick_sort(more)))
+    return (list(quick_sort(less, reverse=reverse)) + [pivot] +
+            list(quick_sort(more, reverse=reverse)))
 
 
 def linear_search(iterable: list,
