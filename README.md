@@ -2,26 +2,8 @@
 
 ## DO NOT USE OUT-SYL FUNCTIONS TO ACHIEVE IN-SYL
 
-*such as using list.index, list.insert, sorted, dictionary, set*\
-*known exclude: map, str.find, str.replace, str.split*
-
-*in-syl:*\
-*types: str, float, int, bool, list*\
-*struct: if, while, for, stack, queue, linked list*\
-*basic python stuff*
-
 wooooo my SBA for absolutely no reason (I mean I have reason, which is DSE, well idk aaaaaaaa)
 
-**git tips**
-
-```git
-git add new_filed_you_created
-git add files_you_edited_too
-git add .
-git status
-git commit -m "Title" -m "Desc"
-git push
-```
 
 ## Word Analysis and Plagiarism Detection System
 
@@ -177,8 +159,8 @@ Shows a significant improvement in program performance or usability.
 ## WOO HERES WHAT I WILL DO
 
 ```none
-test.txt : 711 + 8 words
-test2.txt: 665 + 8 words
+1 year token for private repo access:
+git clone https://TaokyleYT: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@github.com/TaokyleYT/23-26_ICT_SBA
 
 command line & GUI (?)
 CAN USE PYGAME WOOOO

@@ -25,8 +25,8 @@ class config:
     It maintains default values and provides methods to reset settings.
 
     Attributes:
-        CLI_DEFAULTS (list): Default values for Command Line Interface (CLI) settings
-        GUI_DEFAULTS (list): Default values for Graphical User Interface (GUI) settings
+        DEFAULTS["CLI"] (list): Default values for Command Line Interface (CLI) settings
+        DEFAULTS["GUI"] (list): Default values for Graphical User Interface (GUI) settings
         single_file_display_line (int): Number of words to display in single file analysis (CLI)
         compare_file_display_line (int): Number of words to display in file comparison (CLI)
         window_size (str): Size of the GUI window in "widthxheight" format
@@ -43,10 +43,24 @@ class config:
     """
 
     # Default values for CLI and GUI settings
-    CLI_DEFAULTS = [10, 5]
-                 # [single_file_display_line, compare_file_display_line]
-    GUI_DEFAULTS = ["1000x700", 10, [5, 4], 5, 'skyblue', 'skyblue', 'lightgreen', 12, 10, False, 15]
-                 # [window_size, graph_max_words, graph_figsize, analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize, dark_mode, text_font_size]
+    DEFAULTS = {"CLI": {
+        "single_file_display_line": 10, 
+        "compare_file_display_line": 5
+                    },
+                "GUI": {
+        "window_size": "1000x700", 
+        "graph_max_words": "10", 
+        "graph_figsize": [5, 4], 
+        "analyze_max_words": 5, 
+        "graph_bar_color_single": "skyblue", 
+        "graph_bar_color_compare1": "skyblue", 
+        "graph_bar_color_compare2": "lightgreen", 
+        "graph_title_fontsize": 12, 
+        "graph_label_fontsize": 10, 
+        "dark_mode": False, 
+        "text_font_size": 10
+                    }
+                }
 
     try:
         # Attempt to load configuration from file
@@ -69,20 +83,20 @@ class config:
             text_font_size = int(config_data[13])  # Font size for text labels
 
     except:
-        # Use default settings if the configuration file doesn't exist or is corrupted
-        single_file_display_line = CLI_DEFAULTS[0]
-        compare_file_display_line = CLI_DEFAULTS[1]
-        window_size = GUI_DEFAULTS[0]
-        graph_max_words = GUI_DEFAULTS[1]
-        graph_figsize = GUI_DEFAULTS[2]
-        analyze_max_words = GUI_DEFAULTS[3]
-        graph_bar_color_single = GUI_DEFAULTS[4]
-        graph_bar_color_compare1 = GUI_DEFAULTS[5]
-        graph_bar_color_compare2 = GUI_DEFAULTS[6]
-        graph_title_fontsize = GUI_DEFAULTS[7]
-        graph_label_fontsize = GUI_DEFAULTS[8]
-        dark_mode = GUI_DEFAULTS[9]
-        text_font_size = GUI_DEFAULTS[10]
+        # Use default settings if the configuration file doesn"t exist or is corrupted
+        single_file_display_line = DEFAULTS["CLI"]["single_file_display_line"]
+        compare_file_display_line = DEFAULTS["CLI"]["compare_file_display_line"]
+        window_size = DEFAULTS["GUI"]["window_size"]
+        graph_max_words = DEFAULTS["GUI"]["graph_max_words"]
+        graph_figsize = DEFAULTS["GUI"]["graph_figsize"]
+        analyze_max_words = DEFAULTS["GUI"]["analyze_max_words"]
+        graph_bar_color_single = DEFAULTS["GUI"]["graph_bar_color_single"]
+        graph_bar_color_compare1 = DEFAULTS["GUI"]["graph_bar_color_compare1"]
+        graph_bar_color_compare2 = DEFAULTS["GUI"]["graph_bar_color_compare2"]
+        graph_title_fontsize = DEFAULTS["GUI"]["graph_title_fontsize"]
+        graph_label_fontsize = DEFAULTS["GUI"]["graph_label_fontsize"]
+        dark_mode = DEFAULTS["GUI"]["dark_mode"]
+        text_font_size = DEFAULTS["GUI"]["text_font_size"]
 
     # Write/update config file with current settings
     with open("WAPDS.config", "w") as f:
@@ -101,20 +115,20 @@ class config:
         but does not save them to the configuration file.
         """
         # Restore CLI default values
-        cls.single_file_display_line = cls.CLI_DEFAULTS[0]
-        cls.compare_file_display_line = cls.CLI_DEFAULTS[1]
+        cls.single_file_display_line = cls.DEFAULTS["CLI"]["single_file_display_line"]
+        cls.compare_file_display_line = cls.DEFAULTS["CLI"]["compare_file_display_line"]
         # Restore GUI default values
-        cls.window_size = cls.GUI_DEFAULTS[0]
-        cls.graph_max_words = cls.GUI_DEFAULTS[1]
-        cls.graph_figsize = cls.GUI_DEFAULTS[2]
-        cls.analyze_max_words = cls.GUI_DEFAULTS[3]
-        cls.graph_bar_color_single = cls.GUI_DEFAULTS[4]
-        cls.graph_bar_color_compare1 = cls.GUI_DEFAULTS[5]
-        cls.graph_bar_color_compare2 = cls.GUI_DEFAULTS[6]
-        cls.graph_title_fontsize = cls.GUI_DEFAULTS[7]
-        cls.graph_label_fontsize = cls.GUI_DEFAULTS[8]
-        cls.dark_mode = cls.GUI_DEFAULTS[9]
-        cls.text_font_size = cls.GUI_DEFAULTS[10]
+        cls.window_size = cls.DEFAULTS["GUI"]["window_size"]
+        cls.graph_max_words = cls.DEFAULTS["GUI"]["graph_max_words"]
+        cls.graph_figsize = cls.DEFAULTS["GUI"]["graph_figsize"]
+        cls.analyze_max_words = cls.DEFAULTS["GUI"]["analyze_max_words"]
+        cls.graph_bar_color_single = cls.DEFAULTS["GUI"]["graph_bar_color_single"]
+        cls.graph_bar_color_compare1 = cls.DEFAULTS["GUI"]["graph_bar_color_compare1"]
+        cls.graph_bar_color_compare2 = cls.DEFAULTS["GUI"]["graph_bar_color_compare2"]
+        cls.graph_title_fontsize = cls.DEFAULTS["GUI"]["graph_title_fontsize"]
+        cls.graph_label_fontsize = cls.DEFAULTS["GUI"]["graph_label_fontsize"]
+        cls.dark_mode = cls.DEFAULTS["GUI"]["dark_mode"]
+        cls.text_font_size = cls.DEFAULTS["GUI"]["text_font_size"]
 
     @classmethod
     def save(cls):
@@ -153,28 +167,28 @@ def read_file(file_path:str) -> str|None:
     
     # Check if file exists
     if not os.path.exists(file_path):
-        print(f"\x1b[31mError: File '{file_path}' not found.\x1b[m")
+        print(f'\x1b[31mError: File "{file_path}" not found.\x1b[m')
         # Suggest similar filename if available
         if file_path+".txt" in txt_files:
-            print(f"\x1b[33mDid you mean '{file_path}.txt'?\x1b[m")
+            print(f'\x1b[33mDid you mean "{file_path}.txt"?\x1b[m')
         return None
         
     # Check if path is a file (not a directory)
     if not os.path.isfile(file_path):
-        print(f"\x1b[31mError: '{file_path}' is not a file.\x1b[m")
+        print(f'\x1b[31mError: "{file_path}" is not a file.\x1b[m')
         return None
         
     try:
         # Attempt to read the file
-        with open(file_path, 'r', encoding="utf-8") as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             content = file.read()  # Read the entire file content
         
         # Check if file is empty
         if not content.strip():  # Check if the file is empty
-            print(f"\x1b[33mWarning: File '{file_path}' is empty.\x1b[m")
+            print(f'\x1b[33mWarning: File "{file_path}" is empty.\x1b[m')
         return content  # Return file content
     except Exception as e:  # Handle other exceptions
-        print(f"\x1b[31mError reading file '{file_path}': {str(e)}\x1b[m")
+        print(f'\x1b[31mError reading file "{file_path}": {str(e)}\x1b[m')
         return None  # Return None for error
 
 
@@ -197,14 +211,14 @@ def clean_text(text:str|None) -> str:
     if text is None:  # If input text is None, return empty string
         return ""
 
-    # Replace any character that isn't a letter, digit, or space with a space
+    # Replace any character that isn"t a letter, digit, or space with a space
     # This preserves word boundaries while removing punctuation
-    cleaned_text = "".join((char if 'a' <= char <= 'z' or '0' <= char <= '9'
-                            or char == ' ' else ' ') for char in text.lower())
+    cleaned_text = "".join((char if "a" <= char <= "z" or "0" <= char <= "9"
+                            or char == " " else " ") for char in text.lower())
 
     # Remove extra spaces (replace double spaces with single until no doubles remain)
-    while '  ' in cleaned_text:
-        cleaned_text = cleaned_text.replace('  ', ' ')
+    while "  " in cleaned_text:
+        cleaned_text = cleaned_text.replace("  ", " ")
 
     return cleaned_text.strip()  # Return cleaned and stripped text
 
@@ -227,16 +241,16 @@ def count_words(text:str) -> tuple[list, list]:
     if not text:  # If text is empty, return empty structure
         return ([], [])
 
-    # Initialize result structure as a tuple of two lists because can't use dictionary
+    # Initialize result structure as a tuple of two lists as an alternative to dictionary
     word_count = ([], [])  # ([words], [frequencies])
     words = text.split(" ")  # Split text into individual words
 
     # Count frequency of each word using a for loop
     for n in range(len(words)): #will use enumerate later on, which is faster than range(len()) and then thing[idx]
         word = words[n] #because enumerate is O(N), range(len()) O(N) + O(N) = O(2N) > O(N)
-        if word in word_count[0]:  # Check if word already exists in our list
+        word_index = helpers.linear_search(word_count[0], word)
+        if word_index != -1:  # Check if word already exists in our list
             # If word already exists, increment its count
-            word_index = helpers.linear_search(word_count[0], word)
             word_count[1][word_index] += 1
         else:
             # Otherwise, add it to our list with a count of 1
@@ -291,7 +305,7 @@ def search_word_position(text:str, target_word:str, regex:bool = False) -> list[
         # Find all exact matches with their positions
         for idx, word in enumerate(words):
             # Remove punctuation for comparison but keep original word
-            clean_word = ''.join(c.lower() for c in word if c.isalnum())
+            clean_word = "".join(c.lower() for c in word if c.isalnum())
             if clean_word == target_word:
                 results.append((idx, word))
     
@@ -419,31 +433,31 @@ class WordAnalysisApp:
 
     # Define theme colors
     LIGHT_THEME = [
-        '#f0f0f0',  # bg - light gray background
-        '#000000',  # fg - black text
-        '#ffffff',  # text_bg - white text background
-        '#000000',  # text_fg - black text
-        '#e0e0e0',  # button_bg - light gray button background
-        '#4a6984',  # highlight_bg - blue highlight background
-        '#ffffff',  # highlight_fg - white highlight text
-        '#ffffff',  # canvas_bg - white canvas background
-        '#f0f0f0',  # frame_bg - light gray frame background
-        '#f0f0f0',  # labelframe_bg - light gray labelframe background
-        '#f0f0f0'   # tab_bg - light gray tab background
+        "#f0f0f0",  # bg - light gray background
+        "#000000",  # fg - black text
+        "#ffffff",  # text_bg - white text background
+        "#000000",  # text_fg - black text
+        "#e0e0e0",  # button_bg - light gray button background
+        "#4a6984",  # highlight_bg - blue highlight background
+        "#ffffff",  # highlight_fg - white highlight text
+        "#ffffff",  # canvas_bg - white canvas background
+        "#f0f0f0",  # frame_bg - light gray frame background
+        "#f0f0f0",  # labelframe_bg - light gray labelframe background
+        "#f0f0f0"   # tab_bg - light gray tab background
     ]
 
     DARK_THEME = [
-        '#1e1e1e',  # bg - darker background
-        '#ffffff',  # fg - white text
-        '#2d2d2d',  # text_bg - slightly lighter than bg for text areas
-        '#ffffff',  # text_fg - white text
-        '#3d3d3d',  # button_bg - medium gray for buttons
-        '#0078d7',  # highlight_bg - blue highlight
-        '#ffffff',  # highlight_fg - white text on highlight
-        '#2d2d2d',  # canvas_bg - same as text_bg for consistency
-        '#1e1e1e',  # frame_bg - same as bg
-        '#1e1e1e',  # labelframe_bg - same as bg
-        '#2d2d2d'   # tab_bg - slightly lighter for tabs
+        "#1e1e1e",  # bg - darker background
+        "#ffffff",  # fg - white text
+        "#2d2d2d",  # text_bg - slightly lighter than bg for text areas
+        "#ffffff",  # text_fg - white text
+        "#3d3d3d",  # button_bg - medium gray for buttons
+        "#0078d7",  # highlight_bg - blue highlight
+        "#ffffff",  # highlight_fg - white text on highlight
+        "#2d2d2d",  # canvas_bg - same as text_bg for consistency
+        "#1e1e1e",  # frame_bg - same as bg
+        "#1e1e1e",  # labelframe_bg - same as bg
+        "#2d2d2d"   # tab_bg - slightly lighter for tabs
     ]
 
 
@@ -477,6 +491,7 @@ class WordAnalysisApp:
                 if self.window_size is not None:
                     config.window_size = self.window_size
                     config.save()
+                root.bind("<Configure>", lambda:None)
                 messagebox.showwarning("Thank you, app closing...", message="Thank you for using WAPDS")  # Thank you message :)
                 root.destroy()  # Destroy the root window to close the application
                 exit()  # Close the terminal / exit the program too
@@ -489,6 +504,20 @@ class WordAnalysisApp:
         # Configure window close behavior to confirm exit
         root.protocol("WM_DELETE_WINDOW", exit_GUI)  # Set exit protocol to use custom exit function
         root.bind("<Configure>", save_window_size)  # Bind window resize event to save size
+        
+        # Create theme toggle button (created before notebook so the theme toggle is always visible when window size is too small)
+        self.theme_frame = ttk.Frame(root)
+        self.theme_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=(0, 5))
+        
+        # Create dark mode toggle checkbox
+        self.theme_var = tk.BooleanVar(value=config.dark_mode)
+        self.theme_toggle = ttk.Checkbutton(
+            self.theme_frame, 
+            text="Dark Mode", 
+            variable=self.theme_var,
+            command=self.toggle_theme
+        )
+        self.theme_toggle.pack(side=tk.RIGHT)
 
         # Create the main notebook (tabbed interface)
         self.notebook = ttk.Notebook(root)
@@ -504,20 +533,6 @@ class WordAnalysisApp:
 
         # Create style for the application
         self.style = ttk.Style()
-        
-        # Create theme toggle button
-        self.theme_frame = ttk.Frame(root)
-        self.theme_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
-        
-        # Create dark mode toggle checkbox
-        self.theme_var = tk.BooleanVar(value=config.dark_mode)
-        self.theme_toggle = ttk.Checkbutton(
-            self.theme_frame, 
-            text="Dark Mode", 
-            variable=self.theme_var,
-            command=self.toggle_theme
-        )
-        self.theme_toggle.pack(side=tk.RIGHT)
         
         # Create tabs for various functionalities
         self.create_analyze_tab()  # Tab for analyzing single file
@@ -539,12 +554,13 @@ class WordAnalysisApp:
         theme = self.DARK_THEME if config.dark_mode else self.LIGHT_THEME
         
         # Configure the ttk styles properly
-        self.style.theme_use('default')  # Reset to default theme first
+        self.style.theme_use("default")  # Reset to default theme first
         
         # Configure styles for ttk widgets
         self.style.configure("TFrame", background=theme[8])
         self.style.configure("TLabelframe", background=theme[9])
-        self.style.configure("TLabelframe.Label", background=theme[9], foreground=theme[1])
+        self.style.configure("TLabelframe.Label", background=theme[9], foreground=theme[1],
+                             font=("Arial", config.text_font_size))
         
         # Configure Notebook and Tab styles
         self.style.configure("TNotebook", background=theme[0])
@@ -555,7 +571,8 @@ class WordAnalysisApp:
         # Configure Button style
         self.style.configure("TButton", 
                             background=theme[4], 
-                            foreground=theme[1])
+                            foreground=theme[1],
+                            font=("Arial", config.text_font_size))
         self.style.map("TButton",
                     background=[("active", theme[5])],
                     foreground=[("active", theme[6])])
@@ -564,7 +581,8 @@ class WordAnalysisApp:
         self.style.configure("TEntry", 
                             fieldbackground=theme[2], 
                             foreground=theme[3],
-                            insertcolor=theme[1])  # Cursor color
+                            insertcolor=theme[1],
+                            font=("Arial", config.text_font_size))  # Cursor color
         
         # Configure Checkbutton style
         self.style.configure("TCheckbutton", 
@@ -578,7 +596,8 @@ class WordAnalysisApp:
         # Configure Label style
         self.style.configure("TLabel", 
                             background=theme[8], 
-                            foreground=theme[1])
+                            foreground=theme[1],
+                            font=("Arial", config.text_font_size))
         
         # Configure root and main frames
         self.root.configure(background=theme[0])
@@ -588,13 +607,13 @@ class WordAnalysisApp:
         
         # If matplotlib is available, update the graph style
         if plt is not None:
-            plt.style.use('dark_background' if config.dark_mode else 'default')
+            plt.style.use("dark_background" if config.dark_mode else "default")
             
             # Redraw graphs if they exist
-            if hasattr(self, 'word_count1') and self.word_count1:
+            if hasattr(self, "word_count1") and self.word_count1:
                 self.create_frequency_graph(self.word_count1, self.analyze_graph_frame, self.analyze_canvas)
                 
-            if hasattr(self, 'word_count1') and hasattr(self, 'word_count2') and self.word_count1 and self.word_count2:
+            if hasattr(self, "word_count1") and hasattr(self, "word_count2") and self.word_count1 and self.word_count2:
                 self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_graph_frame, self.compare_canvas)
 
     def _update_widget_colors(self, widget, theme):
@@ -617,21 +636,23 @@ class WordAnalysisApp:
                 foreground=theme[3],
                 insertbackground=theme[1],  # Cursor color
                 selectbackground=theme[5],
-                selectforeground=theme[6]
+                selectforeground=theme[6],
+                font=("Arial", config.text_font_size)
             )
         elif widget_class == "Listbox":
             widget.configure(
                 background=theme[2],
                 foreground=theme[3],
                 selectbackground=theme[5],
-                selectforeground=theme[6]
+                selectforeground=theme[6],
+                font=("Arial", config.text_font_size)
             )
         elif widget_class == "Canvas":
             widget.configure(background=theme[7])
         elif widget_class == "Label":
-            widget.configure(background=theme[8], foreground=theme[1])
+            widget.configure(background=theme[8], foreground=theme[1], font=("Arial", config.text_font_size))
         elif widget_class == "LabelFrame":
-            widget.configure(background=theme[9], foreground=theme[1])
+            widget.configure(background=theme[9], foreground=theme[1], font=("Arial", config.text_font_size))
         
         # Recursively update all children
         for child in widget.winfo_children():
@@ -650,13 +671,13 @@ class WordAnalysisApp:
         
         # If matplotlib is available, update the graph style
         if plt is not None:
-            plt.style.use('dark_background' if config.dark_mode else 'default')
+            plt.style.use("dark_background" if config.dark_mode else "default")
             
             # Redraw graphs if they exist
-            if hasattr(self, 'word_count1') and self.word_count1:
+            if hasattr(self, "word_count1") and self.word_count1:
                 self.create_frequency_graph(self.word_count1, self.analyze_graph_frame, self.analyze_canvas)
                 
-            if hasattr(self, 'word_count1') and hasattr(self, 'word_count2') and self.word_count1 and self.word_count2:
+            if hasattr(self, "word_count1") and hasattr(self, "word_count2") and self.word_count1 and self.word_count2:
                 self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_graph_frame, self.compare_canvas)
 
     def create_analyze_tab(self):
@@ -1226,7 +1247,7 @@ class WordAnalysisApp:
                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")]):  # Open dialog for file selection
             self.compare_file_entry2.delete(0, tk.END)  # Clear entry
             for file in file_path[:-1]:
-                self.compare_file_entry2.insert(tk.END, file.replace(",", ",\\")+', ')  # Insert selected path
+                self.compare_file_entry2.insert(tk.END, file.replace(",", ",\\")+", ")  # Insert selected path
             self.compare_file_entry2.insert(tk.END, file_path[-1].replace(",", ",\\"))
             
     def browse_search_file(self):
@@ -1281,12 +1302,12 @@ class WordAnalysisApp:
         self.freq_list.delete(0, tk.END)  # Clear previous frequency list
         freq_sorted = sort_by_frequency(word_count)[:config.analyze_max_words]  # Get sorted frequency list
         for i, (word, count) in enumerate(freq_sorted):  # Iterate through sorted list
-            self.freq_list.insert(tk.END, f"{i + 1}. '{word}': {count} times")  # Insert words and counts
+            self.freq_list.insert(tk.END, f'{i + 1}. "{word}": {count} times')  # Insert words and counts
 
         self.alpha_list.delete(0, tk.END)  # Clear previous alphabetical list
         alpha_sorted = sort_alphabetically(word_count)[:config.analyze_max_words]  # Get sorted alphabetical list
         for i, (word, count) in enumerate(alpha_sorted):  # Iterate through sorted list
-            self.alpha_list.insert(tk.END, f"{i + 1}. '{word}': {count} times")  # Insert words and counts
+            self.alpha_list.insert(tk.END, f'{i + 1}. "{word}": {count} times')  # Insert words and counts
 
         # Create and display the frequency graph
         self.create_frequency_graph(word_count, self.analyze_canvas, self.analyze_canvas)  # Draw graph for the current file
@@ -1334,8 +1355,8 @@ class WordAnalysisApp:
         bars = ax.barh(words, counts, color=config.graph_bar_color_single)
 
         # Set labels and titles for the graph
-        ax.set_xlabel('Frequency', fontsize=config.graph_label_fontsize)  # X-axis label
-        ax.set_title('Top Word Frequencies', fontsize=config.graph_title_fontsize)  # Graph title
+        ax.set_xlabel("Frequency", fontsize=config.graph_label_fontsize)  # X-axis label
+        ax.set_title("Top Word Frequencies", fontsize=config.graph_title_fontsize)  # Graph title
         ax.tick_params(labelsize=config.graph_label_fontsize)  # Set tick params for labels
 
         # Add count labels on bars
@@ -1343,9 +1364,9 @@ class WordAnalysisApp:
             width = bar.get_width()  # Get bar width
             ax.text(width + 0.5,
                     bar.get_y() + bar.get_height() / 2,
-                    f'{width}',
-                    ha='left',
-                    va='center')  # Display count on bar
+                    f"{width}",
+                    ha="left",
+                    va="center")  # Display count on bar
 
         plt.tight_layout()  # Adjust layout
         # Embed the graph in the canvas
@@ -1543,7 +1564,7 @@ class WordAnalysisApp:
             similarity = calculate_similarity(word_count1, word_count2)  # Calculate similarity percentage
 
             self.comparison_text.delete(1.0, tk.END)  # Clear previous comparison results
-            self.comparison_text.insert(tk.END, f"Similarity percentage of\ntext 1: {similarity[0]:.2f}%\ntext 2: {similarity[1]:.2f}\n\n")  # Display similarity percentage
+            self.comparison_text.insert(tk.END, f"Similarity percentage of\ntext 1: {similarity[0]:.2f}%\ntext 2: {similarity[1]:.2f}%\n\n")  # Display similarity percentage
 
             # Determine plagiarism level based on similarity percentage
             similarity = helpers.max(similarity)
@@ -1635,14 +1656,14 @@ class WordAnalysisApp:
         width = 0.35  # Width of bars
 
         # Create bar chart for both files
-        ax.bar([i - width / 2 for i in x], counts1, width, label='File 1', color=config.graph_bar_color_compare1)  # Bars for first file
-        ax.bar([i + width / 2 for i in x], counts2, width, label='File 2', color=config.graph_bar_color_compare2)  # Bars for second file
+        ax.bar([i - width / 2 for i in x], counts1, width, label="File 1", color=config.graph_bar_color_compare1)  # Bars for first file
+        ax.bar([i + width / 2 for i in x], counts2, width, label="File 2", color=config.graph_bar_color_compare2)  # Bars for second file
 
         # Add labels and legend
-        ax.set_ylabel('Frequency')  # Y-axis label
-        ax.set_title('Word Frequency Comparison')  # Graph title
+        ax.set_ylabel("Frequency")  # Y-axis label
+        ax.set_title("Word Frequency Comparison")  # Graph title
         ax.set_xticks(x)  # Set positions for x-ticks
-        ax.set_xticklabels(combined_top_words, rotation=45, ha='right')  # Set labels for x-ticks
+        ax.set_xticklabels(combined_top_words, rotation=45, ha="right")  # Set labels for x-ticks
         ax.legend()  # Display legend
 
         plt.tight_layout()  # Adjust layout for better spacing
@@ -1711,8 +1732,8 @@ class WordAnalysisApp:
         if not all_common_words:
             fig = plt.figure(figsize=config.graph_figsize)
             ax = fig.add_subplot(111)
-            ax.text(0.5, 0.5, 'No common words found in top frequency lists', 
-                    ha='center', va='center', fontsize=12)
+            ax.text(0.5, 0.5, "No common words found in top frequency lists", 
+                    ha="center", va="center", fontsize=12)
             ax.set_xticks([])
             ax.set_yticks([])
             plt.tight_layout()
@@ -1788,21 +1809,21 @@ class WordAnalysisApp:
             
             # Add labels and legend
             if i == 0:  # Only add title to the first subplot
-                ax.set_title('Word Frequency Comparison with Reference Files')
+                ax.set_title("Word Frequency Comparison with Reference Files")
             
             # Add y-label only to the middle subplot to save space
             if i == num_plots // 2:
-                ax.set_ylabel('Frequency')
+                ax.set_ylabel("Frequency")
             
             # Add x-labels only to the last subplot
             if i == num_plots - 1:
                 ax.set_xticks(x)
-                ax.set_xticklabels(display_words, rotation=45, ha='right')
+                ax.set_xticklabels(display_words, rotation=45, ha="right")
             else:
                 ax.set_xticks(x)
                 ax.set_xticklabels([])
             
-            ax.legend(loc='upper right', fontsize='small')
+            ax.legend(loc="upper right", fontsize="small")
         
         plt.tight_layout()
         # Embed the graph in the canvas
@@ -1874,7 +1895,7 @@ class WordAnalysisApp:
             match_text = "pattern" if regex else "word"
             self.search_results.insert(
                 tk.END,
-                f"The {match_text} '{target_word}' appears {len(positions)} times\n\n"
+                f'The {match_text} "{target_word}" appears {len(positions)} times\n\n'
             )
 
             # Configure tag for highlighting the target word with yellow background
@@ -1884,12 +1905,12 @@ class WordAnalysisApp:
             words = content.split()
             for pos, matched_word in positions:
                 # Get a window of words around the occurrence (3 words before, 3 words after)
-                start = helpers.max(0, pos - 3)  # Ensure we don't go below index 0
-                end = helpers.min(len(words), pos + 4)  # Ensure we don't exceed array bounds
+                start = helpers.max(0, pos - 3)  # Ensure we don"t go below index 0
+                end = helpers.min(len(words), pos + 4)  # Ensure we don"t exceed array bounds
 
                 # Create context with ellipses if needed to show this is a snippet
-                prefix = "... " if pos > 3 else ""  # Add ellipsis if we're not at the beginning
-                suffix = " ..." if pos + 4 < len(words) else ""  # Add ellipsis if we're not at the end
+                prefix = "... " if pos > 3 else ""  # Add ellipsis if we"re not at the beginning
+                suffix = " ..." if pos + 4 < len(words) else ""  # Add ellipsis if we"re not at the end
 
                 # Insert position number and prefix
                 self.search_results.insert(tk.END, f"Position {pos}: {prefix}")
@@ -1910,7 +1931,7 @@ class WordAnalysisApp:
         else:
             # No matches found - inform the user
             match_text = "pattern" if regex else "word"
-            self.search_results.insert(tk.END, f"The {match_text} '{target_word}' was not found in the file.")
+            self.search_results.insert(tk.END, f'The {match_text} "{target_word}" was not found in the file.')
         
         # Make the text read-only again to prevent user edits
         self.search_results.config(state=tk.DISABLED)
@@ -1999,15 +2020,15 @@ class WordAnalysisApp:
         else:
             # For exact word matching, process line by line to preserve formatting
             # Split content by lines to preserve newlines
-            lines = content.split('\n')
+            lines = content.split("\n")
             
             # Process each line separately
             for i, line in enumerate(lines):
                 # Handle empty lines
                 if not line.strip():  # Preserve empty lines
-                    if i > 0:  # Don't add newline before the first line
-                        self.original_text.insert(tk.END, '\n')
-                        self.modified_text.insert(tk.END, '\n')
+                    if i > 0:  # Don"t add newline before the first line
+                        self.original_text.insert(tk.END, "\n")
+                        self.modified_text.insert(tk.END, "\n")
                     continue
                     
                 # Split line into words for processing
@@ -2016,22 +2037,22 @@ class WordAnalysisApp:
                 # Handle lines with only whitespace
                 if not words:  # Empty line with whitespace
                     if i > 0:
-                        self.original_text.insert(tk.END, '\n')
-                        self.modified_text.insert(tk.END, '\n')
+                        self.original_text.insert(tk.END, "\n")
+                        self.modified_text.insert(tk.END, "\n")
                     continue
                     
                 # Find all occurrences of the target word in this line
                 positions = []
                 for idx, word in enumerate(words):
                     # Check if this word matches our target (ignoring case and punctuation)
-                    clean_word = ''.join(c.lower() for c in word if c.isalnum())
+                    clean_word = "".join(c.lower() for c in word if c.isalnum())
                     if clean_word == target_word.lower():
                         positions.append(idx)
                 
                 # Add a newline before this line if it's not the first line
                 if i > 0:
-                    self.original_text.insert(tk.END, '\n')
-                    self.modified_text.insert(tk.END, '\n')
+                    self.original_text.insert(tk.END, "\n")
+                    self.modified_text.insert(tk.END, "\n")
                     
                 if positions:
                     # Process the line with replacements
@@ -2049,13 +2070,13 @@ class WordAnalysisApp:
                         leading_punct = ""
                         trailing_punct = ""
                         
-                        # Extract leading punctuation (characters at start that aren't alphanumeric)
+                        # Extract leading punctuation (characters at start that aren"t alphanumeric)
                         i = 0
                         while i < len(original_word) and not original_word[i].isalnum():
                             leading_punct += original_word[i]
                             i += 1
                         
-                        # Extract trailing punctuation (characters at end that aren't alphanumeric)
+                        # Extract trailing punctuation (characters at end that aren"t alphanumeric)
                         i = len(original_word) - 1
                         while i >= 0 and not original_word[i].isalnum():
                             trailing_punct = original_word[i] + trailing_punct
@@ -2066,7 +2087,7 @@ class WordAnalysisApp:
                         # Preserve punctuation in the replacement
                         self.modified_text.insert(tk.END, leading_punct + replacement_word + trailing_punct, "highlight")
                         
-                        # Add a space if this isn't the last word
+                        # Add a space if this isn"t the last word
                         if pos < len(words) - 1:
                             self.original_text.insert(tk.END, " ")
                             self.modified_text.insert(tk.END, " ")
@@ -2111,11 +2132,11 @@ class WordAnalysisApp:
         ):
             try:
                 # Write the modified text to the selected file
-                with open(file_path, 'w') as file:
+                with open(file_path, "w", encoding="utf-8") as file:
                     file.write(self.modified_text.get(1.0, tk.END))
                 # Show success message with the saved file path
                 messagebox.showinfo("Success",
-                                    f"Modified text saved to '{file_path}'")
+                                    f'Modified text saved to "{file_path}"')
             except Exception as e:
                 # Handle any errors during file saving
                 messagebox.showerror("Error", f"Error saving file: {str(e)}")
@@ -2139,6 +2160,7 @@ class WordAnalysisApp:
             graph_height = float(self.graph_height_var.get())  # Get graph height
             title_fontsize = float(self.title_font_var.get())  # Get title font size
             label_fontsize = float(self.label_font_var.get())  # Get label font size
+            text_font_size = int(self.text_font_size_var.get())  # Get label font size
 
             # Check for non-positive numbers in the configuration settings
             if helpers.any(x <= 0 for x in [
@@ -2154,14 +2176,14 @@ class WordAnalysisApp:
             config.compare_file_display_line = compare_file_display
             config.graph_max_words = graph_max_words
             config.analyze_max_words = analyze_max_words
-            config.graph_figsize = (graph_width, graph_height)  # Update figure size
+            config.graph_figsize = [graph_width, graph_height]  # Update figure size
             config.graph_title_fontsize = title_fontsize
             config.graph_label_fontsize = label_fontsize
             config.graph_bar_color_single = self.bar_color_single_var.get()  # Update single color
             config.graph_bar_color_compare1 = self.bar_color_compare1_var.get()  # Update compare file 1 color
             config.graph_bar_color_compare2 = self.bar_color_compare2_var.get()  # Update compare file 2 color
-            config.text_font_size = self.text_font_size_var.get()
-            self.style.configure("TLabel", font=("Arial", config.text_font_size)) #set font size
+            config.text_font_size = text_font_size
+            self.apply_theme()
             config.save()  # Save to config file
 
             messagebox.showinfo("Configuration", "Settings saved successfully!")  # Notify successful save
@@ -2187,7 +2209,7 @@ class WordAnalysisApp:
         self.bar_color_compare1_var.set(str(config.graph_bar_color_compare1))  # Restore color for first compare file
         self.bar_color_compare2_var.set(str(config.graph_bar_color_compare2))  # Restore color for second compare file
         self.text_font_size_var.set(str(config.text_font_size))  # Restore color for second compare file
-        self.style.configure("TLabel", font=("Arial", config.text_font_size)) #restore font size
+        self.apply_theme()
 
     def reset_default_config(self):
         """
@@ -2308,7 +2330,7 @@ def configure():
             [*"Graph bar: set color of File", "\x1b[1;4;97m2\x1b[m", *f"'s bar (compare file) to {config.graph_bar_color_compare2 if unsaved_graph_bar_color_compare2 is None else f'{unsaved_graph_bar_color_compare2} (was {config.graph_bar_color_compare2})'}"],
             [*"Graph ", "\x1b[1;4;97mT\x1b[m", *f"itle: set font size to {config.graph_title_fontsize if unsaved_graph_title_fontsize is None else f'{unsaved_graph_title_fontsize} (was {config.graph_title_fontsize})'}"],
             [*"Graph ", "\x1b[1;4;97mL\x1b[m", *f"abel: set font size to {config.graph_label_fontsize if unsaved_graph_label_fontsize is None else f'{unsaved_graph_label_fontsize} (was {config.graph_label_fontsize})'}"],
-             [*"Text: set ", "\x1b[1;4;97mF\x1b[m", *f"ont size to {config.text_font_size if unsaved_text_font_size is None else f'{unsaved_text_font_size} (was {config.text_font_size})'}"],
+            [*"Text: set ", "\x1b[1;4;97mF\x1b[m", *f"ont size to {config.text_font_size if unsaved_text_font_size is None else f'{unsaved_text_font_size} (was {config.text_font_size})'}"],
             ["\x1b[1;4mS\x1b[m", *"ave and exit"],
             ["\x1b[1;4;97mE\x1b[m", *"xit without saving"]], _override=True, wrap_override=True)  # Formatting the options menu
         
@@ -2399,9 +2421,9 @@ def search_word(file_path:str, target_word:str):
     if content is not None:
         positions = search_word_position(clean_text(content), target_word)
         if positions:
-            print(f"The word '{target_word}' appears {len(positions)} times at positions: {", ".join(str(pos[0]) for pos in positions)}")
+            print(f'The word "{target_word}" appears {len(positions)} times at positions: {", ".join(str(pos[0]) for pos in positions)}')
             return
-    print(f"The word '{target_word}' was not found in the file.")
+    print(f'The word "{target_word}" was not found in the file.')
 
 
 def replace_word(file_path:str, target_word:str, replacement_word:str):
@@ -2426,12 +2448,12 @@ def replace_word(file_path:str, target_word:str, replacement_word:str):
 
     if content is not None:
         # Split by words while preserving newlines and spacing
-        lines = content.split('\n')
+        lines = content.split("\n")
         modified_lines = []
         
         for line in lines:
             if not line.strip():  # Preserve empty lines
-                modified_lines.append('')
+                modified_lines.append("")
                 continue
                 
             words = line.split()
@@ -2442,7 +2464,7 @@ def replace_word(file_path:str, target_word:str, replacement_word:str):
             positions = []
             for idx, word in enumerate(words):
                 # Check if this word matches our target (ignoring case and punctuation)
-                clean_word = ''.join(c.lower() for c in word if c.isalnum())
+                clean_word = "".join(c.lower() for c in word if c.isalnum())
                 if clean_word == target_word.lower():
                     positions.append(idx)
             
@@ -2475,7 +2497,7 @@ def replace_word(file_path:str, target_word:str, replacement_word:str):
                     # Insert the replacement with punctuation preserved
                     modified_line += leading_punct + replacement_word + trailing_punct
                     
-                    # Add a space if this isn't the last word
+                    # Add a space if this isn"t the last word
                     if pos < len(words) - 1:
                         modified_line += " "
                     
@@ -2491,24 +2513,24 @@ def replace_word(file_path:str, target_word:str, replacement_word:str):
             modified_lines.append(modified_line)
         
         # Join all lines back together with newlines preserved
-        modified_content = '\n'.join(modified_lines)
+        modified_content = "\n".join(modified_lines)
 
         print(f"\n\
 Original text:\n\
-{(content[:100])+'...' if len(content) > 100 else content}\n\
+{(content[:100])+"..." if len(content) > 100 else content}\n\
 \n\
 Modified text:\n\
-{modified_content[:100]+'...' if len(modified_content) > 100 else modified_content}"
+{modified_content[:100]+"..." if len(modified_content) > 100 else modified_content}"
               )
 
         save_option = input("\n\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).strip().lower()
-        if save_option == 'y':
+        if save_option == "y":
             new_file_path = input(
                 "Enter the path for the new file: ").strip()
             try:
-                with open(new_file_path, 'w', encoding='utf-8') as file:
+                with open(new_file_path, "w", encoding="utf-8") as file:
                     file.write(modified_content)
-                print(f"Modified text saved to '{new_file_path}'")
+                print(f'Modified text saved to "{new_file_path}"')
             except Exception as e:
                 print(f"Error saving file: {str(e)}")
 
@@ -2537,28 +2559,28 @@ def display_results(file_path:str, word_count:tuple[list, list], total_words:int
     hyphen_wrap = helpers.min(wrap, len(str(show_nums)) + 30)  # Text wrapping limit
 
     # Print header and statistics
-    print(f"\
+    print(f'\
 \n\
-{'=' * helpers.min(wrap, len(file_path) + 15)}\n\
-Analysis of '{file_path}':\n\
-{'=' * helpers.min(wrap, len(file_path) + 15)}\n\
+{"=" * helpers.min(wrap, len(file_path) + 15)}\n\
+Analysis of "{file_path}":\n\
+{"=" * helpers.min(wrap, len(file_path) + 15)}\n\
 Total words: {total_words}\n\
 Unique words: {unique_words}\n\
 \n\
 \n\
 Top {show_nums} Most Frequent Words:\n\
-{'-' * hyphen_wrap}")
+{"-" * hyphen_wrap}')
 
     # Print frequency-sorted words
     frequency_sorted = sort_by_frequency(word_count)  # Get list of words sorted by frequency
-    txt = "".join(f"{i + 1}. '{word}': {count} times\n" for i, (word, count) in enumerate(frequency_sorted[:show_nums]))  # Format output
+    txt = "".join(f'{i + 1}. "{word}": {count} times\n' for i, (word, count) in enumerate(frequency_sorted[:show_nums]))  # Format output
     print(txt)  # Display formatted word frequency information
 
     # Print alphabetically-sorted words
-    txt = f"\nFirst {show_nums} Words (Alphabetically):\n{'-' * hyphen_wrap}\n"  # Setup string for display
+    txt = f"\nFirst {show_nums} Words (Alphabetically):\n{"-" * hyphen_wrap}\n"  # Setup string for display
     alpha_sorted = sort_alphabetically(word_count)  # Get list of words sorted alphabetically
     for i, (word, count) in enumerate(alpha_sorted[:show_nums]):  # Iterate and format
-        txt += f"{i + 1}. '{word}': {count} times\n"  # Append formatted string
+        txt += f'{i + 1}. "{word}": {count} times\n'  # Append formatted string
     print(txt)  # Display the final formatted alphabetical listings
 
 def compare_files(file_path1:str, file_path2:str):
@@ -2606,12 +2628,12 @@ def compare_files(file_path1:str, file_path2:str):
 
     # Print heading for comparison results
     print(
-        f"\n{'=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\
-Comparison between '{file_path1}' and '{file_path2}':\n\
-{'=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\n\
+        f'\n{"=" * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\
+Comparison between "{file_path1}" and "{file_path2}":\n\
+{"=" * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\n\
 Similarity percentage of\n\
 text 1: {similarity[0]:.2f}%\n\
-text 2: {similarity[1]:.2f}%"
+text 2: {similarity[1]:.2f}%'
     )
 
     # Determine and display the plagiarism level using the similarity percentage
@@ -2694,30 +2716,30 @@ def mainCLI():
         if choice in "1234":
             txt_files = [file for file in os.listdir() if os.path.isfile(file) and file.endswith(".txt")]
             print("Text files in current directory:\n" + "\n".join(txt_files))
-            if choice == '1':
+            if choice == "1":
                 file_path = input("Enter the path to the text file: ").strip()  # Path for file
                 analyze_file(file_path)  # Call the analyze function for the selected file
 
-            elif choice == '2':
+            elif choice == "2":
                 file_path1 = input("Enter the path to the first text file: ").strip()  # Path for first file
                 file_path2 = input("Enter the path to the second text file: ").strip()  # Path for second file
                 compare_files(file_path1, file_path2)  # Call compare function on selected files
 
-            elif choice == '3':
+            elif choice == "3":
                 file_path = input("Enter the path to the text file: ").strip()
                 target_word = input("Enter the word to search for: ").strip()
                 search_word(file_path, target_word)
 
-            elif choice == '4':
+            elif choice == "4":
                 file_path = input("Enter the path to the text file: ").strip()
                 target_word = input("Enter the word to replace: ").strip()
                 replacement_word = input("Enter the replacement word: ").strip()
                 replace_word(file_path, target_word, replacement_word)
         
-        elif choice == '5':
+        elif choice == "5":
             configure()  # Call configuration function
 
-        elif choice == '6':
+        elif choice == "6":
             print("Thank you for using WAPDS!")
             break  # Exit the loop
 
@@ -2735,7 +2757,7 @@ if __name__ == "__main__":
         default="GUI")  # Default to GUI if not provided
     parser.add_argument(
         "GUI_window_size",
-        help=f'Enter in format of {some_text}, set the GUI window size and will be saved, defaults to last window size (currently {repr(config.window_size)})',
+        help=f"Enter in format of {some_text}, set the GUI window size and will be saved, defaults to last window size (currently {repr(config.window_size)})",
         nargs="?",  # Optional argument for GUI window size configuration
         default=config.window_size)  # Default size of the window
     args = parser.parse_args()  # Parse the command-line arguments
@@ -2759,7 +2781,7 @@ if __name__ == "__main__":
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults() #corrupted config
             else:
-                parser.error(f'Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}')
+                parser.error(f"Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}")
         config.window_size = GUI_window_size  # Set the new window size in the config
         config.save()  # Save the new configurations
         mainGUI()  # Launch GUI application
