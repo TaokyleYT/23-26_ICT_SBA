@@ -1,9 +1,9 @@
-from typing import Iterable  # Import Iterable types for type hinting
-import time  # For implementing delays in output
 import os  # For accessing and manipulating the file system
-import sys  # For system-specific parameters and functions
-import string  # For string constants and character classifications
 import re  # For regular expression operations for string matching
+import string  # For string constants and character classifications
+import sys  # For system-specific parameters and functions
+import time  # For implementing delays in output
+from typing import Iterable  # Import Iterable types for type hinting
 
 # Platform-specific imports for terminal control to change input mode and handle character printing
 if sys.platform == "win32":
@@ -13,19 +13,22 @@ else:
     import termios  # For controlling terminal settings on Unix/Linux
     import tty  # For setting terminal to character-by-character input mode
 
-def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
-                   end: str = "\n",
-                   delay: float = 0.01,
-                   line_offset: int = 1,
-                   _override: bool = False,
-                   wrap_override: bool = False) -> None:
+
+def animated_print(
+    txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
+    end: str = "\n",
+    delay: float = 0.01,
+    line_offset: int = 1,
+    _override: bool = False,
+    wrap_override: bool = False,
+) -> None:
     """
     Prints text with an animation effect, simulating a typewriter-style output.
 
     This function displays text character by character with a delay between each character,
     creating a typewriter-like animation effect. It handles multi-line text, text wrapping,
     and preserves ANSI escape sequences for colored or formatted text.
-    
+
     printing steps:
     repeat:
         ↟ to the top
@@ -33,7 +36,7 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
             → prints ← ↲
         until reach line that is not yet at their turn to print or after last line
     until everything is printed out
-    
+
     per iteration:
     ```
     ↑→→→
@@ -44,22 +47,22 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
 
     Warning: Multi-line text including ANSI codes may not output as expected, as
     full support would require significantly more complex implementation.
-    
+
     More Warning: line wrapping, despite implemented, seldom fail for whatever reason
     and I can't seem to fix it without breaking something else.
     Please use a bigger terminal or a smaller font size to avoid breaking everything that is being outputted
 
     Args:
-        txt (str | Iterable[str] | Iterable[Iterable[str]]): 
+        txt (str | Iterable[str] | Iterable[Iterable[str]]):
             The text to print. Can be a single string, a list of strings, or a nested list of strings.
-        end (str): 
+        end (str):
             A string to print after the entire text has been animated (default: newline).
-        delay (float): 
+        delay (float):
             The time in seconds between each character print (default: 0.01s).
-        line_offset (int): 
+        line_offset (int):
             The number of lines to offset the text vertically for animation (default: 1).
-        _override (bool): 
-            An internal parameter for optimization during recursion to override certain type checks. 
+        _override (bool):
+            An internal parameter for optimization during recursion to override certain type checks.
             Not intended for direct use.
         wrap_override (bool):
             When True, enables line wrapping even when _override is True (default: False).
@@ -84,19 +87,27 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
         print(end=end)  # Print the "end" string (newline or other)
         return  # Exit function to avoid additional processing
 
-
     # Process and validate the input text
     if all(
-        (all(isinstance(subchar, str) for subchar in char)  # Ensure nested strings in iterables
-         if (isinstance(char, (list, tuple)) and _override)  # Handling nested iterables
-         else isinstance(char, str)) 
-        for char in txt):  # Ensure all elements are strings
+        (
+            all(
+                isinstance(subchar, str) for subchar in char
+            )  # Ensure nested strings in iterables
+            if (
+                isinstance(char, (list, tuple)) and _override
+            )  # Handling nested iterables
+            else isinstance(char, str)
+        )
+        for char in txt
+    ):  # Ensure all elements are strings
         if all(len(char) == 1 for char in txt):  # If all items are single characters
-            txt = (''.join(txt)).split('\n')  # Merge the txt and split it into lines
+            txt = ("".join(txt)).split("\n")  # Merge the txt and split it into lines
         else:
             txt = list(txt)  # Convert txt to a list for processing
     else:
-        raise TypeError("txt must be a str or iterable of str")  # Raise an error for incorrect types
+        raise TypeError(
+            "txt must be a str or iterable of str"
+        )  # Raise an error for incorrect types
 
     # Get terminal size for proper text wrapping
     term_size = os.get_terminal_size()
@@ -104,33 +115,37 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
 
     # Process each line for wrapping and animation
     for line in txt:
-        if _override and not wrap_override:  # Skip processing if override is active and wrap_override is False
+        if (
+            _override and not wrap_override
+        ):  # Skip processing if override is active and wrap_override is False
             txt_lst = txt  # Skip additional processing
             break
         if not line:
             txt_lst.append("")  # Handle empty line
             continue  # Continue to next line
-        
+
         if _override and wrap_override:
             # Handle case where line is already a list of characters
             txt_lst_temp = []  # Temporary list for wrapped characters
             current_line = []  # Current line being built
-            
+
             for char in line:
                 current_line.append(char)
                 if len(current_line) >= term_size.columns - 1:
                     txt_lst_temp.append(current_line)
                     current_line = []
-            
+
             if current_line:  # Add any remaining characters
                 txt_lst_temp.append(current_line)
-            
+
             txt_lst.extend(txt_lst_temp)  # Add wrapped lines to main list
         else:
             # Split line by spaces while excluding ANSI escape sequences
             temp = split_exclude_ANSI(line, " ")
-            words: list[str] = [(item if i == len(temp)-1 else item + " ")
-                                for i, item in enumerate(temp)]  # Append space to all but last word
+            words: list[str] = [
+                (item if i == len(temp) - 1 else item + " ")
+                for i, item in enumerate(temp)
+            ]  # Append space to all but last word
             index: int = 0  # Initialize index for processing words
 
             # Wrap text according to terminal width
@@ -138,8 +153,9 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                 if len(words[index]) > term_size.columns - 1:
                     # Break long words that exceed terminal width into chunks
                     for wrapped_line in (
-                            line[i:i + term_size.columns - 1]
-                            for i in range(0, len(line), term_size.columns - 1)):
+                        line[i : i + term_size.columns - 1]
+                        for i in range(0, len(line), term_size.columns - 1)
+                    ):
                         txt_lst.append(wrapped_line)  # Append wrapped line to list
                     index += 1
                     continue
@@ -152,57 +168,70 @@ def animated_print(txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
                     txt_lst[-1] += word
                 else:
                     break  # Exit while loop if all words processed
-    
+
     if not _override:
         # Split each processed line into characters while preserving ANSI codes
         txt_lst = [split_exclude_ANSI(line) for line in txt_lst]
 
     # Truncate text if it exceeds terminal height
-    txt_lst, truncated = txt_lst[:term_size.lines - 1], txt_lst[term_size.lines - 1:]
+    txt_lst, truncated = txt_lst[: term_size.lines - 1], txt_lst[term_size.lines - 1 :]
 
     # Find the maximum line length for animation timing
     max_wordlen = max(len(line) for line in txt_lst)
 
     # Print spaces for the animation based on the number of lines
-    print('\n' * (len(txt_lst)), end='\x1b[A')  # Move cursor up to start animation
-    
+    print("\n" * (len(txt_lst)), end="\x1b[A")  # Move cursor up to start animation
+
     # Animate the text character by character
     for i in range(max_wordlen + line_offset * len(txt_lst)):
         # Move cursor up to the top of the animation output
-        print("\x1b[A" * (len(txt_lst) - 1), end='')
+        print("\x1b[A" * (len(txt_lst) - 1), end="")
         time.sleep(delay)  # Pause between characters
         for j, line in enumerate(txt_lst):
             current_char = j * line_offset + 1  # Track the current character position
             # Update lines that need to be redrawn
-            if (i - current_char >= 0 and i - current_char < len(line)):
+            if i - current_char >= 0 and i - current_char < len(line):
                 # Print current character with front effect
                 print(
-                    "\x1b[" + str(current_char) + "D" +  # Move cursor left to overwrite character
-                    line[i - current_char] +  # Print the current character
-                    "\x1b[" + str(current_char) + "C" +  # Move cursor right
-                    "\b\x1b[B",  # Move cursor to the next line
-                    end='',
-                    flush=True)  # Ensure immediate printing
+                    "\x1b["
+                    + str(current_char)
+                    + "D"  # Move cursor left to overwrite character
+                    + line[i - current_char]  # Print the current character
+                    + "\x1b["
+                    + str(current_char)
+                    + "C"  # Move cursor right
+                    + "\b\x1b[B",  # Move cursor to the next line
+                    end="",
+                    flush=True,
+                )  # Ensure immediate printing
             else:
-                print("\x1b[B", end='', flush=True)  # Move line without printing
-        print("\x1b[A\x1b[C", end='', flush=True)  # Move cursor back up for the next iteration
+                print("\x1b[B", end="", flush=True)  # Move line without printing
+        print(
+            "\x1b[A\x1b[C", end="", flush=True
+        )  # Move cursor back up for the next iteration
 
     time.sleep(delay)  # Additional delay to complete character output
     # Reset cursor position for any following outputs
-    print("\x1b[" + str(line_offset * len(txt_lst)) + "D",
-          end='\n' if truncated else '',
-          flush=True)
+    print(
+        "\x1b[" + str(line_offset * len(txt_lst)) + "D",
+        end="\n" if truncated else "",
+        flush=True,
+    )
 
     # Recursively handle any truncated text for complete output
-    animated_print(truncated, end, delay, line_offset, _override=True, wrap_override=wrap_override)
+    animated_print(
+        truncated, end, delay, line_offset, _override=True, wrap_override=wrap_override
+    )
     return
 
 
-def animated_input(prompt: str = "",
-                   delay: float = 0.01,
-                   line_offset: int = 1,
-                   single_letter: bool = False,
-                   _log: bool = False) -> str:
+def animated_input(
+    prompt: str = "",
+    delay: float = 0.01,
+    line_offset: int = 1,
+    single_letter: bool = False,
+    _log: bool = False,
+) -> str:
     """
     Animated version of input() that displays a prompt with animation effects.
 
@@ -212,20 +241,20 @@ def animated_input(prompt: str = "",
 
     Warning: Multi-line prompts including ANSI codes may not output as expected
     due to implementation complexity.
-    
+
     Note that this input does not support multi-line input, just like the original one
 
     Args:
-        prompt (str): 
+        prompt (str):
             Text to display before the input field.
-        delay (float): 
+        delay (float):
             Time in seconds between character animations (default: 0.01s).
-        line_offset (int): 
+        line_offset (int):
             Number of lines to offset the text vertically (default: 1).
-        single_letter (bool): 
+        single_letter (bool):
             Whether to accept a single letter input and return immediately (default: False).
             If True, skips animation and returns after a single keypress.
-        _log (bool): 
+        _log (bool):
             Whether to log input for debugging purposes (internal use, default: False).
             When enabled, writes input events to "input_log.txt".
 
@@ -249,7 +278,9 @@ def animated_input(prompt: str = "",
     else:  # Unix/Linux implementation
         stdin = sys.stdin.fileno()  # Get standard input file descriptor
         original_term = termios.tcgetattr(stdin)  # Get current terminal attributes
-        tty.setcbreak(stdin, termios.TCSANOW)  # Set terminal to raw mode for character input
+        tty.setcbreak(
+            stdin, termios.TCSANOW
+        )  # Set terminal to raw mode for character input
 
     # Check if single letter input mode is enabled
     if single_letter:
@@ -288,11 +319,15 @@ def animated_input(prompt: str = "",
         result += sys.stdin.read(1)  # Append additional read characters
 
     # Parse cursor position response from terminal
-    reg = re.match(r"^\x1b\[(\d*);(\d*)R", result)  # Extract row and column from ANSI response
+    reg = re.match(
+        r"^\x1b\[(\d*);(\d*)R", result
+    )  # Extract row and column from ANSI response
     ptr = int(reg.groups()[1]) if reg else 1  # Get current cursor position
 
     # Prepare character sets for animation
-    printables = [" "] + list(string.printable)[:-6]  # Include printable ASCII characters
+    printables = [" "] + list(string.printable)[
+        :-6
+    ]  # Include printable ASCII characters
     output = sys.stdout.write  # Alias for writing output
 
     # Read input character by character until the Enter key
@@ -319,11 +354,13 @@ def animated_input(prompt: str = "",
                     with open("input_log.txt", "a") as f:
                         f.write("del\n")
                 result = result[:-1]  # Remove last character from result
-            
+
                 if ptr % columns != 0:  # If not at start of the line
                     output("\b \b")  # Erase character on same line
                 else:  # If at the start of the line
-                    output(f"\x1b[F\x1b[{columns-1}G\b \b")  # Move up one line and back to the last character
+                    output(
+                        f"\x1b[F\x1b[{columns-1}G\b \b"
+                    )  # Move up one line and back to the last character
 
                 sys.stdout.flush()  # Show updated result immediately
                 ptr -= 1  # Move cursor back
@@ -332,19 +369,21 @@ def animated_input(prompt: str = "",
                 with open("input_log.txt", "a") as f:
                     f.write(f"add {repr(char)} \n")
             result += char  # Add character to result
-            
+
             if ptr % columns == 0:  # If at end of terminal width
                 output(" \n")  # Create a new line to continue input
-            
+
             # Handle ANSI escape sequences explicitly here
             if char == "\x1b":  # Start of ANSI escape sequence
                 ansi = char  # Store starting ANSI sequence
             elif ansi:  # Continue building ANSI sequence
                 ansi += char
-            
+
             # Determine animation length based on character type
             if char in printables:  # If character is printable
-                end_cyc = linear_search(printables, char) + 1  # Index for animation limit
+                end_cyc = (
+                    linear_search(printables, char) + 1
+                )  # Index for animation limit
             elif char in "\0 \b\n" or ansi:  # Handle special characters and ANSI
                 end_cyc = 0
             else:  # If not special
@@ -353,7 +392,9 @@ def animated_input(prompt: str = "",
             # Animation effect: cycle through characters
             for c in printables[:end_cyc]:  # Show each character in printables
                 output(ansi)  # Print any ANSI information
-                output(c + "\b")  # Show character then backspace to show just the animated char
+                output(
+                    c + "\b"
+                )  # Show character then backspace to show just the animated char
                 sys.stdout.flush()  # Prompt for immediate output
                 time.sleep(delay / 10)  # Shorter sleep for quicker animation
 
@@ -388,28 +429,28 @@ def animated_input(prompt: str = "",
     return result  # Return the string input by the user
 
 
-def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = False) -> list:
+def quick_sort(iterable: Iterable, /, *, key=None, reverse: bool = False) -> list:
     """
     Sorts a list using the quick sort algorithm.
-    
+
     This is a recursive implementation of the quick sort algorithm that uses
     the first element as the pivot. It creates new lists rather than sorting in-place.
 
     Args:
-        Iterable (Iterable): 
+        Iterable (Iterable):
             The list or sequence to sort.
         key (callable):
             A key function to extract a comparison key from each element (default: None).
-        reverse (bool): 
+        reverse (bool):
             Sort in descending order if True, otherwise in ascending order (default: False).
-        
+
     Returns:
         list: A new sorted list.
-        
+
     Time Complexity:
         - Average case: O(n log n)
         - Worst case: O(n^2) when the list is already sorted
-        
+
     Space Complexity:
         O(n) due to the creation of new lists during recursion.
     """
@@ -418,7 +459,7 @@ def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = False) -> l
         return iterable
 
     pivot = iterable[0]  # Choose the first element as the pivot
-    comp_pivot = pivot if key == None else key(pivot)
+    comp_pivot = pivot if key is None else key(pivot)
     less = []  # List to hold elements less than the pivot
     more = []  # List to hold elements greater than or equal to the pivot
 
@@ -432,43 +473,46 @@ def quick_sort(iterable: Iterable, /, *, key = None, reverse: bool = False) -> l
                 more.append(item)  # Add to "more" otherwise
         else:
             if comp_item > comp_pivot:
-                less.append(item)  # Add to "less" if it's larger than the pivot (cuz reverse)
+                less.append(
+                    item
+                )  # Add to "less" if it's larger than the pivot (cuz reverse)
             else:
                 more.append(item)  # Add to "more" otherwise
 
     # Recursively sort both partitions and combine them
     # Reverse the result if descending order is requested
-    return (list(quick_sort(less, reverse=reverse)) + [pivot] +
-            list(quick_sort(more, reverse=reverse)))
+    return (
+        list(quick_sort(less, reverse=reverse))
+        + [pivot]
+        + list(quick_sort(more, reverse=reverse))
+    )
 
 
-def linear_search(iterable: list,
-                  value,
-                  start=0,
-                  stop=9223372036854775807,
-                  /):  # The '/' indicates that the parameters to the left cannot be passed as keyword arguments.
+def linear_search(
+    iterable: list, value, start=0, stop=9223372036854775807, /
+):  # The '/' indicates that the parameters to the left cannot be passed as keyword arguments.
     """
     Performs a linear search for a value in a list.
-    
+
     Sequentially checks each element in the list until it finds a match or reaches the end.
     Allows specifying a range to search within.
 
     Args:
-        iterable (list): 
+        iterable (list):
             The list to search in.
-        value: 
+        value:
             The value to search for.
-        start (int): 
+        start (int):
             Starting index for the search (default: 0).
-        stop (int): 
+        stop (int):
             Ending index (exclusive) for the search
             (default: 9223372036854775807, which is 2^63-1,
             aka largest signed integer in 64 bit system, I copied it straight out from list.index docs,
             to search the entire list).
-        
+
     Returns:
         int: Index of the first occurrence of `value` if found, -1 otherwise.
-        
+
     Time Complexity:
         O(n) where n is the number of elements in the specified search range.
     """
@@ -483,26 +527,26 @@ def linear_search(iterable: list,
 
 
 def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
-    """
+    r"""
     Splits a string by separator(s) while preserving ANSI escape sequences.
-    
+
     This functions similar to `str.split()` but retains ANSI escape codes within each
     resulting substring. If the separator is empty, it splits into individual characters
     while keeping ANSI sequences together.
 
     Args:
-        text (str): 
+        text (str):
             The string to split.
-        sep (str | list[str] | tuple[str]): 
+        sep (str | list[str] | tuple[str]):
             Separator(s) to split by. Can be a string or an iterable (list or tuple) of strings.
             If empty string, it splits into individual characters.
-            
+
     Returns:
         list[str]: A list of strings after splitting by separator(s).
-        
+
     Raises:
         TypeError: If `sep` is not a string, a list of strings, or a tuple of strings.
-        
+
     Example:
         >>> split_exclude_ANSI("\x1b[31mHello\x1b[0m World", "")
         ['\x1b[31m', 'Hello, '\x1b[0m', 'World']
@@ -531,7 +575,7 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
 
     while i < len(text):
         # Check if entering an ANSI escape sequence
-        if text[i] == '\x1b' and i + 1 < len(text) and text[i + 1] == '[':
+        if text[i] == "\x1b" and i + 1 < len(text) and text[i + 1] == "[":
             in_ansi = True  # Set flag indicating we are inside an ANSI sequence
             ansi_start = i  # Mark the start index of the ANSI sequence
 
@@ -546,7 +590,10 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
                 i += 1  # Increment index to read next character
             # Check for any specified separator matches
             for separator in separators:
-                if i + len(separator) <= len(text) and text[i:i + len(separator)] == separator:
+                if (
+                    i + len(separator) <= len(text)
+                    and text[i : i + len(separator)] == separator
+                ):
                     result.append(text[start:i])  # Append current segment
                     i += len(separator) - 1  # Move index past the separator
                     start = i + 1  # Update start for the next segment
@@ -555,7 +602,7 @@ def split_exclude_ANSI(text: str, sep: str | list[str] | tuple[str] = ""):
         i += 1  # Advance the iterator
 
     # Add the last segment post-loop
-    result.append(text[start:])  
+    result.append(text[start:])
 
     # Remove any trailing empty strings in the result
     while result and result[-1] == "":
@@ -568,18 +615,18 @@ def max(*args):
     """
     Returns the largest item in an iterable or the largest of multiple arguments.
 
-    This function reimplements the built-in max() to allow use without directly importing 
+    This function reimplements the built-in max() to allow use without directly importing
     built-in functions or creating excessively large loops.
 
     Args:
         *args: Accepts either a single iterable or multiple arguments to compare.
-        
+
     Returns:
         The largest item among those provided.
-        
+
     Raises:
         TypeError: If no arguments are provided.
-        
+
     Example:
         >>> max(1, 2, 3)
         3
@@ -587,14 +634,16 @@ def max(*args):
         3
     """
     if not args:  # Check if no arguments were received
-        raise TypeError("max expected at least 1 argument, 0 received") 
-        
+        raise TypeError("max expected at least 1 argument, 0 received")
+
     elif len(args) == 1:  # Handle single iterable input
-        args = args[0] 
+        args = args[0]
         if isinstance(args, Iterable):  # Convert to list if it's an iterable
             args = list(args)
         else:
-            return args  # Directly return the value if it's a single non-iterable argument
+            return (
+                args  # Directly return the value if it's a single non-iterable argument
+            )
 
     maximum = args[0]  # Initialize maximum with the first argument
     for n in args:  # Loop to find maximum
@@ -607,18 +656,18 @@ def min(*args):
     """
     Returns the smallest item in an iterable or the smallest of multiple arguments.
 
-    This function reimplements the built-in min() to allow use without directly importing 
+    This function reimplements the built-in min() to allow use without directly importing
     built-in functions or creating excessively large loops.
 
     Args:
         *args: Accepts either a single iterable or multiple arguments to compare.
-        
+
     Returns:
         The smallest item among those provided.
-        
+
     Raises:
         TypeError: If no arguments are provided.
-        
+
     Example:
         >>> min(1, 2, 3)
         1
@@ -633,7 +682,9 @@ def min(*args):
         if isinstance(args, Iterable):  # Convert to list if it's an iterable
             args = list(args)
         else:
-            return args  # Directly return the value if it's a single non-iterable argument
+            return (
+                args  # Directly return the value if it's a single non-iterable argument
+            )
 
     minimum = args[0]  # Initialize minimum with the first argument
     for n in args:  # Loop to find minimum
@@ -646,7 +697,7 @@ def all(*args):
     """
     Returns True if all elements of the iterable are true (or if iterable is empty).
 
-    This function reimplements the built-in all() to allow use without importing 
+    This function reimplements the built-in all() to allow use without importing
     built-in functions or creating excessively large loops.
 
     Args:
@@ -663,7 +714,7 @@ def all(*args):
     """
     if not args:  # Check if no arguments were received
         return True  # Return True since empty iterables are considered "all true"
-        
+
     elif len(args) == 1:  # Handle single iterable input
         args = args[0]
         if isinstance(args, Iterable):  # Convert iterable to list
@@ -681,15 +732,15 @@ def any(*args):
     """
     Returns True if any element of the iterable is true.
 
-    This function reimplements the built-in any() to allow use without directly importing 
+    This function reimplements the built-in any() to allow use without directly importing
     built-in functions or creating excessively large loops. If the iterable is empty, returns False.
 
     Args:
         *args: Accepts either a single iterable or multiple arguments to check.
-        
+
     Returns:
         bool: True if any element is true, False otherwise.
-        
+
     Example:
         >>> any([False, False, True])
         True
@@ -697,8 +748,10 @@ def any(*args):
         False
     """
     if not args:  # Check if no arguments were received
-        return False  # Return False since empty iterables are considered "no true values"
-        
+        return (
+            False  # Return False since empty iterables are considered "no true values"
+        )
+
     elif len(args) == 1:  # Handle single iterable input
         args = args[0]
         if isinstance(args, Iterable):  # Convert iterable to list

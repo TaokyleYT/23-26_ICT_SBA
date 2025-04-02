@@ -1,17 +1,28 @@
 import os  # Import module for terminal size detection and file operations
-import helpers  # Import custom helper functions that avoid using built-in functions
-import tkinter as tk  # Import tkinter for GUI implementation
 import re  # Import regex module for pattern matching
-# (I heard that GUI use of it is fine probably)
-from tkinter import ttk, filedialog, messagebox  # Import some tkinter components specificly
+
+# I heard that I can use regex for GUI stuff(?)
+import tkinter as tk  # Import tkinter for GUI implementation
+from tkinter import (  # Import some tkinter components specificly
+    filedialog,
+    messagebox,
+    ttk,
+)
+
+import helpers  # Import custom helper functions that avoid using built-in functions
+
 try:
-    from nltk_plagiarism import get_similarity_score # For advance stuff
+    from nltk_plagiarism import get_similarity_score  # For advance stuff
 except (ImportError, ModuleNotFoundError):
     get_similarity_score = None  # Set get_similarity_score to None so we can check if the entirety of nltk is available later
 try:
     import matplotlib.pyplot as plt  # Import matplotlib for data visualization
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # For embedding matplotlib in tkinter
-    from matplotlib.backends._backend_tk import NavigationToolbar2Tk  # For embedding toolbar for matplotlib
+    from matplotlib.backends._backend_tk import (
+        NavigationToolbar2Tk,  # For embedding toolbar for matplotlib
+    )
+    from matplotlib.backends.backend_tkagg import (
+        FigureCanvasTkAgg,  # For embedding matplotlib in tkinter
+    )
 except (ImportError, ModuleNotFoundError):
     plt = None  # Set plt to None so we can check if matplotlib is available later
 import argparse  # For command-line argument parsing
@@ -36,27 +47,27 @@ class config:
         graph_bar_color_single (str): Color for bars in single file analysis
         graph_bar_color_compare1 (str): Color for bars of first file in comparison
         graph_bar_color_compare2 (str): Color for bars of second file in comparison
-        graph_title_fontsize (int): Font size for graph titles
-        graph_label_fontsize (int): Font size for graph labels
+        graph_title_fontsize (float): Font size for graph titles
+        graph_label_fontsize (float): Font size for graph labels
         dark_mode (bool): Whether dark mode is enabled
         text_font_size (int): Font size for text labels
     """
 
     # Default values for CLI and GUI settings
     DEFAULTS = {"CLI": {
-        "single_file_display_line": 10, 
+        "single_file_display_line": 10,
         "compare_file_display_line": 5
                     },
                 "GUI": {
-        "window_size": "1000x700", 
-        "graph_max_words": "10", 
-        "graph_figsize": [5, 4], 
-        "analyze_max_words": 5, 
-        "graph_bar_color_single": "skyblue", 
-        "graph_bar_color_compare1": "skyblue", 
-        "graph_bar_color_compare2": "lightgreen", 
-        "graph_title_fontsize": 12, 
-        "graph_label_fontsize": 10, 
+        "window_size": "1000x700",
+        "graph_max_words": 10,
+        "graph_figsize": [5.0, 4.0],
+        "analyze_max_words": 5,
+        "graph_bar_color_single": "skyblue",
+        "graph_bar_color_compare1": "skyblue",
+        "graph_bar_color_compare2": "lightgreen",
+        "graph_title_fontsize": 12.0,
+        "graph_label_fontsize": 10.0,
         "dark_mode": False, 
         "text_font_size": 10
                     }
@@ -77,12 +88,16 @@ class config:
             graph_bar_color_single = str(config_data[7])  # Bar color for single analysis
             graph_bar_color_compare1 = str(config_data[8])  # First file comparison bar color
             graph_bar_color_compare2 = str(config_data[9])  # Second file comparison bar color
-            graph_title_fontsize = int(config_data[10])  # Font size for graph titles
-            graph_label_fontsize = int(config_data[11])  # Font size for graph labels
+            graph_title_fontsize = float(config_data[10])  # Font size for graph titles
+            graph_label_fontsize = float(config_data[11])  # Font size for graph labels
             dark_mode = bool(int(config_data[12]))  # Dark mode setting (stored as 0/1)
             text_font_size = int(config_data[13])  # Font size for text labels
 
+    # trunk-ignore(ruff/E722)
     except:
+        # Uses bare except because I don't want the program to halt
+        # for whatever unexpected error (i.e. UnicodeDecodeError, TypeError, name any) caused by the config file
+
         # Use default settings if the configuration file doesn"t exist or is corrupted
         single_file_display_line = DEFAULTS["CLI"]["single_file_display_line"]
         compare_file_display_line = DEFAULTS["CLI"]["compare_file_display_line"]
@@ -314,7 +329,7 @@ def search_word_position(text:str, target_word:str, regex:bool = False) -> list[
 
 def sort_alphabetically(word_count:tuple[list, list]) -> list[tuple[str, int],]:
     """
-    Sort words alphabetically using quick_sort from helpers.
+    Sort words alphabetically using quick sort from helpers.
 
     Args:
         word_count (tuple): A tuple of (words, frequencies) as returned by count_words()
@@ -1758,8 +1773,8 @@ class WordAnalysisApp:
         
         # Sort common words by frequency in the first file
         all_common_words_sorted = helpers.quick_sort(all_common_words, 
-                                        key=lambda word: word_count1[1][helpers.linear_search(word_count1[0], word)] 
-                                        if word in word_count1[0] else 0)
+                                        key=lambda word: word_count1[1][helpers.linear_search(word_count1[0], word)] if word in word_count1[0] else 0,
+                                        reverse=True)
         
         # Limit to a reasonable number of words to keep the graph readable
         # For multiple reference files, we need to be more selective
@@ -1775,7 +1790,7 @@ class WordAnalysisApp:
         # If there are too many reference files, limit the display
         if num_plots > 10:
             # Sort reference files by similarity score and take top 10
-            indices = helpers.quick_sort(range(len(similarity_scores)), key=lambda i: similarity_scores[i])[:10]
+            indices = helpers.quick_sort(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)[:10]
             reference_word_counts = [reference_word_counts[i] for i in indices]
             reference_file_names = [reference_file_names[i] for i in indices]
             similarity_scores = [similarity_scores[i] for i in indices]
@@ -2689,10 +2704,17 @@ def mainGUI():
     """
     root = tk.Tk()  # Create main tkinter window
     app = WordAnalysisApp(root, config.window_size)  # Instantiate GUI
-    #app is unused because tkinter take care of all the stuff
     
     # Begin the main event loop
-    root.mainloop()
+    try:
+        root.mainloop()
+    except KeyboardInterrupt:
+        if app.window_size is not None:
+                config.window_size = app.window_size
+                config.save()
+        root.bind("<Configure>", lambda:None)
+        root.destroy()
+        raise KeyboardInterrupt from None
 
 def mainCLI():
     """
@@ -2794,7 +2816,8 @@ if __name__ == "__main__":
         mainGUI()  # Launch GUI application
     elif args.run_type == "CLI":
         # make print and input animated, looks fancy, yet creates inconvenience lol
-        from helpers import animated_print as print, animated_input as input
+        from helpers import animated_input as input
+        from helpers import animated_print as print
         mainCLI()  # Launch CLI application
     else:
         # If an invalid run type is provided, inform the user

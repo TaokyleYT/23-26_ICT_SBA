@@ -4,7 +4,6 @@
 
 wooooo my SBA for absolutely no reason (I mean I have reason, which is DSE, well idk aaaaaaaa)
 
-
 ## Word Analysis and Plagiarism Detection System
 
 ### Task 1 (Design & Implementation)
@@ -33,20 +32,20 @@ Write a Python program to analyze articles from text files. The program should:
 (d) Compare two articles and calculate similarity percentage.
 
 - Design an algorithm to compare word frequencies between two text files.
-- Calculate the percentage of similarity using a formula (e.g. (common_words / total_unique_words) * 100).
+- Calculate the percentage of similarity using a formula (e.g. (common_words / total_unique_words) \* 100).
 
 (e) Use stepwise refinement to describe the algorithm.
 
 - Break down the process into modular steps (e.g. file input, data cleaning, counting, sorting, comparison).
 
 \
-*You may want to consider some of the following key factors when designing the program:*\
+_You may want to consider some of the following key factors when designing the program:_\
 \
-*Use functions to ensure a modular approach (e.g. read_file(), count_words(), calculate_similarity()).*\
-*Validate input files (e.g. check if files exist and are non-empty).*\
-*Handle errors gracefully (e.g. invalid file paths, empty files).*\
-*Ensure clear output (e.g. display word counts, sorted lists, similarity percentage).*\
-*Search for a target word, and/or replace it with another word.*
+_Use functions to ensure a modular approach (e.g. read_file(), count_words(), calculate_similarity())._\
+_Validate input files (e.g. check if files exist and are non-empty)._\
+_Handle errors gracefully (e.g. invalid file paths, empty files)._\
+_Ensure clear output (e.g. display word counts, sorted lists, similarity percentage)._\
+_Search for a target word, and/or replace it with another word._
 
 \
 **Deliverables:**
@@ -54,9 +53,9 @@ Write a Python program to analyze articles from text files. The program should:
 - Python program code.
 - Documentation explaining your design choices and algorithms.
 
-*Notes:*\
-*Ensure your program handles edge cases (e.g. empty files, non-text formats).*\
-*Focus on readability and reusability (e.g. add comments, avoid hard-coded paths).*
+_Notes:_\
+_Ensure your program handles edge cases (e.g. empty files, non-text formats)._\
+_Focus on readability and reusability (e.g. add comments, avoid hard-coded paths)._
 
 ### Task 2 (Testing & Evaluation)
 
