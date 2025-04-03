@@ -1,7 +1,8 @@
 import os  # Import module for terminal size detection and file operations
-import re  # Import regex module for pattern matching
 
 # I heard that I can use regex for GUI stuff(?)
+import re  # Import regex module for pattern matching
+
 import tkinter as tk  # Import tkinter for GUI implementation
 from tkinter import (  # Import some tkinter components specificly
     filedialog,
@@ -2310,7 +2311,7 @@ def configure():
     - Maximum words for graph display
     - Figure size for graphs
     - Colors for graph bars
-    - Font sizes for titles and labels
+    - Font sizes for titles, labels, and text
     """
     # Initialize unsaved configuration values
     unsaved_single_file_display_line = None

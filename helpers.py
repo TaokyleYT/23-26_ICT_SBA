@@ -442,7 +442,7 @@ def quick_sort(iterable: Iterable, /, *, key=None, reverse: bool = False) -> lis
         key (callable):
             A key function to extract a comparison key from each element (default: None).
         reverse (bool):
-            Sort in descending order if True, otherwise in ascending order (default: False).
+            reverse flag can be set to request the result in descending order.
 
     Returns:
         list: A new sorted list.
