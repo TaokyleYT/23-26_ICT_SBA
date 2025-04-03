@@ -176,3 +176,22 @@ note: can use matplotlib or ascii graph to show result instead of numbers
 
 should I train a big ahh neural network for plagiarism? idk it seemed a bit overkill lol
 ```
+
+## WOOO SOME BUGS I AINT FIXIN FOR NOTHIN
+
+```none
+CLI:
+replace empty space don't work??
+GUI:
+reset to default also reset theme, but checkbox not changed
+after changing settings, nav bar become 2 woooow
+(remove the navbar its useless bruh)
+multiple file selected to compare, nltk die die, file dont select first only
+```
+
+## WOOO SOME FIXED BUGS LUO LAM AINT FINDIN FOR NOTHIN
+
+```none
+CLI:
+font size setting in CLI shows graph label instead :/
+```

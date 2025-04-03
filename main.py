@@ -230,7 +230,7 @@ def clean_text(text:str|None) -> str:
     # Replace any character that isn"t a letter, digit, or space with a space
     # This preserves word boundaries while removing punctuation
     cleaned_text = "".join((char if "a" <= char <= "z" or "0" <= char <= "9"
-                            or char == " " else " ") for char in text.lower())
+                            or char == " " or char == "-" else " ") for char in text.lower())
 
     # Remove extra spaces (replace double spaces with single until no doubles remain)
     while "  " in cleaned_text:
@@ -2384,7 +2384,7 @@ def configure():
         elif config_option == "L":
             unsaved_graph_label_fontsize = configure_test_input("Enter font size of the figure's labels", float, str(config.graph_label_fontsize))
         elif config_option == "F":
-            unsaved_text_font_size = configure_test_input("Enter font size of the text labels", int, str(config.graph_label_fontsize))
+            unsaved_text_font_size = configure_test_input("Enter font size of the text labels", int, str(config.text_font_size))
         elif config_option in "ES":  # If user selects Exit or Save, break the loop
             break
         else:
