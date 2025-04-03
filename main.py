@@ -221,7 +221,7 @@ def clean_text(text:str|None) -> str:
 
     This function normalizes text by:
     1. Converting to lowercase
-    2. Replacing all non-alphanumeric characters with spaces
+    2. Replacing all non-alphanumeric characters (except hyphens) with spaces
     3. Removing extra spaces
     """
     if text is None:  # If input text is None, return empty string
@@ -237,6 +237,20 @@ def clean_text(text:str|None) -> str:
         cleaned_text = cleaned_text.replace("  ", " ")
 
     return cleaned_text.strip()  # Return cleaned and stripped text
+
+def alphanumerical(text: str) -> bool:
+    """
+    Finds out if the text is alphanumerical. (basically str.isalnum())
+
+    Args:
+        text (str): The text to check
+
+    Returns:
+        bool: True if the text is alphanumerical, False otherwise.
+
+    This function checks if the input text contains only alphanumeric characters
+    """
+    return helpers.all(("a" <= char <= "z" or "0" <= char <= "9") for char in text.lower())
 
 
 def count_words(text:str) -> tuple[list, list]:
@@ -277,7 +291,7 @@ def count_words(text:str) -> tuple[list, list]:
 
 
 
-def search_word_position(text:str, target_word:str, regex:bool = False) -> list[tuple,]:
+def search_word_position(text:str, target_word:str, regex:bool = False) -> list[tuple[int, str],]:
     """
     Search for a target word or pattern in the text and return its positions.
     
@@ -315,13 +329,13 @@ def search_word_position(text:str, target_word:str, regex:bool = False) -> list[
             return []
     else:
         # Standard word search (case-insensitive)
-        words = text.split()
+        words = text.lower().split()
         target_word = target_word.lower()
         
         # Find all exact matches with their positions
         for idx, word in enumerate(words):
             # Remove punctuation for comparison but keep original word
-            clean_word = "".join(c.lower() for c in word if c.isalnum())
+            clean_word = "".join(c.lower() for c in word if alphanumerical(c) or c == "'" or c == "-")
             if clean_word == target_word:
                 results.append((idx, word))
     
@@ -500,8 +514,12 @@ class WordAnalysisApp:
         
         def save_window_size(event):
             """Save the current window size when the window is resized."""
-            self.window_size = f"{event.width}x{event.height}"
-        
+            if self.root.state() == 'normal' and event.width > 150 and event.height > 150:
+                # It's an attempt, but I can't seem to fix the issue where the window size will be greatly reduced
+                # when the window is minimized without making a custom top bar, due to tkinter limitations.
+                # I don't want to make a custom top bar because that would introduce a lot of complexity that's
+                # not worth for only saving window size, so I guess avoid force ending the app while it's minimized.
+                self.window_size = f"{event.width}x{event.height}"
         def exit_GUI():
             """
             Exit the GUI application with a confirmation dialog.
@@ -546,14 +564,6 @@ class WordAnalysisApp:
         # Create the main notebook (tabbed interface)
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-        # Variables to store file paths and analysis results
-        self.file_path1 = ""
-        self.file_path2 = ""
-        self.word_count1 = None
-        self.word_count2 = None
-        self.clean_content1 = ""
-        self.clean_content2 = ""
 
         # Create style for the application
         self.style = ttk.Style()
@@ -632,13 +642,14 @@ class WordAnalysisApp:
         # If matplotlib is available, update the graph style
         if plt is not None:
             plt.style.use("dark_background" if config.dark_mode else "default")
-            
-            # Redraw graphs if they exist
-            if hasattr(self, "word_count1") and self.word_count1:
-                self.create_frequency_graph(self.word_count1, self.analyze_graph_frame, self.analyze_canvas)
+
+            # Redraw the graphs if they exist
+            if hasattr(self, "analyze_graph_cmd"):
+                eval(self.analyze_graph_cmd)
                 
-            if hasattr(self, "word_count1") and hasattr(self, "word_count2") and self.word_count1 and self.word_count2:
-                self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_graph_frame, self.compare_canvas)
+            if hasattr(self, "compare_graph_cmd"):
+                eval(self.compare_graph_cmd)
+
 
     def _update_widget_colors(self, widget, theme):
         """
@@ -696,13 +707,13 @@ class WordAnalysisApp:
         # If matplotlib is available, update the graph style
         if plt is not None:
             plt.style.use("dark_background" if config.dark_mode else "default")
-            
-            # Redraw graphs if they exist
-            if hasattr(self, "word_count1") and self.word_count1:
-                self.create_frequency_graph(self.word_count1, self.analyze_graph_frame, self.analyze_canvas)
+
+            # Redraw the graphs if they exist
+            if hasattr(self, "analyze_graph_cmd"):
+                eval(self.analyze_graph_cmd)
                 
-            if hasattr(self, "word_count1") and hasattr(self, "word_count2") and self.word_count1 and self.word_count2:
-                self.create_comparison_graph(self.word_count1, self.word_count2, self.compare_graph_frame, self.compare_canvas)
+            if hasattr(self, "compare_graph_cmd"):
+                eval(self.compare_graph_cmd)
 
     def create_analyze_tab(self):
         """
@@ -804,9 +815,9 @@ class WordAnalysisApp:
         
         def update_file_labels():
             """
-            Update file labels based on whether NLTK is enabled.
+            Update file labels based on whether cosine similarity is enabled.
             
-            When NLTK is enabled:
+            When cosine similarity is enabled:
             - File 1 becomes "File"
             - File 2 becomes "Reference Files"
             Otherwise, they remain as "File 1" and "File 2"
@@ -879,7 +890,7 @@ class WordAnalysisApp:
                                 text="Compare Files",
                                 command=self.compare_files)
         compare_btn.pack(side=tk.TOP, pady=10)
-        # Add NLTK checkbox
+        # Add cosine similarity (uses nltk) checkbox
         self.compare_nltk = tk.BooleanVar(value=False)
         use_nltk = ttk.Checkbutton(buttons_frame, 
                                     text="Use cosine similarity", 
@@ -1334,11 +1345,9 @@ class WordAnalysisApp:
             self.alpha_list.insert(tk.END, f'{i + 1}. "{word}": {count} times')  # Insert words and counts
 
         # Create and display the frequency graph
-        self.create_frequency_graph(word_count, self.analyze_canvas, self.analyze_canvas)  # Draw graph for the current file
+        self.analyze_graph_cmd = f"self.create_frequency_graph({word_count}, self.analyze_canvas, self.analyze_canvas)"
+        eval(self.analyze_graph_cmd)  # Draw graph for the current file
 
-        # Store data for later use
-        self.word_count1 = word_count  # Store word count data
-        self.clean_content1 = clean_content  # Store cleaned content
 
     def create_frequency_graph(self, word_count, canvas_frame_widget, canvas_widget, max_words=config.graph_max_words):
         """
@@ -1372,8 +1381,8 @@ class WordAnalysisApp:
         # Create a figure for the graph
         fig, ax = plt.subplots(figsize=config.graph_figsize)
 
-        words = [word for word, _ in top_words]  # List of top words
-        counts = [count for _, count in top_words]  # List of counts for top words
+        words = [word for word, _ in top_words][::-1]  # List of top words
+        counts = [count for _, count in top_words][::-1]  # List of counts for top words
 
         # Create a horizontal bar chart
         bars = ax.barh(words, counts, color=config.graph_bar_color_single)
@@ -1386,7 +1395,7 @@ class WordAnalysisApp:
         # Add count labels on bars
         for bar in bars:
             width = bar.get_width()  # Get bar width
-            ax.text(width + 0.5,
+            ax.text(width + 0.1,
                     bar.get_y() + bar.get_height() / 2,
                     f"{width}",
                     ha="left",
@@ -1402,13 +1411,6 @@ class WordAnalysisApp:
         toolbar = NavigationToolbar2Tk(canvas, canvas_frame_widget)
         toolbar.update()
         toolbar.pack(side=tk.BOTTOM, fill=tk.X)
-        
-        # Add vertical scrollbar if needed
-        if len(words) > 10:  # Only add scrollbar if there are many words
-            scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.VERTICAL, command=canvas_widget.yview)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            canvas_widget.configure(yscrollcommand=scrollbar.set)
-
 
     def compare_files(self):
         """
@@ -1435,6 +1437,7 @@ class WordAnalysisApp:
             return  # Exit method on error
         if self.compare_nltk.get() and get_similarity_score is None:
             self.compare_nltk.set(False)
+            file_path2 = file_path2.split(", ")[0].replace(",\\", ",")  # If NLTK is not available, use the first file only
             print("\x1b[33mWarning: some required modules in nltk_plagiarism module is missing, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m")  #Show error message
             messagebox.showerror("Error", "there are some errors trying to use cosine similarity (nltk), jaccard(?) similarity is used instead. Please refer to the error message in the terminal")  # Show more error message
 
@@ -1543,16 +1546,8 @@ class WordAnalysisApp:
             
             # Create a specialized NLTK-based comparison graph for all reference files
             if reference_word_counts:
-                self.create_nltk_comparison_graph(
-                    word_count1, 
-                    reference_word_counts,
-                    os.path.basename(file_path1), 
-                    reference_file_names,
-                    similarity_scores, 
-                    self.compare_graph_frame, 
-                    self.compare_canvas
-                )
-            
+                self.compare_graph_cmd = f"self.create_nltk_comparison_graph({word_count1}, {reference_word_counts}, '{os.path.basename(file_path1)}', {reference_file_names}, {similarity_scores}, self.compare_graph_frame, self.compare_canvas)"
+                eval(self.compare_graph_cmd)  # Draw graph for NLTK comparisons
         else:
             # Standard comparison between two files
             content2 = read_file(file_path2)  # Read second file content
@@ -1608,7 +1603,8 @@ class WordAnalysisApp:
             self.comparison_text.insert(tk.END, f"Plagiarism Level: {level}", "color")  # Display plagiarism level
             
             # Create comparison graph
-            self.create_comparison_graph(word_count1, word_count2, self.compare_graph_frame, self.compare_canvas)  # Draw graph for comparisons
+            self.compare_graph_cmd = f"self.create_comparison_graph({word_count1}, {word_count2}, self.compare_graph_frame, self.compare_canvas)"
+            eval(self.compare_graph_cmd)  # Draw graph for the comparison
 
 
 
@@ -1660,15 +1656,15 @@ class WordAnalysisApp:
 
         for word in combined_top_words:  # Iterate through combined top words
             # Get count in the first file
-            if word in word_count1[0]:
-                idx = helpers.linear_search(word_count1[0], word)  # Find index in word count
+            idx = helpers.linear_search(word_count1[0], word)  # Find index in word count
+            if idx != -1:
                 counts1.append(word_count1[1][idx])  # Append count
             else:
                 counts1.append(0)  # Append zero count if word not present
 
             # Get count for the second file
-            if word in word_count2[0]:
-                idx = helpers.linear_search(word_count2[0], word)  # Find index in word count
+            idx = helpers.linear_search(word_count2[0], word)  # Find index in word count
+            if idx != -1:
                 counts2.append(word_count2[1][idx])  # Append count
             else:
                 counts2.append(0)  # Append zero count if word not present
@@ -1700,15 +1696,7 @@ class WordAnalysisApp:
         toolbar = NavigationToolbar2Tk(canvas, canvas_frame_widget)
         toolbar.update()
         toolbar.pack(side=tk.BOTTOM, fill=tk.X)
-        
-        # Add vertical scrollbar if needed
-        if len(combined_top_words) > 10:  # Only add scrollbar if there are many words
-            scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.VERTICAL, command=canvas_widget.yview)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            canvas_widget.configure(yscrollcommand=scrollbar.set)
 
-        
-        
     def create_nltk_comparison_graph(self, word_count1, reference_word_counts, file1_name, reference_file_names, 
                                     similarity_scores, canvas_frame_widget, canvas_widget, max_words=config.graph_max_words):
         """
@@ -1858,20 +1846,7 @@ class WordAnalysisApp:
         toolbar = NavigationToolbar2Tk(canvas, canvas_frame_widget)
         toolbar.update()
         toolbar.pack(side=tk.BOTTOM, fill=tk.X)
-        
-        # Add vertical scrollbar for multiple plots
-        scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.VERTICAL, command=canvas_widget.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        canvas_widget.configure(yscrollcommand=scrollbar.set)
-        
-        # Add horizontal scrollbar if needed
-        if len(display_words) > 10:
-            h_scrollbar = ttk.Scrollbar(canvas_widget, orient=tk.HORIZONTAL, command=canvas_widget.xview)
-            h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
-            canvas_widget.configure(xscrollcommand=h_scrollbar.set)
 
-
-        
     def search_word(self):
         """
         Search for a word or pattern in the selected file and highlight occurrences.
@@ -2068,7 +2043,7 @@ class WordAnalysisApp:
                 positions = []
                 for idx, word in enumerate(words):
                     # Check if this word matches our target (ignoring case and punctuation)
-                    clean_word = "".join(c.lower() for c in word if c.isalnum())
+                    clean_word = "".join(c.lower() for c in word if alphanumerical(c))
                     if clean_word == target_word.lower():
                         positions.append(idx)
                 
@@ -2095,13 +2070,13 @@ class WordAnalysisApp:
                         
                         # Extract leading punctuation (characters at start that aren"t alphanumeric)
                         i = 0
-                        while i < len(original_word) and not original_word[i].isalnum():
+                        while i < len(original_word) and not alphanumerical(original_word[i]):
                             leading_punct += original_word[i]
                             i += 1
                         
                         # Extract trailing punctuation (characters at end that aren"t alphanumeric)
                         i = len(original_word) - 1
-                        while i >= 0 and not original_word[i].isalnum():
+                        while i >= 0 and not alphanumerical(original_word[i]):
                             trailing_punct = original_word[i] + trailing_punct
                             i -= 1
                         
@@ -2242,6 +2217,7 @@ class WordAnalysisApp:
         default values defined in the config class.
         """
         config.reset_to_defaults()  # Reset config class to defaults
+        self.theme_var.set(config.dark_mode)
         self.reset_last_save_config()  # Restore the input fields to the default values
 
         messagebox.showinfo("Configuration", "Settings reset to default values.")  # Notify user
@@ -2487,7 +2463,7 @@ def replace_word(file_path:str, target_word:str, replacement_word:str):
             positions = []
             for idx, word in enumerate(words):
                 # Check if this word matches our target (ignoring case and punctuation)
-                clean_word = "".join(c.lower() for c in word if c.isalnum())
+                clean_word = "".join(c.lower() for c in word if alphanumerical(c) or c == "'" or c == "-")  # Allow apostrophes and hyphens in words
                 if clean_word == target_word.lower():
                     positions.append(idx)
             
@@ -2507,13 +2483,13 @@ def replace_word(file_path:str, target_word:str, replacement_word:str):
                     
                     # Extract leading punctuation
                     i = 0
-                    while i < len(original_word) and not original_word[i].isalnum():
+                    while i < len(original_word) and not alphanumerical(original_word[i]):
                         leading_punct += original_word[i]
                         i += 1
                     
                     # Extract trailing punctuation
                     i = len(original_word) - 1
-                    while i >= 0 and not original_word[i].isalnum():
+                    while i >= 0 and not alphanumerical(original_word[i]):
                         trailing_punct = original_word[i] + trailing_punct
                         i -= 1
                     

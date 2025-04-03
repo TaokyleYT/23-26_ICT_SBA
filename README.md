@@ -159,6 +159,7 @@ Shows a significant improvement in program performance or usability.
 
 ```none
 1 year token for private repo access:
+<!-- trunk-ignore(trufflehog/Github) -->
 git clone https://TaokyleYT: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@github.com/TaokyleYT/23-26_ICT_SBA
 
 command line & GUI (?)
@@ -180,18 +181,14 @@ should I train a big ahh neural network for plagiarism? idk it seemed a bit over
 ## WOOO SOME BUGS I AINT FIXIN FOR NOTHIN
 
 ```none
-CLI:
-replace empty space don't work??
-GUI:
-reset to default also reset theme, but checkbox not changed
-after changing settings, nav bar become 2 woooow
-(remove the navbar its useless bruh)
-multiple file selected to compare, nltk die die, file dont select first only
+So far so good
 ```
 
-## WOOO SOME FIXED BUGS LUO LAM AINT FINDIN FOR NOTHIN
+## WOOO SOME FIXED BUGS MS LUO AINT FINDIN FOR NOTHIN
 
 ```none
 CLI:
 font size setting in CLI shows graph label instead :/
+GUI:
+multiple file selected to compare, nltk die die, file dont select first only
 ```
