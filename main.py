@@ -449,7 +449,7 @@ def calculate_similarity(word_count1:tuple[list, list], word_count2:tuple[list, 
             (common_freq / count2_freq) * 100 if count2_freq > 0 else 0,)
 
 
-class WordAnalysisApp:
+class GUI_APP:
     """
     GUI application for WAPDS.
 
@@ -585,6 +585,50 @@ class WordAnalysisApp:
         This method configures all widgets with the appropriate colors and styles
         based on whether dark mode is enabled or not.
         """
+
+        def _update_widget_colors(widget, theme):
+            """
+            Recursively update colors for all widgets.
+
+            Args:
+                widget: The widget to update
+                theme: The theme colors to apply
+
+            This helper method traverses the widget hierarchy and applies
+            appropriate theme colors to each widget based on its type.
+            """
+            widget_class = widget.__class__.__name__
+
+            # Handle standard tkinter widgets (not ttk)
+            if widget_class == "Text":
+                widget.configure(
+                    background=theme[2],
+                    foreground=theme[3],
+                    insertbackground=theme[1],  # Cursor color
+                    selectbackground=theme[5],
+                    selectforeground=theme[6],
+                    font=("Arial", config.text_font_size)
+                )
+            elif widget_class == "Listbox":
+                widget.configure(
+                    background=theme[2],
+                    foreground=theme[3],
+                    selectbackground=theme[5],
+                    selectforeground=theme[6],
+                    font=("Arial", config.text_font_size)
+                )
+            elif widget_class == "Canvas":
+                widget.configure(background=theme[7])
+            elif widget_class == "Label":
+                widget.configure(background=theme[8], foreground=theme[1], font=("Arial", config.text_font_size))
+            elif widget_class == "LabelFrame":
+                widget.configure(background=theme[9], foreground=theme[1], font=("Arial", config.text_font_size))
+
+            # Recursively update all children
+            for child in widget.winfo_children():
+                _update_widget_colors(child, theme)
+
+
         theme = self.DARK_THEME if config.dark_mode else self.LIGHT_THEME
         
         # Configure the ttk styles properly
@@ -637,7 +681,7 @@ class WordAnalysisApp:
         self.root.configure(background=theme[0])
         
         # Update all widgets recursively
-        self._update_widget_colors(self.root, theme)
+        _update_widget_colors(self.root, theme)
         
         # If matplotlib is available, update the graph style
         if plt is not None:
@@ -649,49 +693,6 @@ class WordAnalysisApp:
                 
             if hasattr(self, "compare_graph_cmd"):
                 eval(self.compare_graph_cmd)
-
-
-    def _update_widget_colors(self, widget, theme):
-        """
-        Recursively update colors for all widgets.
-        
-        Args:
-            widget: The widget to update
-            theme: The theme colors to apply
-            
-        This helper method traverses the widget hierarchy and applies
-        appropriate theme colors to each widget based on its type.
-        """
-        widget_class = widget.__class__.__name__
-        
-        # Handle standard tkinter widgets (not ttk)
-        if widget_class == "Text":
-            widget.configure(
-                background=theme[2],
-                foreground=theme[3],
-                insertbackground=theme[1],  # Cursor color
-                selectbackground=theme[5],
-                selectforeground=theme[6],
-                font=("Arial", config.text_font_size)
-            )
-        elif widget_class == "Listbox":
-            widget.configure(
-                background=theme[2],
-                foreground=theme[3],
-                selectbackground=theme[5],
-                selectforeground=theme[6],
-                font=("Arial", config.text_font_size)
-            )
-        elif widget_class == "Canvas":
-            widget.configure(background=theme[7])
-        elif widget_class == "Label":
-            widget.configure(background=theme[8], foreground=theme[1], font=("Arial", config.text_font_size))
-        elif widget_class == "LabelFrame":
-            widget.configure(background=theme[9], foreground=theme[1], font=("Arial", config.text_font_size))
-        
-        # Recursively update all children
-        for child in widget.winfo_children():
-            self._update_widget_colors(child, theme)
 
     def toggle_theme(self):
         """
@@ -703,17 +704,6 @@ class WordAnalysisApp:
         config.dark_mode = self.theme_var.get()
         config.save()
         self.apply_theme()
-        
-        # If matplotlib is available, update the graph style
-        if plt is not None:
-            plt.style.use("dark_background" if config.dark_mode else "default")
-
-            # Redraw the graphs if they exist
-            if hasattr(self, "analyze_graph_cmd"):
-                eval(self.analyze_graph_cmd)
-                
-            if hasattr(self, "compare_graph_cmd"):
-                eval(self.compare_graph_cmd)
 
     def create_analyze_tab(self):
         """
@@ -2043,7 +2033,7 @@ class WordAnalysisApp:
                 positions = []
                 for idx, word in enumerate(words):
                     # Check if this word matches our target (ignoring case and punctuation)
-                    clean_word = "".join(c.lower() for c in word if alphanumerical(c))
+                    clean_word = "".join(c.lower() for c in word if alphanumerical(c) or c == "'" or c == "-")
                     if clean_word == target_word.lower():
                         positions.append(idx)
                 
@@ -2522,7 +2512,7 @@ Modified text:\n\
 {modified_content[:100]+"..." if len(modified_content) > 100 else modified_content}"
               )
 
-        save_option = input("\n\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).strip().lower()
+        save_option = input("\n\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).lower()
         if save_option == "y":
             new_file_path = input(
                 "Enter the path for the new file: ").strip()
@@ -2680,7 +2670,7 @@ def mainGUI():
     and sets up a dialog confirmation when the user attempts to close the window.
     """
     root = tk.Tk()  # Create main tkinter window
-    app = WordAnalysisApp(root, config.window_size)  # Instantiate GUI
+    app = GUI_APP(root, config.window_size)  # Instantiate GUI
     
     # Begin the main event loop
     try:
@@ -2701,6 +2691,8 @@ def mainCLI():
     file analysis, comparison, configuration, and exit options.
     """
     columns = os.get_terminal_size().columns  # Get terminal width for formatting
+    file_path = ""  # Initialize file path for single file analysis
+    file_path2 = ""  # Initialize second file path for comparison
     print("Word Analysis and Plagiarism Detection System\n" +
           "-" * helpers.min(columns, 45))  # Print intro header
 
@@ -2716,30 +2708,40 @@ def mainCLI():
 6. Exit\n")
 
         # Prompt user for choice and capture input
-        choice = input("\nEnter your choice (1-6): ", single_letter=True).strip()
+        choice = input("\nEnter your choice (1-6): ", single_letter=True)
 
         # Handle each choice
         if choice in "1234":
             txt_files = [file for file in os.listdir() if os.path.isfile(file) and file.endswith(".txt")]
-            print("Text files in current directory:\n" + "\n".join(txt_files))
+            print("Text files in current directory" + (" (enter nothing to use the last chosen file)" if file_path or file_path2 else "") + ":\n" + "\n".join(txt_files))
             if choice == "1":
-                file_path = input("Enter the path to the text file: ").strip()  # Path for file
+                new_file_path = input("Enter the path to the text file" + (f" (last chosen file: {file_path})" if file_path else "") + ": ").strip()  # Path for file
+                if new_file_path != "":  # If user enters something, replaces as last chosen file
+                    file_path = new_file_path
                 analyze_file(file_path)  # Call the analyze function for the selected file
 
             elif choice == "2":
-                file_path1 = input("Enter the path to the first text file: ").strip()  # Path for first file
-                file_path2 = input("Enter the path to the second text file: ").strip()  # Path for second file
-                compare_files(file_path1, file_path2)  # Call compare function on selected files
+                new_file_path = input("Enter the path to the first text file" + (f" (last chosen: {file_path})" if file_path else "") + ": ").strip()  # Path for first file
+                new_file_path2 = input("Enter the path to the second text file" + (f" (last chosen: {file_path2})" if file_path2 else "") + ": ").strip()  # Path for second file\
+                if new_file_path != "":  # same here
+                    file_path = new_file_path
+                if new_file_path2 != "":
+                    file_path2 = new_file_path2
+                compare_files(file_path, file_path2)  # Call compare function on selected files
 
             elif choice == "3":
-                file_path = input("Enter the path to the text file: ").strip()
+                new_file_path = input("Enter the path to the text file" + (f" (last chosen: {file_path})" if file_path else "") + ": ").strip()
                 target_word = input("Enter the word to search for: ").strip()
+                if new_file_path != "":  # same
+                    file_path = new_file_path
                 search_word(file_path, target_word)
 
             elif choice == "4":
-                file_path = input("Enter the path to the text file: ").strip()
+                new_file_path = input("Enter the path to the text file" + (f" (last chosen: {file_path})" if file_path else "") + ": ").strip()
                 target_word = input("Enter the word to replace: ").strip()
                 replacement_word = input("Enter the replacement word: ").strip()
+                if new_file_path != "":
+                    file_path = new_file_path
                 replace_word(file_path, target_word, replacement_word)
         
         elif choice == "5":

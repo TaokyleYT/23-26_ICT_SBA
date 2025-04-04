@@ -262,7 +262,7 @@ def animated_input(
         str: The user's input string (without the trailing newline).
     """
     # Display the prompt with animated typing effect
-    animated_print(prompt, "", delay, line_offset)
+    animated_print(prompt, " ", delay, line_offset)
 
     # Get terminal width for text wrapping
     columns = os.get_terminal_size().columns - 2  # Adjust for prompt/other text
