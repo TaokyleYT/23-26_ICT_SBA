@@ -2780,16 +2780,24 @@ if __name__ == "__main__":
         try:
             GUI_window_size_check = [int(dimension) for dimension in GUI_window_size_check]  # Convert dimensions into integers
             if len(GUI_window_size_check) != 2:  # Check for two dimensions
-                raise ValueError  # Raise an error if not valid
+                raise TypeError  # Raise an error if not valid
             for n in GUI_window_size_check:  # Validate each dimension
                 if n <= 0:  # Ensure dimensions are positive
+                    raise TypeError
+                elif n < 150:
                     raise ValueError
-        except ValueError:
+        except TypeError:
             # If parsing fails, inform the user of the formatting error
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults() #corrupted config
             else:
                 parser.error(f"Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}")
+        except ValueError:
+            # oops, window size too small
+            if GUI_window_size == config.window_size:
+                config.reset_to_defaults() #invalid config
+            else:
+                parser.error(f"GUI is too small ({repr(args.GUI_window_size)}), please keep the window size larger than 150x150")
         config.window_size = GUI_window_size  # Set the new window size in the config
         config.save()  # Save the new configurations
         mainGUI()  # Launch GUI application
