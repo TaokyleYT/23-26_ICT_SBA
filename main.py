@@ -2791,13 +2791,13 @@ if __name__ == "__main__":
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults() #corrupted config
             else:
-                parser.error(f"Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}")
+                parser.error(f"Please enter GUI window size in the format of {some_text}, not {repr(GUI_window_size)}")
         except TypeError: #its not actually type error but a dummy error to distinguish value too small with invalid value
             # oops, window size too small
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults() #invalid config
             else:
-                parser.error(f"GUI is too small ({repr(args.GUI_window_size)}), please keep the window size larger than 150x150")
+                parser.error(f"GUI is too small ({GUI_window_size}), please keep the window size larger than 150x150")
         config.window_size = GUI_window_size  # Set the new window size in the config
         config.save()  # Save the new configurations
         mainGUI()  # Launch GUI application
