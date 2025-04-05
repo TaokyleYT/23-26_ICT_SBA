@@ -2778,21 +2778,21 @@ if __name__ == "__main__":
         GUI_window_size = args.GUI_window_size.strip()
         GUI_window_size_check = GUI_window_size.split("x")  # Split input into width and height
         try:
-            GUI_window_size_check = [int(dimension) for dimension in GUI_window_size_check]  # Convert dimensions into integers
+            GUI_window_size_check = list(map(int, GUI_window_size_check))  # Convert dimensions into integers
             if len(GUI_window_size_check) != 2:  # Check for two dimensions
-                raise TypeError  # Raise an error if not valid
+                raise ValueError # Raise error if not valid
             for n in GUI_window_size_check:  # Validate each dimension
                 if n <= 0:  # Ensure dimensions are positive
-                    raise TypeError
-                elif n < 150:
                     raise ValueError
-        except TypeError:
+                elif n < 150:
+                    raise TypeError
+        except ValueError:
             # If parsing fails, inform the user of the formatting error
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults() #corrupted config
             else:
                 parser.error(f"Please enter GUI window size in the format of {some_text}, not {repr(args.GUI_window_size)}")
-        except ValueError:
+        except TypeError: #its not actually type error but a dummy error to distinguish value too small with invalid value
             # oops, window size too small
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults() #invalid config
