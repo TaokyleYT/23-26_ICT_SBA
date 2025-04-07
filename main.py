@@ -2504,12 +2504,12 @@ def replace_word(file_path:str, target_word:str, replacement_word:str):
         # Join all lines back together with newlines preserved
         modified_content = "\n".join(modified_lines)
 
-        print(f"\n\
-Original text:\n\
-{(content[:100])+"..." if len(content) > 100 else content}\n\
-\n\
-Modified text:\n\
-{modified_content[:100]+"..." if len(modified_content) > 100 else modified_content}"
+        print(f"""
+Original text:
+{(content[:100])+"..." if len(content) > 100 else content}
+
+Modified text:
+{modified_content[:100]+"..." if len(modified_content) > 100 else modified_content}"""
               )
 
         save_option = input("\n\nDo you want to save the modified text to a new file? (y/n): ", single_letter=True).lower()
@@ -2526,7 +2526,7 @@ Modified text:\n\
 
 
 
-def display_results(file_path:str, word_count:tuple[list, list], total_words:int, unique_words:int, show_nums:int = 10, wrap:int = os.get_terminal_size().columns):
+def display_results(file_path:str, word_count:tuple[list, list], total_words:int, unique_words:int, show_nums:int = 10, wrap:int|None = None):
     """
     Display analysis results for a single text file in CLI mode.
     
@@ -2541,24 +2541,25 @@ def display_results(file_path:str, word_count:tuple[list, list], total_words:int
         total_words (int): Total number of words in the file
         unique_words (int): Number of unique words in the file
         show_nums (int): Number of top words to display (default is 10)
-        wrap (int): The terminal width to wrap text (default is the current terminal size)
+        wrap (int | None): The terminal width to wrap text (None means default, which is the current terminal size)
     """
     # Limit number of words to display to available words
     show_nums = helpers.min(show_nums, len(word_count[0]))  # Maximum words to show is the smaller of user request or available data
+    if wrap is None:
+        wrap = os.get_terminal_size().columns
     hyphen_wrap = helpers.min(wrap, len(str(show_nums)) + 30)  # Text wrapping limit
 
     # Print header and statistics
-    print(f'\
-\n\
-{"=" * helpers.min(wrap, len(file_path) + 15)}\n\
-Analysis of "{file_path}":\n\
-{"=" * helpers.min(wrap, len(file_path) + 15)}\n\
-Total words: {total_words}\n\
-Unique words: {unique_words}\n\
-\n\
-\n\
-Top {show_nums} Most Frequent Words:\n\
-{"-" * hyphen_wrap}')
+    print(f'''
+{"=" * helpers.min(wrap, len(file_path) + 15)}
+Analysis of "{file_path}":
+{"=" * helpers.min(wrap, len(file_path) + 15)}
+Total words: {total_words}
+Unique words: {unique_words}
+
+
+Top {show_nums} Most Frequent Words:
+{"-" * hyphen_wrap}''')
 
     # Print frequency-sorted words
     frequency_sorted = sort_by_frequency(word_count)  # Get list of words sorted by frequency
@@ -2617,12 +2618,13 @@ def compare_files(file_path1:str, file_path2:str):
 
     # Print heading for comparison results
     print(
-        f'\n{"=" * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\
-Comparison between "{file_path1}" and "{file_path2}":\n\
-{"=" * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\n\
-Similarity percentage of\n\
-text 1: {similarity[0]:.2f}%\n\
-text 2: {similarity[1]:.2f}%'
+        f'''\n{"=" * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}
+Comparison between "{file_path1}" and "{file_path2}":
+{"=" * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}
+
+Similarity percentage of
+text 1: {similarity[0]:.2f}%
+text 2: {similarity[1]:.2f}%'''
     )
 
     # Determine and display the plagiarism level using the similarity percentage
@@ -2698,14 +2700,16 @@ def mainCLI():
 
     while True:
         # Display the main menu options
-        print("\
-\nMenu:\n\
-1. Analyze a single file\n\
-2. Compare two files for plagiarism\n\
-3. Search for a word in a file\n\
-4. Replace a word in a file\n\
-5. Configure settings\n\
-6. Exit\n")
+        print("""
+
+Menu:
+1. Analyze a single file
+2. Compare two files for plagiarism
+3. Search for a word in a file
+4. Replace a word in a file
+5. Configure settings
+6. Exit
+""")
 
         # Prompt user for choice and capture input
         choice = input("\nEnter your choice (1-6): ", single_letter=True)
@@ -2722,7 +2726,7 @@ def mainCLI():
 
             elif choice == "2":
                 new_file_path = input("Enter the path to the first text file" + (f" (last chosen: {file_path})" if file_path else "") + ": ").strip()  # Path for first file
-                new_file_path2 = input("Enter the path to the second text file" + (f" (last chosen: {file_path2})" if file_path2 else "") + ": ").strip()  # Path for second file\
+                new_file_path2 = input("Enter the path to the second text file" + (f" (last chosen: {file_path2})" if file_path2 else "") + ": ").strip()  # Path for second file
                 if new_file_path != "":  # same here
                     file_path = new_file_path
                 if new_file_path2 != "":

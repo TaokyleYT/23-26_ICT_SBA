@@ -164,6 +164,7 @@ git clone https://TaokyleYT:github_pat_11AYPYTYQ0o4sOnNzaBZg7_1GEYLn3vteaQUw05Rn
 1 month token for editing:
 git config --global --unset credential.helper
 cmdkey /delete:LegacyGeneric:target=git:https://github.com
+<!-- trunk-ignore(trufflehog/Github) -->
 git clone https://TaokyleYT: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@github.com/TaokyleYT/23-26_ICT_SBA
 
 

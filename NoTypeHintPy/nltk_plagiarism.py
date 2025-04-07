@@ -11,8 +11,6 @@ if os.name == 'nt':
 else:
     data_dir = __file__.rsplit('/', 1)[0] + '/nltk_data'
 nltk.data.path.append(data_dir)
-
-
 def update():
     """
 
@@ -101,8 +99,6 @@ def update():
     if not exists(data_dir + '/corpora'):
         nltk.download('stopwords', data_dir)
         nltk.download('wordnet', data_dir)
-
-
 def preprocess_text(text):
     """
 
@@ -236,13 +232,10 @@ def preprocess_text(text):
     stop_words = stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
     tokens = word_tokenize(text)
-    tokens = [word.lower() for word in tokens if word.isalnum() and word.
-        lower() not in stop_words]
+    tokens = [word.lower() for word in tokens if word.isalnum() and word.lower() not in stop_words]
     tokens = [lemmatizer.lemmatize(word) for word in tokens]
     processed_text = ' '.join(tokens)
     return processed_text
-
-
 def calculate_similarity(query_features, reference_features):
     """
 
@@ -392,12 +385,9 @@ def calculate_similarity(query_features, reference_features):
     if query_features.shape[1] != reference_features.shape[1]:
         reference_features = reference_features.T
     if query_features.shape[1] != reference_features.shape[1]:
-        raise ValueError(
-            'Incompatible dimensions for query and reference features')
+        raise ValueError('Incompatible dimensions for query and reference features')
     similarity = cosine_similarity(query_features, reference_features)
     return similarity
-
-
 def bow_features(texts):
     """
 
@@ -530,9 +520,7 @@ def bow_features(texts):
     """
     vectorizer = CountVectorizer()
     features = vectorizer.fit_transform(texts)
-    return features, vectorizer
-
-
+    return (features, vectorizer)
 def tfidf_features(texts):
     """
 
@@ -665,9 +653,7 @@ def tfidf_features(texts):
     """
     vectorizer = TfidfVectorizer()
     features = vectorizer.fit_transform(texts)
-    return features, vectorizer
-
-
+    return (features, vectorizer)
 def get_similarity_score(query_text, reference_texts):
     """
 
@@ -815,20 +801,15 @@ def get_similarity_score(query_text, reference_texts):
 
     """
     preprocessed_query = preprocess_text(query_text)
-    preprocessed_references = [preprocess_text(text) for text in
-        reference_texts]
-    features_query, vectorizer = tfidf_features([preprocessed_query] +
-        preprocessed_references)
+    preprocessed_references = [preprocess_text(text) for text in reference_texts]
+    features_query, vectorizer = tfidf_features([preprocessed_query] + preprocessed_references)
     features_references = features_query[1:]
     features_query = features_query[:1]
-    similarity_scores = calculate_similarity(features_query,
-        features_references)
+    similarity_scores = calculate_similarity(features_query, features_references)
     plagiarism_results = []
     for i, score in enumerate(similarity_scores[0]):
         plagiarism_results.append([reference_texts[i], score])
     return plagiarism_results
-
-
 if __name__ == '__main__':
     update()
     with open('test2_1.txt', 'r') as file:
