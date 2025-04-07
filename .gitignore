@@ -152,6 +152,13 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# replit configs
+.replit
+generated-icon.png
+replit.nix
+uv.lock
+pyproject.toml
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore

@@ -161,6 +161,11 @@ Shows a significant improvement in program performance or usability.
 1 year token for private repo access:
 <!-- trunk-ignore(trufflehog/Github) -->
 git clone https://TaokyleYT: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@github.com/TaokyleYT/23-26_ICT_SBA
+1 month token for editing:
+git config --global --unset credential.helper
+cmdkey /delete:LegacyGeneric:target=git:https://github.com
+git clone https://TaokyleYT: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@github.com/TaokyleYT/23-26_ICT_SBA
+
 
 command line & GUI (?)
 CAN USE PYGAME WOOOO
