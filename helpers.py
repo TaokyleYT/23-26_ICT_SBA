@@ -15,7 +15,7 @@ else:
 
 
 def animated_print(
-    txt: str | Iterable[str] | Iterable[Iterable[str]] = "",
+    txt: str | Iterable[str,] | Iterable[Iterable[str,],] = "",
     end: str = "\n",
     delay: float = 0.01,
     line_offset: int = 1,
@@ -53,7 +53,7 @@ def animated_print(
     Please use a bigger terminal or a smaller font size to avoid breaking everything that is being outputted
 
     Args:
-        txt (str | Iterable[str] | Iterable[Iterable[str]]):
+        txt (str | Iterable[str,] | Iterable[Iterable[str,],]):
             The text to print. Can be a single string, a list of strings, or a nested list of strings.
         end (str):
             A string to print after the entire text has been animated (default: newline).
