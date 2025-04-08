@@ -2,7 +2,7 @@ import ast
 import os
 import sys
 
-if True or sys.version_info < (3, 9):
+if sys.version_info < (3, 9):
     try:
         import astunparse
     except ImportError:
@@ -47,12 +47,12 @@ def main():
     if not os.path.exists("NoTypeHintPy"):
         os.mkdir("NoTypeHintPy")
     for file in os.listdir("."):
-        if not file.endswith(".py") or os.path.samefile(file, __file__):
+        if not file.endswith(".py") or os.path.samefile(file, __file__) or "TypeHintingRemover" in file:
             continue
         print("Attempting to remove type hints for", file)
         try:
             with open(file, "r", errors="ignore") as sourceFile:
-                source = "\n".join(sourceFile.readlines())
+                source = "".join(sourceFile.readlines())
                 dest = remove_type_hints(source)
                 with open(
                     os.path.join(os.path.dirname(file), f"NoTypeHintPy/{file}"), "w"

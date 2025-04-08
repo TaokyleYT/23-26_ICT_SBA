@@ -2213,7 +2213,7 @@ class GUI_APP:
         messagebox.showinfo("Configuration", "Settings reset to default values.")  # Notify user
         
         
-def configure_test_input(prompt: str, type, was: str, error: str = ""):
+def configure_test_input(prompt: str, type, was: str, error = ""):
     """Prompt the user for input in the command line interface (CLI)
     and validate if the input is of the specified type.
 

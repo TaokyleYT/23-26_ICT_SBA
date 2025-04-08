@@ -7,13 +7,13 @@ import helpers
 
 try:
     from nltk_plagiarism import get_similarity_score
-except (ImportError, ModuleNotFoundError):
+except:
     get_similarity_score = None
 try:
     import matplotlib.pyplot as plt
     from matplotlib.backends._backend_tk import NavigationToolbar2Tk
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-except (ImportError, ModuleNotFoundError):
+except:
     plt = None
 import argparse
 
