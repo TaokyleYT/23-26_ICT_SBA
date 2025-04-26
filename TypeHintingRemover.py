@@ -19,7 +19,16 @@ if sys.version_info < (3, 9):
 
 
 class TypeHintRemover(ast.NodeTransformer):
-
+    
+    def __init__(self):
+        super().__init__()
+        self.extra_line = 0
+        
+    def generic_visit(self, node):
+        node.lineno += 1
+        node.end_lineno += 1
+        return super().generic_visit(node)
+    
     def visit_FunctionDef(self, node):
         node.returns = None
         if node.args.args:
@@ -38,6 +47,8 @@ class TypeHintRemover(ast.NodeTransformer):
         self.generic_visit(node)
         return node
     
+    def visit_NamedExpr(self, node):
+        node.lineno
 
 
 def remove_type_hints(source):

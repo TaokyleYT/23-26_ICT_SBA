@@ -6,6 +6,12 @@
 # C extensions
 *.so
 
+#vscode stuff
+.vscode
+*/.vscode
+.trunk
+*/.trunk
+
 # Distribution / packaging
 .Python
 build/

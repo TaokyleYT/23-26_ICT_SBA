@@ -2,7 +2,6 @@ import os  # Import module for terminal size detection and file operations
 
 # I heard that I can use regex for GUI stuff(?)
 import re  # Import regex module for pattern matching
-
 import tkinter as tk  # Import tkinter for GUI implementation
 from tkinter import (  # Import some tkinter components specificly
     filedialog,
