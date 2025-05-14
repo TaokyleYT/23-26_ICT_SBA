@@ -1188,9 +1188,11 @@ class GUI_APP:
         colors_frame.pack(fill=tk.X, pady=5)
 
         # Label and entry for bar colors
-        ttk.Label(colors_frame, text="Bar colors:").pack(side=tk.LEFT, padx=5)
+        ttk.Label(colors_frame, text="Bar colors (Analyze):").pack(side=tk.LEFT, padx=5)
         self.bar_color_single_var = tk.StringVar(value=str(config.graph_bar_color_single))  # Bind entry with current value
         ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_single_var).pack(side=tk.LEFT, padx=2)
+        
+        ttk.Label(colors_frame, text=" | (Compare):").pack(side=tk.LEFT, padx=5)
 
         self.bar_color_compare1_var = tk.StringVar(value=str(config.graph_bar_color_compare1))  # Bind entry with current value
         ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_compare1_var).pack(side=tk.LEFT, padx=2)
