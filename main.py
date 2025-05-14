@@ -13,6 +13,7 @@ import helpers  # Import custom helper functions that avoid using built-in funct
 
 try:
     from nltk_plagiarism import get_similarity_score  # For advance stuff
+    import numpy as np # For redrawing nltk graph without scikit-learn (in nltk_plagarism.py)
 except:
     get_similarity_score = None  # Set get_similarity_score to None so we can check if the entirety of nltk is available later
 try:
@@ -1535,7 +1536,7 @@ class GUI_APP:
             
             # Create a specialized NLTK-based comparison graph for all reference files
             if reference_word_counts:
-                self.compare_graph_cmd = f"self.create_nltk_comparison_graph({word_count1}, {reference_word_counts}, '{os.path.basename(file_path1)}', {reference_file_names}, {similarity_scores}, self.compare_graph_frame, self.compare_canvas)"
+                self.compare_graph_cmd = f"self.create_nltk_comparison_graph({word_count1}, {reference_word_counts}, '''{os.path.basename(file_path1)}''', {reference_file_names}, {similarity_scores}, self.compare_graph_frame, self.compare_canvas)"
                 eval(self.compare_graph_cmd)  # Draw graph for NLTK comparisons
         else:
             # Standard comparison between two files
