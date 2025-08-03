@@ -12,8 +12,9 @@ Word Analysis and Plagiarism Detection System
 </h1>
 <img alt="" src="https://img.shields.io/badge/python-3.3_%7C_3.4-EF0000" />
 <img alt="" src="https://img.shields.io/badge/3.5_%7C_3.6_%7C_3.7_%7C_3.8-FFCC22" />
-<img alt="" src="https://img.shields.io/badge/3.9-yellow" />
-<img alt="" src="https://img.shields.io/badge/3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-green" />
+<img alt="" src="https://img.shields.io/badge/3.9-DFFF33" />
+<img alt="" src="https://img.shields.io/badge/3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-7BFF2D" />
+<br>
 <img alt="" src="https://img.shields.io/github/commit-activity/y/TaokyleYT/WAPDS" />
 <img alt="" src="https://img.shields.io/github/last-commit/TaokyleYT/WAPDS" />
 <img alt="" src="https://img.shields.io/github/contributors-anon/TaokyleYT/WAPDS" />
@@ -107,12 +108,9 @@ More details about command line options can be found from `python main.py -h`.
 
 Copyright © 2025 Taokyle. All rights reserved.
 
-WAPDS is an application for submission of 2026 Hong Kong Diploma of Secondary Education Examination *[HKDSE](https://en.wikipedia.org/wiki/Hong_Kong_Diploma_of_Secondary_Education)* and Information and Communications Technology *
-[ICT](https://www.hkeaa.edu.hk/en/hkdse/hkdse_subj.html?A2&2&16)* School-Based Assessment *
-[SBA](https://www.hkeaa.edu.hk/en/sba/introduction)*. For more details on this application, please refer to the report.
+WAPDS is an application for submission of 2026 Hong Kong Diploma of Secondary Education Examination *[HKDSE](https://en.wikipedia.org/wiki/Hong_Kong_Diploma_of_Secondary_Education)* and Information and Communications Technology *[ICT](https://www.hkeaa.edu.hk/en/hkdse/hkdse_subj.html?A2&2&16)* School-Based Assessment *[SBA](https://www.hkeaa.edu.hk/en/sba/introduction)*. For more details on this application, please refer to the report.
 
-Copyright 2025 Taokyle. license under *
-[GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html)*
+Copyright 2025 Taokyle. license under *[GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html)*
 
 This file is part of WAPDS.\
 WAPDS is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\
