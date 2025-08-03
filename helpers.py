@@ -1,9 +1,9 @@
-import os  # For accessing and manipulating the file system
+import os  # For temporarily overriding the terminal's settings used by animated print/input
 import re  # For regular expression operations for string matching
-import string  # For string constants and character classifications
-import sys  # For system-specific parameters and functions
-import time  # For implementing delays in output
-from typing import Iterable  # Import Iterable types for type hinting
+import string  # For grabbing printable characters
+import sys  # For checking OS type and providing raw stdin&stdout ports
+import time  # For implementing delays in output for animated print/input
+from typing import Iterable  # For type hinting (basically does nothing practical when running lol)
 
 # Platform-specific imports for terminal control to change input mode and handle character printing
 if sys.platform == "win32":
@@ -325,9 +325,7 @@ def animated_input(
     ptr = int(reg.groups()[1]) if reg else 1  # Get current cursor position
 
     # Prepare character sets for animation
-    printables = [" "] + list(string.printable)[
-        :-6
-    ]  # Include printable ASCII characters
+    printables = [" "] + list(string.printable)[:-6]  # Include printable ASCII characters
     output = sys.stdout.write  # Alias for writing output
 
     # Read input character by character until the Enter key

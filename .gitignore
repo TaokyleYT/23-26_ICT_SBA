@@ -1,3 +1,7 @@
+# Custom files
+WAPDS.config
+input_log.txt
+
 # Byte-compiled / optimized / DLL files
 *__pycache__/
 *.py[cod]
@@ -7,10 +11,8 @@
 *.so
 
 #vscode stuff
-.vscode
-*/.vscode
-.trunk
-*/.trunk
+*.vscode
+*.trunk
 
 # Distribution / packaging
 .Python

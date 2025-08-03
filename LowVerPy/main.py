@@ -4,7 +4,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import helpers
 try:
-    from nltk_plagiarism import get_similarity_score
+    from nltk_tools import get_similarity_score
+    import numpy as np
 except:
     get_similarity_score = None
 try:
@@ -71,7 +72,7 @@ class config:
         dark_mode = DEFAULTS['GUI']['dark_mode']
         text_font_size = DEFAULTS['GUI']['text_font_size']
     with open('WAPDS.config', 'w') as f:
-        f.write(f'{single_file_display_line};{compare_file_display_line};{window_size};{graph_max_words};{graph_figsize[0]};{graph_figsize[1]};{analyze_max_words};{graph_bar_color_single};{graph_bar_color_compare1};{graph_bar_color_compare2};{graph_title_fontsize};{graph_label_fontsize};{int(dark_mode)};{text_font_size}')
+        f.write('{};{};{};{};{};{};{};{};{};{};{};{};{};{}'.format(single_file_display_line, compare_file_display_line, window_size, graph_max_words, graph_figsize[0], graph_figsize[1], analyze_max_words, graph_bar_color_single, graph_bar_color_compare1, graph_bar_color_compare2, graph_title_fontsize, graph_label_fontsize, int(dark_mode), text_font_size))
 
     @classmethod
     def reset_to_defaults(cls):
@@ -104,7 +105,7 @@ class config:
         in a semicolon-delimited format.
         """
         with open('WAPDS.config', 'w') as f:
-            f.write(f'{cls.single_file_display_line};{cls.compare_file_display_line};{cls.window_size};{cls.graph_max_words};{cls.graph_figsize[0]};{cls.graph_figsize[1]};{cls.analyze_max_words};{cls.graph_bar_color_single};{cls.graph_bar_color_compare1};{cls.graph_bar_color_compare2};{cls.graph_title_fontsize};{cls.graph_label_fontsize};{int(cls.dark_mode)};{cls.text_font_size}')
+            f.write('{};{};{};{};{};{};{};{};{};{};{};{};{};{}'.format(cls.single_file_display_line, cls.compare_file_display_line, cls.window_size, cls.graph_max_words, cls.graph_figsize[0], cls.graph_figsize[1], cls.analyze_max_words, cls.graph_bar_color_single, cls.graph_bar_color_compare1, cls.graph_bar_color_compare2, cls.graph_title_fontsize, cls.graph_label_fontsize, int(cls.dark_mode), cls.text_font_size))
 
 def read_file(file_path):
     """
@@ -121,21 +122,21 @@ def read_file(file_path):
     """
     txt_files = [file for file in os.listdir() if os.path.isfile(file) and file.endswith('.txt')]
     if not os.path.exists(file_path):
-        print(f'\x1b[31mError: File "{file_path}" not found.\x1b[m')
+        print('\x1b[31mError: File "{}" not found.\x1b[m'.format(file_path))
         if file_path + '.txt' in txt_files:
-            print(f'\x1b[33mDid you mean "{file_path}.txt"?\x1b[m')
+            print('\x1b[33mDid you mean "{}.txt"?\x1b[m'.format(file_path))
         return None
     if not os.path.isfile(file_path):
-        print(f'\x1b[31mError: "{file_path}" is not a file.\x1b[m')
+        print('\x1b[31mError: "{}" is not a file.\x1b[m'.format(file_path))
         return None
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         if not content.strip():
-            print(f'\x1b[33mWarning: File "{file_path}" is empty.\x1b[m')
+            print('\x1b[33mWarning: File "{}" is empty.\x1b[m'.format(file_path))
         return content
     except Exception as e:
-        print(f'\x1b[31mError reading file "{file_path}": {str(e)}\x1b[m')
+        print('\x1b[31mError reading file "{}": {}\x1b[m'.format(file_path, str(e)))
         return None
 
 def clean_text(text):
@@ -355,7 +356,7 @@ class GUI_APP:
         def save_window_size(event):
             """Save the current window size when the window is resized."""
             if self.root.state() == 'normal' and event.width > 150 and (event.height > 150):
-                self.window_size = f'{event.width}x{event.height}'
+                self.window_size = '{}x{}'.format(event.width, event.height)
 
         def exit_GUI():
             """
@@ -731,9 +732,10 @@ class GUI_APP:
         self.text_font_entry.pack(side=tk.LEFT, padx=5)
         colors_frame = ttk.Frame(graph_settings_frame)
         colors_frame.pack(fill=tk.X, pady=5)
-        ttk.Label(colors_frame, text='Bar colors:').pack(side=tk.LEFT, padx=5)
+        ttk.Label(colors_frame, text='Bar colors (Analyze):').pack(side=tk.LEFT, padx=5)
         self.bar_color_single_var = tk.StringVar(value=str(config.graph_bar_color_single))
         ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_single_var).pack(side=tk.LEFT, padx=2)
+        ttk.Label(colors_frame, text=' | (Compare):').pack(side=tk.LEFT, padx=5)
         self.bar_color_compare1_var = tk.StringVar(value=str(config.graph_bar_color_compare1))
         ttk.Entry(colors_frame, width=10, textvariable=self.bar_color_compare1_var).pack(side=tk.LEFT, padx=2)
         self.bar_color_compare2_var = tk.StringVar(value=str(config.graph_bar_color_compare2))
@@ -758,7 +760,8 @@ class GUI_APP:
         Open a file dialog to browse for a file to analyze.
         Updates the file path entry field with the selected path.
         """
-        if (file_path := filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])):
+        file_path = filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])
+        if file_path:
             self.file_entry1.delete(0, tk.END)
             self.file_entry1.insert(0, file_path)
             self.file_path1 = file_path
@@ -768,7 +771,8 @@ class GUI_APP:
         Open a file dialog to browse for the first file to compare.
         Updates the file path entry field with the selected path.
         """
-        if (file_path := filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])):
+        file_path = filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])
+        if file_path:
             self.compare_file_entry1.delete(0, tk.END)
             self.compare_file_entry1.insert(0, file_path)
 
@@ -777,7 +781,8 @@ class GUI_APP:
         Open a file dialog to browse for the second file to compare.
         Updates the file path entry field with the selected path.
         """
-        if (file_path := filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])):
+        file_path = filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])
+        if file_path:
             self.compare_file_entry2.delete(0, tk.END)
             self.compare_file_entry2.insert(0, file_path)
 
@@ -786,7 +791,8 @@ class GUI_APP:
         Open a file dialog to browse for the a set of reference files to compare.
         Updates the file path entry field with the selected path.
         """
-        if (file_path := filedialog.askopenfilenames(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])):
+        file_path = filedialog.askopenfilenames(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])
+        if file_path:
             self.compare_file_entry2.delete(0, tk.END)
             for file in file_path[:-1]:
                 self.compare_file_entry2.insert(tk.END, file.replace(',', ',\\') + ', ')
@@ -794,13 +800,15 @@ class GUI_APP:
 
     def browse_search_file(self):
         """Browse for a file to search."""
-        if (file_path := filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])):
+        file_path = filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])
+        if file_path:
             self.search_file_entry.delete(0, tk.END)
             self.search_file_entry.insert(0, file_path)
 
     def browse_replace_file(self):
         """Browse for a file to perform word replacement."""
-        if (file_path := filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])):
+        file_path = filedialog.askopenfilename(filetypes=[('Text files', '*.txt'), ('All files', '*.*')])
+        if file_path:
             self.replace_file_entry.delete(0, tk.END)
             self.replace_file_entry.insert(0, file_path)
 
@@ -821,25 +829,25 @@ class GUI_APP:
             return
         content = read_file(file_path)
         if content is None:
-            messagebox.showerror('Error', f'Could not read file: {file_path}')
+            messagebox.showerror('Error', 'Could not read file: {}'.format(file_path))
             return
         clean_content = clean_text(content)
         word_count = count_words(clean_content)
         total_words = len(clean_content.split(' '))
         unique_words = len(word_count[0])
         self.stats_text.delete(1.0, tk.END)
-        self.stats_text.insert(tk.END, f'File: {os.path.basename(file_path)}\n')
-        self.stats_text.insert(tk.END, f'Total words: {total_words}\n')
-        self.stats_text.insert(tk.END, f'Unique words: {unique_words}\n')
+        self.stats_text.insert(tk.END, 'File: {}\n'.format(os.path.basename(file_path)))
+        self.stats_text.insert(tk.END, 'Total words: {}\n'.format(total_words))
+        self.stats_text.insert(tk.END, 'Unique words: {}\n'.format(unique_words))
         self.freq_list.delete(0, tk.END)
         freq_sorted = sort_by_frequency(word_count)[:config.analyze_max_words]
         for i, (word, count) in enumerate(freq_sorted):
-            self.freq_list.insert(tk.END, f'{i + 1}. "{word}": {count} times')
+            self.freq_list.insert(tk.END, '{}. "{}": {} times'.format(i + 1, word, count))
         self.alpha_list.delete(0, tk.END)
         alpha_sorted = sort_alphabetically(word_count)[:config.analyze_max_words]
         for i, (word, count) in enumerate(alpha_sorted):
-            self.alpha_list.insert(tk.END, f'{i + 1}. "{word}": {count} times')
-        self.analyze_graph_cmd = f'self.create_frequency_graph({word_count}, self.analyze_canvas, self.analyze_canvas)'
+            self.alpha_list.insert(tk.END, '{}. "{}": {} times'.format(i + 1, word, count))
+        self.analyze_graph_cmd = 'self.create_frequency_graph({}, self.analyze_canvas, self.analyze_canvas)'.format(word_count)
         eval(self.analyze_graph_cmd)
 
     def create_frequency_graph(self, word_count, canvas_frame_widget, canvas_widget, max_words=config.graph_max_words):
@@ -873,7 +881,7 @@ class GUI_APP:
         ax.tick_params(labelsize=config.graph_label_fontsize)
         for bar in bars:
             width = bar.get_width()
-            ax.text(width + 0.1, bar.get_y() + bar.get_height() / 2, f'{width}', ha='left', va='center')
+            ax.text(width + 0.1, bar.get_y() + bar.get_height() / 2, '{}'.format(width), ha='left', va='center')
         plt.tight_layout()
         canvas = FigureCanvasTkAgg(fig, master=canvas_widget)
         canvas.draw()
@@ -900,12 +908,12 @@ class GUI_APP:
             return
         content1 = read_file(file_path1)
         if content1 is None:
-            messagebox.showerror('Error', f'Could not read file: {file_path1}')
+            messagebox.showerror('Error', 'Could not read file: {}'.format(file_path1))
             return
         if self.compare_nltk.get() and get_similarity_score is None:
             self.compare_nltk.set(False)
             file_path2 = file_path2.split(', ')[0].replace(',\\', ',')
-            print('\x1b[33mWarning: some required modules in nltk_plagiarism module is missing, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m')
+            print('\x1b[33mWarning: some required modules in nltk_tools module is missing, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m')
             messagebox.showerror('Error', 'there are some errors trying to use cosine similarity (nltk), jaccard(?) similarity is used instead. Please refer to the error message in the terminal')
         if self.compare_nltk.get():
             file_paths = []
@@ -917,7 +925,7 @@ class GUI_APP:
             for path in file_paths:
                 content = read_file(path)
                 if content is None:
-                    messagebox.showerror('Error', f'Could not read file: {path}')
+                    messagebox.showerror('Error', 'Could not read file: {}'.format(path))
                     return
                 reference_contents.append(content)
                 reference_file_names.append(os.path.basename(path))
@@ -926,11 +934,11 @@ class GUI_APP:
             total_words1 = len(clean_content1.split(' '))
             unique_words1 = len(word_count1[0])
             self.file1_stats_text.delete(1.0, tk.END)
-            self.file1_stats_text.insert(tk.END, f'File: {os.path.basename(file_path1)}\n')
-            self.file1_stats_text.insert(tk.END, f'Total words: {total_words1}\n')
-            self.file1_stats_text.insert(tk.END, f'Unique words: {unique_words1}\n')
+            self.file1_stats_text.insert(tk.END, 'File: {}\n'.format(os.path.basename(file_path1)))
+            self.file1_stats_text.insert(tk.END, 'Total words: {}\n'.format(total_words1))
+            self.file1_stats_text.insert(tk.END, 'Unique words: {}\n'.format(unique_words1))
             self.file2_stats_text.delete(1.0, tk.END)
-            self.file2_stats_text.insert(tk.END, f'Reference Files: {len(file_paths)}\n')
+            self.file2_stats_text.insert(tk.END, 'Reference Files: {}\n'.format(len(file_paths)))
             total_words2 = 0
             unique_words = []
             reference_word_counts = []
@@ -943,23 +951,23 @@ class GUI_APP:
                 for word in word_count[0]:
                     if word not in unique_words:
                         unique_words.append(word)
-                self.file2_stats_text.insert(tk.END, f'File {i + 1}: {reference_file_names[i]}\n')
-            self.file2_stats_text.insert(tk.END, f'Total words across all files: {total_words2}\n')
-            self.file2_stats_text.insert(tk.END, f'Unique words across all files: {len(unique_words)}\n')
+                self.file2_stats_text.insert(tk.END, 'File {}: {}\n'.format(i + 1, reference_file_names[i]))
+            self.file2_stats_text.insert(tk.END, 'Total words across all files: {}\n'.format(total_words2))
+            self.file2_stats_text.insert(tk.END, 'Unique words across all files: {}\n'.format(len(unique_words)))
             plagiarism_results = get_similarity_score(content1, reference_contents)
             self.comparison_text.delete(1.0, tk.END)
             similarity_scores = [0] * len(reference_contents)
             if plagiarism_results:
                 max_similarity = helpers.max((result[1] for result in plagiarism_results))
                 similarity = max_similarity * 100
-                self.comparison_text.insert(tk.END, f'Similarity percentage: {similarity:.2f}%\n\n')
+                self.comparison_text.insert(tk.END, 'Similarity percentage: {.2f}%\n\n'.format(similarity))
                 self.comparison_text.insert(tk.END, 'Matches found in:\n')
                 for i, result in enumerate(plagiarism_results):
                     score = result[1] * 100
                     match_index = helpers.linear_search(reference_contents, result[0])
                     file_name = reference_file_names[match_index]
                     similarity_scores[match_index] = score
-                    self.comparison_text.insert(tk.END, f'Match {i + 1}: {file_name} - {score:.2f}% similarity\n')
+                    self.comparison_text.insert(tk.END, 'Match {}: {} - {.2f}% similarity\n'.format(i + 1, file_name, score))
             else:
                 similarity = 0
                 self.comparison_text.insert(tk.END, 'No significant similarity detected\n\n')
@@ -976,14 +984,14 @@ class GUI_APP:
             else:
                 level = 'MINIMAL - These texts are mostly different'
                 self.comparison_text.tag_configure('color', foreground='green')
-            self.comparison_text.insert(tk.END, f'\nPlagiarism Level: {level}', 'color')
+            self.comparison_text.insert(tk.END, '\nPlagiarism Level: {}'.format(level), 'color')
             if reference_word_counts:
-                self.compare_graph_cmd = f"self.create_nltk_comparison_graph({word_count1}, {reference_word_counts}, '{os.path.basename(file_path1)}', {reference_file_names}, {similarity_scores}, self.compare_graph_frame, self.compare_canvas)"
+                self.compare_graph_cmd = "self.create_nltk_comparison_graph({}, {}, '''{}''', {}, {}, self.compare_graph_frame, self.compare_canvas)".format(word_count1, reference_word_counts, os.path.basename(file_path1), reference_file_names, similarity_scores)
                 eval(self.compare_graph_cmd)
         else:
             content2 = read_file(file_path2)
             if content2 is None:
-                messagebox.showerror('Error', f'Could not read file: {file_path2}')
+                messagebox.showerror('Error', 'Could not read file: {}'.format(file_path2))
                 return
             clean_content1 = clean_text(content1)
             clean_content2 = clean_text(content2)
@@ -994,16 +1002,16 @@ class GUI_APP:
             unique_words1 = len(word_count1[0])
             unique_words2 = len(word_count2[0])
             self.file1_stats_text.delete(1.0, tk.END)
-            self.file1_stats_text.insert(tk.END, f'File: {os.path.basename(file_path1)}\n')
-            self.file1_stats_text.insert(tk.END, f'Total words: {total_words1}\n')
-            self.file1_stats_text.insert(tk.END, f'Unique words: {unique_words1}\n')
+            self.file1_stats_text.insert(tk.END, 'File: {}\n'.format(os.path.basename(file_path1)))
+            self.file1_stats_text.insert(tk.END, 'Total words: {}\n'.format(total_words1))
+            self.file1_stats_text.insert(tk.END, 'Unique words: {}\n'.format(unique_words1))
             self.file2_stats_text.delete(1.0, tk.END)
-            self.file2_stats_text.insert(tk.END, f'File: {os.path.basename(file_path2)}\n')
-            self.file2_stats_text.insert(tk.END, f'Total words: {total_words2}\n')
-            self.file2_stats_text.insert(tk.END, f'Unique words: {unique_words2}\n')
+            self.file2_stats_text.insert(tk.END, 'File: {}\n'.format(os.path.basename(file_path2)))
+            self.file2_stats_text.insert(tk.END, 'Total words: {}\n'.format(total_words2))
+            self.file2_stats_text.insert(tk.END, 'Unique words: {}\n'.format(unique_words2))
             similarity = calculate_similarity(word_count1, word_count2)
             self.comparison_text.delete(1.0, tk.END)
-            self.comparison_text.insert(tk.END, f'Similarity percentage of\ntext 1: {similarity[0]:.2f}%\ntext 2: {similarity[1]:.2f}%\n\n')
+            self.comparison_text.insert(tk.END, 'Similarity percentage of\ntext 1: {.2f}%\ntext 2: {.2f}%\n\n'.format(similarity[0], similarity[1]))
             similarity = helpers.max(similarity)
             if similarity > 80:
                 level = 'HIGH - These texts are very similar'
@@ -1017,8 +1025,8 @@ class GUI_APP:
             else:
                 level = 'MINIMAL - These texts are mostly different'
                 self.comparison_text.tag_configure('color', foreground='green')
-            self.comparison_text.insert(tk.END, f'Plagiarism Level: {level}', 'color')
-            self.compare_graph_cmd = f'self.create_comparison_graph({word_count1}, {word_count2}, self.compare_graph_frame, self.compare_canvas)'
+            self.comparison_text.insert(tk.END, 'Plagiarism Level: {}'.format(level), 'color')
+            self.compare_graph_cmd = 'self.create_comparison_graph({}, {}, self.compare_graph_frame, self.compare_canvas)'.format(word_count1, word_count2)
             eval(self.compare_graph_cmd)
 
     def create_comparison_graph(self, word_count1, word_count2, canvas_frame_widget, canvas_widget, max_words=config.graph_max_words):
@@ -1159,7 +1167,7 @@ class GUI_APP:
             x = range(len(display_words))
             width = 0.35
             ax.bar([j - width / 2 for j in x], counts1, width, label=file1_name, color=config.graph_bar_color_compare1)
-            ax.bar([j + width / 2 for j in x], counts2, width, label=f'{reference_file_names[i]} ({similarity_scores[i]:.1f}%)', color=config.graph_bar_color_compare2)
+            ax.bar([j + width / 2 for j in x], counts2, width, label='{} ({.1f}%)'.format(reference_file_names[i], similarity_scores[i]), color=config.graph_bar_color_compare2)
             if i == 0:
                 ax.set_title('Word Frequency Comparison with Reference Files')
             if i == num_plots // 2:
@@ -1203,14 +1211,14 @@ class GUI_APP:
             return
         content = read_file(file_path)
         if content is None:
-            messagebox.showerror('Error', f'Could not read file: {file_path}')
+            messagebox.showerror('Error', 'Could not read file: {}'.format(file_path))
             return
         positions = search_word_position(content, target_word, regex)
         self.search_results.config(state=tk.NORMAL)
         self.search_results.delete(1.0, tk.END)
         if positions:
             match_text = 'pattern' if regex else 'word'
-            self.search_results.insert(tk.END, f'The {match_text} "{target_word}" appears {len(positions)} times\n\n')
+            self.search_results.insert(tk.END, 'The {} "{}" appears {} times\n\n'.format(match_text, target_word, len(positions)))
             self.search_results.tag_configure('highlight', background='yellow', foreground='black')
             words = content.split()
             for pos, matched_word in positions:
@@ -1218,16 +1226,16 @@ class GUI_APP:
                 end = helpers.min(len(words), pos + 4)
                 prefix = '... ' if pos > 3 else ''
                 suffix = ' ...' if pos + 4 < len(words) else ''
-                self.search_results.insert(tk.END, f'Position {pos}: {prefix}')
+                self.search_results.insert(tk.END, 'Position {}: {}'.format(pos, prefix))
                 if start < pos:
                     self.search_results.insert(tk.END, ' '.join(words[start:pos]) + ' ')
                 self.search_results.insert(tk.END, matched_word, 'highlight')
                 if pos + 1 < end:
                     self.search_results.insert(tk.END, ' ' + ' '.join(words[pos + 1:end]))
-                self.search_results.insert(tk.END, f'{suffix}\n')
+                self.search_results.insert(tk.END, '{}\n'.format(suffix))
         else:
             match_text = 'pattern' if regex else 'word'
-            self.search_results.insert(tk.END, f'The {match_text} "{target_word}" was not found in the file.')
+            self.search_results.insert(tk.END, 'The {} "{}" was not found in the file.'.format(match_text, target_word))
         self.search_results.config(state=tk.DISABLED)
 
     def replace_word(self):
@@ -1256,7 +1264,7 @@ class GUI_APP:
             return
         content = read_file(file_path)
         if content is None:
-            messagebox.showerror('Error', f'Could not read file: {file_path}')
+            messagebox.showerror('Error', 'Could not read file: {}'.format(file_path))
             return
         self.original_text.config(state=tk.NORMAL)
         self.modified_text.tag_configure('highlight', background='yellow', foreground='black')
@@ -1351,13 +1359,14 @@ class GUI_APP:
         if not self.modified_text.get(1.0, tk.END).strip():
             messagebox.showerror('Error', 'No modified text to save.')
             return
-        if (file_path := filedialog.asksaveasfilename(defaultextension='.txt', filetypes=[('Text files', '*.txt'), ('All files', '*.*')])):
+        file_path = filedialog.asksaveasfilename(defaultextension='.txt', filetypes=[('Text files', '*.txt'), ('All files', '*.*')])
+        if file_path:
             try:
                 with open(file_path, 'w', encoding='utf-8') as file:
                     file.write(self.modified_text.get(1.0, tk.END))
-                messagebox.showinfo('Success', f'Modified text saved to "{file_path}"')
+                messagebox.showinfo('Success', 'Modified text saved to "{}"'.format(file_path))
             except Exception as e:
-                messagebox.showerror('Error', f'Error saving file: {str(e)}')
+                messagebox.showerror('Error', 'Error saving file: {}'.format(str(e)))
 
     def save_config(self):
         """
@@ -1447,7 +1456,7 @@ def configure_test_input(prompt, type, was, error=''):
         type: The validated input converted to the specified type.
     """
     try:
-        temp_unsaved = input(f'{prompt} (was {was}): ')
+        temp_unsaved = input('{} (was {}): '.format(prompt, was))
         if type is int:
             temp_unsaved = int(temp_unsaved)
             if temp_unsaved > 0:
@@ -1509,7 +1518,8 @@ def configure():
                 continue
             if eval(unsaved_var) is not None:
                 unsaved = True
-        print([[], [*f'Change settings{('(unsaved)' if unsaved else '')}:'], [], [*'CLI settings:'], ['\x1b[1;4;97mA\x1b[m', *f'nalyse file: show first {(config.single_file_display_line if unsaved_single_file_display_line is None else f'{unsaved_single_file_display_line} (was {config.single_file_display_line})')} sorted words appeared'], ['\x1b[1;4;97mC\x1b[m', *f'ompare files: show first {(config.compare_file_display_line if unsaved_compare_file_display_line is None else f'{unsaved_compare_file_display_line} (was {config.compare_file_display_line})')} sorted words appeared'], [], [*'GUI settings:'], ['a', '\x1b[1;4;97mN\x1b[m', *f'alyse file: show first {(config.analyze_max_words if unsaved_analyze_max_words is None else f'{unsaved_analyze_max_words} (was {config.analyze_max_words})')} sorted words appeared'], [*'Graph: ', '\x1b[1;4;97mM\x1b[m', *f'ax word: show first {(config.graph_max_words if unsaved_graph_max_words is None else f'{unsaved_graph_max_words} (was {config.graph_max_words})')} sorted words appeared'], [*'Graph figure size: set the figure ', '\x1b[1;4;97mH\x1b[m', *f'eight to {(config.graph_figsize[1] if unsaved_graph_figsize_h is None else f'{unsaved_graph_figsize_h} (was {config.graph_figsize[1]})')}'], [*'Graph figure size: set the figure ', '\x1b[1;4;97mW\x1b[m', *f'idth to {(config.graph_figsize[0] if unsaved_graph_figsize_w is None else f'{unsaved_graph_figsize_w} (was {config.graph_figsize[0]})')}'], [*'Graph bar: set color of s', '\x1b[1;4;97mI\x1b[m', *f'ngle bar (analyse file) to {(config.graph_bar_color_single if unsaved_graph_bar_color_single is None else f'{unsaved_graph_bar_color_single} (was {config.graph_bar_color_single})')}'], [*'Graph bar: set color of File', '\x1b[1;4;97m1\x1b[m', *f"'s bar (compare file) to {(config.graph_bar_color_compare1 if unsaved_graph_bar_color_compare1 is None else f'{unsaved_graph_bar_color_compare1} (was {config.graph_bar_color_compare1})')}"], [*'Graph bar: set color of File', '\x1b[1;4;97m2\x1b[m', *f"'s bar (compare file) to {(config.graph_bar_color_compare2 if unsaved_graph_bar_color_compare2 is None else f'{unsaved_graph_bar_color_compare2} (was {config.graph_bar_color_compare2})')}"], [*'Graph ', '\x1b[1;4;97mT\x1b[m', *f'itle: set font size to {(config.graph_title_fontsize if unsaved_graph_title_fontsize is None else f'{unsaved_graph_title_fontsize} (was {config.graph_title_fontsize})')}'], [*'Graph ', '\x1b[1;4;97mL\x1b[m', *f'abel: set font size to {(config.graph_label_fontsize if unsaved_graph_label_fontsize is None else f'{unsaved_graph_label_fontsize} (was {config.graph_label_fontsize})')}'], [*'Text: set ', '\x1b[1;4;97mF\x1b[m', *f'ont size to {(config.text_font_size if unsaved_text_font_size is None else f'{unsaved_text_font_size} (was {config.text_font_size})')}'], ['\x1b[1;4mS\x1b[m', *'ave and exit'], ['\x1b[1;4;97mE\x1b[m', *'xit without saving']], _override=True, wrap_override=True)
+                break
+        print([[], [*'Change settings{}:'.format('(unsaved)' if unsaved else '')], [], ['C', 'L', 'I', ' ', 's', 'e', 't', 't', 'i', 'n', 'g', 's', ':'], ['\x1b[1;4;97mA\x1b[m', *'nalyse file: show first {} sorted words appeared'.format(config.single_file_display_line if unsaved_single_file_display_line is None else '{} (was {})'.format(unsaved_single_file_display_line, config.single_file_display_line))], ['\x1b[1;4;97mC\x1b[m', *'ompare files: show first {} sorted words appeared'.format(config.compare_file_display_line if unsaved_compare_file_display_line is None else '{} (was {})'.format(unsaved_compare_file_display_line, config.compare_file_display_line))], [], ['G', 'U', 'I', ' ', 's', 'e', 't', 't', 'i', 'n', 'g', 's', ':'], ['a', '\x1b[1;4;97mN\x1b[m', *'alyse file: show first {} sorted words appeared'.format(config.analyze_max_words if unsaved_analyze_max_words is None else '{} (was {})'.format(unsaved_analyze_max_words, config.analyze_max_words))], ['G', 'r', 'a', 'p', 'h', ':', ' ', '\x1b[1;4;97mM\x1b[m', *'ax word: show first {} sorted words appeared'.format(config.graph_max_words if unsaved_graph_max_words is None else '{} (was {})'.format(unsaved_graph_max_words, config.graph_max_words))], ['G', 'r', 'a', 'p', 'h', ' ', 'f', 'i', 'g', 'u', 'r', 'e', ' ', 's', 'i', 'z', 'e', ':', ' ', 's', 'e', 't', ' ', 't', 'h', 'e', ' ', 'f', 'i', 'g', 'u', 'r', 'e', ' ', '\x1b[1;4;97mH\x1b[m', *'eight to {}'.format(config.graph_figsize[1] if unsaved_graph_figsize_h is None else '{} (was {})'.format(unsaved_graph_figsize_h, config.graph_figsize[1]))], ['G', 'r', 'a', 'p', 'h', ' ', 'f', 'i', 'g', 'u', 'r', 'e', ' ', 's', 'i', 'z', 'e', ':', ' ', 's', 'e', 't', ' ', 't', 'h', 'e', ' ', 'f', 'i', 'g', 'u', 'r', 'e', ' ', '\x1b[1;4;97mW\x1b[m', *'idth to {}'.format(config.graph_figsize[0] if unsaved_graph_figsize_w is None else '{} (was {})'.format(unsaved_graph_figsize_w, config.graph_figsize[0]))], ['G', 'r', 'a', 'p', 'h', ' ', 'b', 'a', 'r', ':', ' ', 's', 'e', 't', ' ', 'c', 'o', 'l', 'o', 'r', ' ', 'o', 'f', ' ', 's', '\x1b[1;4;97mI\x1b[m', *'ngle bar (analyse file) to {}'.format(config.graph_bar_color_single if unsaved_graph_bar_color_single is None else '{} (was {})'.format(unsaved_graph_bar_color_single, config.graph_bar_color_single))], ['G', 'r', 'a', 'p', 'h', ' ', 'b', 'a', 'r', ':', ' ', 's', 'e', 't', ' ', 'c', 'o', 'l', 'o', 'r', ' ', 'o', 'f', ' ', 'F', 'i', 'l', 'e', '\x1b[1;4;97m1\x1b[m', *"'s bar (compare file) to {}".format(config.graph_bar_color_compare1 if unsaved_graph_bar_color_compare1 is None else '{} (was {})'.format(unsaved_graph_bar_color_compare1, config.graph_bar_color_compare1))], ['G', 'r', 'a', 'p', 'h', ' ', 'b', 'a', 'r', ':', ' ', 's', 'e', 't', ' ', 'c', 'o', 'l', 'o', 'r', ' ', 'o', 'f', ' ', 'F', 'i', 'l', 'e', '\x1b[1;4;97m2\x1b[m', *"'s bar (compare file) to {}".format(config.graph_bar_color_compare2 if unsaved_graph_bar_color_compare2 is None else '{} (was {})'.format(unsaved_graph_bar_color_compare2, config.graph_bar_color_compare2))], ['G', 'r', 'a', 'p', 'h', ' ', '\x1b[1;4;97mT\x1b[m', *'itle: set font size to {}'.format(config.graph_title_fontsize if unsaved_graph_title_fontsize is None else '{} (was {})'.format(unsaved_graph_title_fontsize, config.graph_title_fontsize))], ['G', 'r', 'a', 'p', 'h', ' ', '\x1b[1;4;97mL\x1b[m', *'abel: set font size to {}'.format(config.graph_label_fontsize if unsaved_graph_label_fontsize is None else '{} (was {})'.format(unsaved_graph_label_fontsize, config.graph_label_fontsize))], ['T', 'e', 'x', 't', ':', ' ', 's', 'e', 't', ' ', '\x1b[1;4;97mF\x1b[m', *'ont size to {}'.format(config.text_font_size if unsaved_text_font_size is None else '{} (was {})'.format(unsaved_text_font_size, config.text_font_size))], ['\x1b[1;4mS\x1b[m', 'a', 'v', 'e', ' ', 'a', 'n', 'd', ' ', 'e', 'x', 'i', 't'], ['\x1b[1;4;97mE\x1b[m', 'x', 'i', 't', ' ', 'w', 'i', 't', 'h', 'o', 'u', 't', ' ', 's', 'a', 'v', 'i', 'n', 'g']], _override=True, wrap_override=True)
         config_option = input('Enter option: ', single_letter=True).upper().strip()
         if config_option == 'A':
             unsaved_single_file_display_line = configure_test_input('Enter number of sorted words to display in Analyze File mode', int, str(config.single_file_display_line))
@@ -1538,7 +1548,7 @@ def configure():
         elif config_option in 'ES':
             break
         else:
-            print(f'Invalid option {repr(config_option)}. Please try again.')
+            print('Invalid option {}. Please try again.'.format(repr(config_option)))
     if config_option == 'S':
         if unsaved_single_file_display_line is not None:
             config.single_file_display_line = unsaved_single_file_display_line
@@ -1587,9 +1597,9 @@ def search_word(file_path, target_word):
     if content is not None:
         positions = search_word_position(clean_text(content), target_word)
         if positions:
-            print(f'The word "{target_word}" appears {len(positions)} times at positions: {', '.join((str(pos[0]) for pos in positions))}')
+            print('The word "{}" appears {} times at positions: {}'.format(target_word, len(positions), ', '.join((str(pos[0]) for pos in positions))))
             return
-    print(f'The word "{target_word}" was not found in the file.')
+    print('The word "{}" was not found in the file.'.format(target_word))
 
 def replace_word(file_path, target_word, replacement_word):
     """
@@ -1650,16 +1660,16 @@ def replace_word(file_path, target_word, replacement_word):
                 modified_line = line
             modified_lines.append(modified_line)
         modified_content = '\n'.join(modified_lines)
-        print(f'\nOriginal text:\n{(content[:100] + '...' if len(content) > 100 else content)}\n\nModified text:\n{(modified_content[:100] + '...' if len(modified_content) > 100 else modified_content)}')
+        print('\nOriginal text:\n{}\n\nModified text:\n{}'.format(content[:100] + '...' if len(content) > 100 else content, modified_content[:100] + '...' if len(modified_content) > 100 else modified_content))
         save_option = input('\n\nDo you want to save the modified text to a new file? (y/n): ', single_letter=True).lower()
         if save_option == 'y':
             new_file_path = input('Enter the path for the new file: ').strip()
             try:
                 with open(new_file_path, 'w', encoding='utf-8') as file:
                     file.write(modified_content)
-                print(f'Modified text saved to "{new_file_path}"')
+                print('Modified text saved to "{}"'.format(new_file_path))
             except Exception as e:
-                print(f'Error saving file: {str(e)}')
+                print('Error saving file: {}'.format(str(e)))
 
 def display_results(file_path, word_count, total_words, unique_words, show_nums=10, wrap=None):
     """
@@ -1682,14 +1692,14 @@ def display_results(file_path, word_count, total_words, unique_words, show_nums=
     if wrap is None:
         wrap = os.get_terminal_size().columns
     hyphen_wrap = helpers.min(wrap, len(str(show_nums)) + 30)
-    print(f'\n{'=' * helpers.min(wrap, len(file_path) + 15)}\nAnalysis of "{file_path}":\n{'=' * helpers.min(wrap, len(file_path) + 15)}\nTotal words: {total_words}\nUnique words: {unique_words}\n\n\nTop {show_nums} Most Frequent Words:\n{'-' * hyphen_wrap}')
+    print('\n{}\nAnalysis of "{}":\n{}\nTotal words: {}\nUnique words: {}\n\n\nTop {} Most Frequent Words:\n{}'.format('=' * helpers.min(wrap, len(file_path) + 15), file_path, '=' * helpers.min(wrap, len(file_path) + 15), total_words, unique_words, show_nums, '-' * hyphen_wrap))
     frequency_sorted = sort_by_frequency(word_count)
-    txt = ''.join((f'{i + 1}. "{word}": {count} times\n' for i, (word, count) in enumerate(frequency_sorted[:show_nums])))
+    txt = ''.join(('{}. "{}": {} times\n'.format(i + 1, word, count) for i, (word, count) in enumerate(frequency_sorted[:show_nums])))
     print(txt)
-    txt = f'\nFirst {show_nums} Words (Alphabetically):\n{'-' * hyphen_wrap}\n'
+    txt = '\nFirst {} Words (Alphabetically):\n{}\n'.format(show_nums, '-' * hyphen_wrap)
     alpha_sorted = sort_alphabetically(word_count)
     for i, (word, count) in enumerate(alpha_sorted[:show_nums]):
-        txt += f'{i + 1}. "{word}": {count} times\n'
+        txt += '{}. "{}": {} times\n'.format(i + 1, word, count)
     print(txt)
 
 def compare_files(file_path1, file_path2):
@@ -1721,7 +1731,7 @@ def compare_files(file_path1, file_path2):
     display_results(file_path1, word_count1, total_words1, unique_words1, config.compare_file_display_line)
     display_results(file_path2, word_count2, total_words2, unique_words2, config.compare_file_display_line)
     similarity = calculate_similarity(word_count1, word_count2)
-    print(f'\n{'=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\nComparison between "{file_path1}" and "{file_path2}":\n{'=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30)}\n\nSimilarity percentage of\ntext 1: {similarity[0]:.2f}%\ntext 2: {similarity[1]:.2f}%')
+    print('\n{}\nComparison between "{}" and "{}":\n{}\n\nSimilarity percentage of\ntext 1: {.2f}%\ntext 2: {.2f}%'.format('=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30), file_path1, file_path2, '=' * helpers.min(columns, len(file_path1) + len(file_path2) + 30), similarity[0], similarity[1]))
     similarity = helpers.max(similarity)
     if similarity > 80:
         print('\x1b[31mPlagiarism Level: HIGH - These texts are very similar\x1b[m')
@@ -1789,26 +1799,26 @@ def mainCLI():
             txt_files = [file for file in os.listdir() if os.path.isfile(file) and file.endswith('.txt')]
             print('Text files in current directory' + (' (enter nothing to use the last chosen file)' if file_path or file_path2 else '') + ':\n' + '\n'.join(txt_files))
             if choice == '1':
-                new_file_path = input('Enter the path to the text file' + (f' (last chosen file: {file_path})' if file_path else '') + ': ').strip()
+                new_file_path = input('Enter the path to the text file' + (' (last chosen file: {})'.format(file_path) if file_path else '') + ': ').strip()
                 if new_file_path != '':
                     file_path = new_file_path
                 analyze_file(file_path)
             elif choice == '2':
-                new_file_path = input('Enter the path to the first text file' + (f' (last chosen: {file_path})' if file_path else '') + ': ').strip()
-                new_file_path2 = input('Enter the path to the second text file' + (f' (last chosen: {file_path2})' if file_path2 else '') + ': ').strip()
+                new_file_path = input('Enter the path to the first text file' + (' (last chosen: {})'.format(file_path) if file_path else '') + ': ').strip()
+                new_file_path2 = input('Enter the path to the second text file' + (' (last chosen: {})'.format(file_path2) if file_path2 else '') + ': ').strip()
                 if new_file_path != '':
                     file_path = new_file_path
                 if new_file_path2 != '':
                     file_path2 = new_file_path2
                 compare_files(file_path, file_path2)
             elif choice == '3':
-                new_file_path = input('Enter the path to the text file' + (f' (last chosen: {file_path})' if file_path else '') + ': ').strip()
+                new_file_path = input('Enter the path to the text file' + (' (last chosen: {})'.format(file_path) if file_path else '') + ': ').strip()
                 target_word = input('Enter the word to search for: ').strip()
                 if new_file_path != '':
                     file_path = new_file_path
                 search_word(file_path, target_word)
             elif choice == '4':
-                new_file_path = input('Enter the path to the text file' + (f' (last chosen: {file_path})' if file_path else '') + ': ').strip()
+                new_file_path = input('Enter the path to the text file' + (' (last chosen: {})'.format(file_path) if file_path else '') + ': ').strip()
                 target_word = input('Enter the word to replace: ').strip()
                 replacement_word = input('Enter the replacement word: ').strip()
                 if new_file_path != '':
@@ -1820,12 +1830,12 @@ def mainCLI():
             print('Thank you for using WAPDS!')
             break
         else:
-            print(f'Invalid choice {repr(choice)}. Please enter a number between 1 and 6.')
+            print('Invalid choice {}. Please enter a number between 1 and 6.'.format(repr(choice)))
 if __name__ == '__main__':
     some_text = '{width}x{height}'
     parser = argparse.ArgumentParser(description='Word Analysis and Plagiarism Detection System (WAPDS)')
     parser.add_argument('run_type', help='Enter "GUI" or "CLI" to determine which version should run, defaults to GUI', nargs='?', default='GUI')
-    parser.add_argument('GUI_window_size', help=f'Enter in format of {some_text}, set the GUI window size and will be saved, defaults to last window size (currently {repr(config.window_size)})', nargs='?', default=config.window_size)
+    parser.add_argument('GUI_window_size', help='Enter in format of {}, set the GUI window size and will be saved, defaults to last window size (currently {})'.format(some_text, repr(config.window_size)), nargs='?', default=config.window_size)
     args = parser.parse_args()
     if args.run_type == 'GUI':
         if plt is None:
@@ -1845,12 +1855,12 @@ if __name__ == '__main__':
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults()
             else:
-                parser.error(f'Please enter GUI window size in the format of {some_text}, not {repr(GUI_window_size)}')
+                parser.error('Please enter GUI window size in the format of {}, not {}'.format(some_text, repr(GUI_window_size)))
         except TypeError:
             if GUI_window_size == config.window_size:
                 config.reset_to_defaults()
             else:
-                parser.error(f'GUI is too small ({GUI_window_size}), please keep the window size larger than 150x150')
+                parser.error('GUI is too small ({}), please keep the window size larger than 150x150'.format(GUI_window_size))
         config.window_size = GUI_window_size
         config.save()
         mainGUI()
@@ -1859,4 +1869,4 @@ if __name__ == '__main__':
         from helpers import animated_print as print
         mainCLI()
     else:
-        parser.error(f'Please enter either "GUI" or "CLI" for run type, not {repr(args.run_type)}')
+        parser.error('Please enter either "GUI" or "CLI" for run type, not {}'.format(repr(args.run_type)))

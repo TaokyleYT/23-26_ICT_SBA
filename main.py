@@ -12,8 +12,8 @@ from tkinter import (  # Import some tkinter components specificly
 import helpers  # Import custom helper functions that avoid using built-in functions
 
 try:
-    from nltk_plagiarism import get_similarity_score  # For advance stuff
-    import numpy as np # For redrawing nltk graph without scikit-learn (in nltk_plagarism.py)
+    from nltk_tools import get_similarity_score  # For advance stuff
+    import numpy as np # For redrawing nltk graph without scikit-learn (in nltk_tools.py)
 except:
     get_similarity_score = None  # Set get_similarity_score to None so we can check if the entirety of nltk is available later
 try:
@@ -1430,7 +1430,7 @@ class GUI_APP:
         if self.compare_nltk.get() and get_similarity_score is None:
             self.compare_nltk.set(False)
             file_path2 = file_path2.split(", ")[0].replace(",\\", ",")  # If NLTK is not available, use the first file only
-            print("\x1b[33mWarning: some required modules in nltk_plagiarism module is missing, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m")  #Show error message
+            print("\x1b[33mWarning: some required modules in nltk_tools module is missing, or is corrupted. Please (re)install the necesserary modules by running `python -m pip install nltk scikit-learn` in the terminal\x1b[m")  #Show error message
             messagebox.showerror("Error", "there are some errors trying to use cosine similarity (nltk), jaccard(?) similarity is used instead. Please refer to the error message in the terminal")  # Show more error message
 
         # Process differently based on whether NLTK is enabled
@@ -2303,6 +2303,8 @@ def configure():
                 continue
             if eval(unsaved_var) is not None:
                 unsaved = True
+                break
+        # The output menu (raw due to mixtures of multiline ANSI, thus big and scary)
         print(
             [[],
             [*f"Change settings{'(unsaved)' if unsaved else ''}:"],

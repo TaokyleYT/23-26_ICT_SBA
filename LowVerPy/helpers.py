@@ -101,8 +101,8 @@ def animated_print(txt='', end='\n', delay=0.01, line_offset=1, _override=False,
             txt_lst.extend(txt_lst_temp)
         else:
             temp = split_exclude_ANSI(line, ' ')
-            words: list[str] = [item if i == len(temp) - 1 else item + ' ' for i, item in enumerate(temp)]
-            index: int = 0
+            words = [item if i == len(temp) - 1 else item + ' ' for i, item in enumerate(temp)]
+            index = 0
             while index < len(words):
                 if len(words[index]) > term_size.columns - 1:
                     for wrapped_line in (line[i:i + term_size.columns - 1] for i in range(0, len(line), term_size.columns - 1)):
@@ -190,7 +190,7 @@ def animated_input(prompt='', delay=0.01, line_offset=1, single_letter=False, _l
         if result in '\x03\x04':
             if _log:
                 with open('input_log.txt', 'a') as f:
-                    f.write(f'KeyboardInterrupt with {result}\n')
+                    f.write('KeyboardInterrupt with {}\n'.format(result))
             raise KeyboardInterrupt
         print(result)
         if sys.platform == 'win32':
@@ -200,7 +200,7 @@ def animated_input(prompt='', delay=0.01, line_offset=1, single_letter=False, _l
             termios.tcsetattr(stdin, termios.TCSANOW, original_term)
         if _log:
             with open('input_log.txt', 'a') as f:
-                f.write(f'submitted {repr(result)} \n')
+                f.write('submitted {} \n'.format(repr(result)))
         return result
     sys.stdout.write('\x1b[?25l\x1b[6n')
     sys.stdout.flush()
@@ -221,7 +221,7 @@ def animated_input(prompt='', delay=0.01, line_offset=1, single_letter=False, _l
         if char in '\x03\x04':
             if _log:
                 with open('input_log.txt', 'a') as f:
-                    f.write(f'KeyboardInterrupt with {char}\n')
+                    f.write('KeyboardInterrupt with {}\n'.format(char))
             raise KeyboardInterrupt
         if char in '\x7f\x08':
             if len(result) > 0:
@@ -232,13 +232,13 @@ def animated_input(prompt='', delay=0.01, line_offset=1, single_letter=False, _l
                 if ptr % columns != 0:
                     output('\x08 \x08')
                 else:
-                    output(f'\x1b[F\x1b[{columns - 1}G\x08 \x08')
+                    output('\x1b[F\x1b[{}G\x08 \x08'.format(columns - 1))
                 sys.stdout.flush()
                 ptr -= 1
         else:
             if _log:
                 with open('input_log.txt', 'a') as f:
-                    f.write(f'add {repr(char)} \n')
+                    f.write('add {} \n'.format(repr(char)))
             result += char
             if ptr % columns == 0:
                 output(' \n')
@@ -275,10 +275,10 @@ def animated_input(prompt='', delay=0.01, line_offset=1, single_letter=False, _l
         termios.tcsetattr(stdin, termios.TCSANOW, original_term)
     if _log:
         with open('input_log.txt', 'a') as f:
-            f.write(f'submitted {repr(result)} \n')
+            f.write('submitted {} \n'.format(repr(result)))
     return result
 
-def quick_sort(iterable: Iterable, /, *, key=None, reverse: bool=False):
+def quick_sort(*, key=None, reverse=False):
     """
     Sorts a list using the quick sort algorithm.
 
@@ -322,7 +322,7 @@ def quick_sort(iterable: Iterable, /, *, key=None, reverse: bool=False):
             more.append(item)
     return list(quick_sort(less, reverse=reverse)) + [pivot] + list(quick_sort(more, reverse=reverse))
 
-def linear_search(iterable: list, value, start=0, stop=9223372036854775807, /):
+def linear_search():
     """
     Performs a linear search for a value in a list.
 

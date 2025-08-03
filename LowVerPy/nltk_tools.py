@@ -11,43 +11,22 @@ if os.name == 'nt':
 else:
     data_dir = __file__.rsplit('/', 1)[0] + '/nltk_data'
 nltk.data.path.append(data_dir)
-
-def update():
-    """
-
-    Update NLTK data if necessary.
-
-
-
-    This function checks if the NLTK data directory exists and downloads the required
-
-    data if it doesn't.
-
-    """
-    if not exists(data_dir + '/tokenizers'):
-        nltk.download('punkt', data_dir)
-        nltk.download('punkt_tab', data_dir)
-    if not exists(data_dir + '/corpora'):
-        nltk.download('stopwords', data_dir)
-        nltk.download('wordnet', data_dir)
+if not exists(data_dir + '/tokenizers'):
+    nltk.download('punkt', data_dir)
+    nltk.download('punkt_tab', data_dir)
+if not exists(data_dir + '/corpora'):
+    nltk.download('stopwords', data_dir)
+    nltk.download('wordnet', data_dir)
 
 def preprocess_text(text):
     """
-
     Preprocess a text by tokenizing, removing punctuation and stop words, and lemmatizing.
 
-
-
     Args:
-
         text (str): The text to preprocess.
 
-
-
     Returns:
-
         str: The preprocessed text.
-
     """
     stop_words = stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
@@ -59,23 +38,14 @@ def preprocess_text(text):
 
 def calculate_similarity(query_features, reference_features):
     """
-
     Calculate the cosine similarity between two sets of features.
 
-
-
     Args:
-
         query_features (scipy.sparse.csr_matrix): The features of the query text.
-
         reference_features (scipy.sparse.csr_matrix): The features of the reference texts.
 
-
-
     Returns:
-
         list: A list of similarity scores, one for each reference text.
-
     """
     if query_features.shape[1] != reference_features.shape[1]:
         reference_features = reference_features.T
@@ -86,21 +56,13 @@ def calculate_similarity(query_features, reference_features):
 
 def bow_features(texts):
     """
-
     Extract bag-of-words features from a list of texts.
 
-
-
     Args:
-
         texts (list): A list of texts.
 
-
-
     Returns:
-
         tuple: A tuple containing the features and the vectorizer.
-
     """
     vectorizer = CountVectorizer()
     features = vectorizer.fit_transform(texts)
@@ -108,21 +70,13 @@ def bow_features(texts):
 
 def tfidf_features(texts):
     """
-
     Extract TF-IDF features from a list of texts.
 
-
-
     Args:
-
         texts (list): A list of texts.
 
-
-
     Returns:
-
         tuple: A tuple containing the features and the vectorizer.
-
     """
     vectorizer = TfidfVectorizer()
     features = vectorizer.fit_transform(texts)
@@ -130,23 +84,14 @@ def tfidf_features(texts):
 
 def get_similarity_score(query_text, reference_texts):
     """
-
     Calculate the cosine similarity between a query text and one or more reference texts.
 
-
-
     Args:
-
         query_text (str): The query text.
-
         reference_texts (list): A list of reference texts.
 
-
-
     Returns:
-
         list: A list of tuples, where each tuple contains the reference text and its corresponding similarity score.
-
     """
     preprocessed_query = preprocess_text(query_text)
     preprocessed_references = [preprocess_text(text) for text in reference_texts]
@@ -159,7 +104,6 @@ def get_similarity_score(query_text, reference_texts):
         plagiarism_results.append([reference_texts[i], score])
     return plagiarism_results
 if __name__ == '__main__':
-    update()
     with open('test2_1.txt', 'r') as file:
         example_document = file.read()
     reference_texts = []
@@ -172,7 +116,7 @@ if __name__ == '__main__':
         if results:
             print('Plagiarized content detected:')
             for result in results:
-                print(f'Similarity Score: {result[1] * 100:.2f}%')
+                print('Similarity Score: {.2f}%'.format(result[1] * 100))
                 print()
         else:
             print('No plagiarism detected.')
